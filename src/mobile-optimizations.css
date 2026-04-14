@@ -1,0 +1,68 @@
+/* Mobile-First CSS Optimizations for Lead Capture Screen
+   Add these to App.jsx or a separate CSS file */
+
+/* iPhone SE specific optimizations (375x667 - smallest common viewport) */
+@media (max-height: 700px) and (max-width: 400px) {
+  /* Reduce level number size on very small screens */
+  .lead-capture-level {
+    font-size: 3rem !important; /* Down from text-5xl (4rem) */
+    margin-bottom: 0.75rem !important; /* Reduce spacing */
+  }
+
+  /* Compress locked cards spacing */
+  .lead-capture-cards {
+    gap: 0.375rem !important; /* Reduce from space-y-1.5 */
+  }
+
+  /* Reduce form top margin to fit in viewport */
+  .lead-capture-form {
+    margin-top: 0.75rem !important; /* Reduce spacing above form */
+  }
+
+  /* Ensure submit button stays above fold */
+  .lead-capture-submit {
+    margin-top: 0.75rem !important;
+    padding: 0.875rem 1rem !important; /* Slightly reduce padding while keeping tap target */
+  }
+
+  /* Reduce overall container padding */
+  .lead-capture-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+}
+
+/* Keyboard handling optimizations */
+@media (max-height: 600px) {
+  /* When virtual keyboard might be open */
+  .lead-capture-container {
+    padding-top: 1rem !important;
+  }
+  
+  .lead-capture-level {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .lead-capture-cards {
+    margin-bottom: 0.75rem !important;
+  }
+}
+
+/* Touch target optimizations */
+.mobile-tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Input focus improvements for mobile */
+.mobile-input:focus {
+  transform: none !important; /* Prevent zoom on iOS */
+}
+
+/* Prevent horizontal scroll on very small screens */
+@media (max-width: 360px) {
+  .lead-capture-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
