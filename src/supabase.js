@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { utmTracker } from './utils/utmTracker.js';
 
 // Supabase configuration
 const SUPABASE_CONFIG = {
@@ -55,7 +56,7 @@ export const scoreLLMResponse = async (item, text) => {
   }
 };
 
-// Lead capture with Supabase integration
+// Lead capture with Supabase integration and UTM tracking
 export const captureLeadData = async (leadData) => {
   console.log('💾 Capturing lead data:', leadData);
   
@@ -63,6 +64,10 @@ export const captureLeadData = async (leadData) => {
   window.__aiLevelLead = leadData;
   
   try {
+    // Get UTM attribution data
+    const attribution = utmTracker.formatForDatabase();
+    console.log('🎯 Attribution data:', attribution);
+
     const { data, error } = await supabase
       .from('ai_level_leads')
       .insert([{
@@ -72,8 +77,16 @@ export const captureLeadData = async (leadData) => {
         level: leadData.level,
         relationship_status: leadData.relationshipStatus,
         scores: leadData.scores,
-        source: 'web',
-        created_at: new Date().toISOString()
+        source: attribution.source || 'web',
+        created_at: new Date().toISOString(),
+        // UTM attribution fields
+        utm_source: attribution.utm_source,
+        utm_medium: attribution.utm_medium,
+        utm_campaign: attribution.utm_campaign,
+        utm_term: attribution.utm_term,
+        utm_content: attribution.utm_content,
+        referrer: attribution.referrer,
+        landing_page: attribution.landing_page
       }])
       .select()
       .single();
@@ -85,7 +98,12 @@ export const captureLeadData = async (leadData) => {
     }
     
     console.log('✅ Lead captured successfully:', data);
-    return { success: true, data };
+    console.log('🎯 UTM Summary:', utmTracker.getSummary());
+    
+    // Store lead ID for intent tracking
+    sessionStorage.setItem('ai-level-lead-id', data.id);
+    
+    return { success: true, data, attribution };
     
   } catch (err) {
     console.error('❌ Lead capture exception:', err);
@@ -191,6 +209,29 @@ export const trackAnalyticsEvent = async (eventType, eventData = {}) => {
   } catch (err) {
     console.error(`❌ Analytics exception for ${eventType}:`, err);
     return { success: false, error: err };
+  }
+};
+
+// Admin table setup (run once during deployment)
+export const setupAdminTables = async () => {
+  try {
+    // Create admin_config table
+    const { error: configError } = await supabase.rpc('create_admin_config_table');
+    if (configError && !configError.message.includes('already exists')) {
+      console.error('Error creating admin_config table:', configError);
+    }
+
+    // Create admin_sessions table  
+    const { error: sessionsError } = await supabase.rpc('create_admin_sessions_table');
+    if (sessionsError && !sessionsError.message.includes('already exists')) {
+      console.error('Error creating admin_sessions table:', sessionsError);
+    }
+
+    console.log('✅ Admin tables setup completed');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Admin tables setup failed:', error);
+    return { success: false, error };
   }
 };
 

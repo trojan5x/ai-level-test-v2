@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { captureLeadData, captureIntentData, trackAnalyticsEvent, scoreLLMResponse } from "./supabase.js";
+import { utmTracker } from './utils/utmTracker.js';
+import PrivateRoute from './components/PrivateRoute.jsx';
+import AdminDashboard from './admin/components/AdminDashboard.jsx';
 
 const SCREENS = {
   LANDING: "landing",
@@ -2188,7 +2192,7 @@ function generateInsights(scores, level) {
 }
 
 // ─── Main App ───────────────────────────────────────────
-export default function AILevel() {
+function AILevel() {
   const [screen, setScreen] = useState(SCREENS.LANDING);
   const [scores, setScores] = useState({
     a1: 0, a2: 0, a3: 0, a4: 0, a5: 0, b1: 0,
@@ -2198,6 +2202,11 @@ export default function AILevel() {
   });
   const scoresRef = useRef(scores);
   scoresRef.current = scores;
+
+  // Initialize UTM tracking on component mount
+  useEffect(() => {
+    utmTracker.initialize();
+  }, []);
 
   const update = (patch) => {
     setScores((prev) => {
@@ -2328,4 +2337,24 @@ export default function AILevel() {
   };
 
   return <div className="font-sans antialiased">{screenMap[screen]}</div>;
+}
+
+// Main App component with routing
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<AILevel />} />
+        <Route 
+          path="/admin" 
+          element={
+            <PrivateRoute>
+              <AdminDashboard />
+            </PrivateRoute>
+          } 
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
 }
