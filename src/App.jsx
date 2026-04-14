@@ -1708,17 +1708,25 @@ function AnimatedNumber({ target, color, duration = 1200 }) {
 function Expandable({ label, color, children }) {
   const [open, setOpen] = useState(false);
   return (
-    <button onClick={() => setOpen(!open)} className="w-full text-left">
-      <div className="flex items-center gap-2 py-1.5">
-        <span className="text-[10px] font-medium" style={{ color: color || "#94a3b8" }}>{label}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-200 text-gray-600 ${open ? "rotate-180" : ""}`}>
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+    <div className="w-full">
+      <button onClick={() => setOpen(!open)} className="w-full text-left py-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-medium" style={{ color: color || "#94a3b8" }}>{label}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-200 text-gray-600 ${open ? "rotate-180" : ""}`}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
+      </button>
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+        open 
+          ? "max-h-screen opacity-100 pb-3" 
+          : "max-h-0 opacity-0 pb-0"
+      }`}>
+        <div className={`${open ? "" : "hidden"}`}>
+          {children}
+        </div>
       </div>
-      <div className={`overflow-hidden transition-all duration-300 ${open ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}>
-        <div className="pb-3">{children}</div>
-      </div>
-    </button>
+    </div>
   );
 }
 
@@ -2071,71 +2079,74 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
               <div className="flex-1 h-px bg-gray-800/40" />
             </div>
 
-            {/* All insights */}
-            <Expandable label={`Your profile insights (${insights.length})`} color={data.color}>
-              <div className="space-y-2 text-left">
-                {insights.map((insight, i) => (
-                  <div key={i} className="bg-gray-900/50 rounded-xl px-4 py-3 border border-gray-800/30">
-                    <p className="text-xs font-semibold mb-0.5" style={{ color: data.color }}>{insight.label}</p>
-                    <p className="text-gray-300 text-sm leading-relaxed">{insight.text}</p>
-                  </div>
-                ))}
-              </div>
-            </Expandable>
-
-            {/* How to level up */}
-            <Expandable label="How to level up" color="#34d399">
-              <div className="text-left space-y-2.5 mb-2">
-                {suggestions.levelTips.map((tip, i) => (
-                  <div key={i} className="flex gap-2.5">
-                    <span className="text-emerald-400/50 text-sm mt-0.5 flex-shrink-0">→</span>
-                    <p className="text-gray-300 text-sm leading-relaxed">{tip}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-gray-800/30 pt-2.5">
-                <div className="flex gap-2.5">
-                  <span className="text-sm mt-0.5 flex-shrink-0 opacity-60">{relData.emoji}</span>
-                  <p className="text-gray-400 text-sm leading-relaxed italic">{suggestions.relationshipTip}</p>
-                </div>
-              </div>
-            </Expandable>
-
-            {/* Level scale */}
-            <Expandable label="See all 7 levels" color={data.color}>
-              <div className="space-y-0.5">
-                {LEVEL_SCALE.map((l) => (
-                  <div key={l.level} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-left ${l.level === level ? "bg-gray-800/60" : ""}`}>
-                    <span className={`text-xs font-bold w-4 text-right ${l.level === level ? "text-white" : "text-gray-700"}`}>{l.level}</span>
-                    <span className={`text-[11px] flex-1 ${l.level === level ? "text-white font-medium" : "text-gray-600"}`}>{l.name}</span>
-                    <span className={`text-[9px] ${l.level === level ? "text-gray-400" : "text-gray-700"}`}>{l.short}</span>
-                    {l.level === level && <span className="text-[9px] ml-0.5" style={{ color: data.color }}>← You</span>}
-                  </div>
-                ))}
-                <p className="text-gray-700 text-[9px] px-3 pt-2 italic">Levels 5-6 require the full assessment (coming soon).</p>
-              </div>
-            </Expandable>
-
-            {/* Relationship types */}
-            <Expandable label="What are the relationship types?" color={relData.color}>
-              <div className="space-y-0.5 mt-1">
-                {RELATIONSHIP_SCALE.map((r) => (
-                  <div key={r.key} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-left ${r.key === relationshipStatus ? "bg-gray-800/60" : ""}`}>
-                    <span className="text-sm w-5 flex-shrink-0">{RELATIONSHIP_DATA[r.key].emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[11px] ${r.key === relationshipStatus ? "text-white font-medium" : "text-gray-500"}`}>{r.label}</span>
-                        <span className="text-gray-700 text-[9px]">·</span>
-                        <span className={`text-[9px] ${r.key === relationshipStatus ? "" : "text-gray-600"}`} style={r.key === relationshipStatus ? { color: relData.color } : {}}>{r.tierLabel}</span>
-                      </div>
-                      <p className={`text-[9px] ${r.key === relationshipStatus ? "text-gray-400" : "text-gray-700"}`}>{r.short}</p>
+            {/* Expandable sections container - fixed mobile spacing */}
+            <div className="space-y-2">
+              {/* All insights */}
+              <Expandable label={`Your profile insights (${insights.length})`} color={data.color}>
+                <div className="space-y-2 text-left">
+                  {insights.map((insight, i) => (
+                    <div key={i} className="bg-gray-900/50 rounded-xl px-4 py-3 border border-gray-800/30">
+                      <p className="text-xs font-semibold mb-0.5" style={{ color: data.color }}>{insight.label}</p>
+                      <p className="text-gray-300 text-sm leading-relaxed">{insight.text}</p>
                     </div>
-                    {r.key === relationshipStatus && <span className="text-[9px] flex-shrink-0" style={{ color: relData.color }}>← You</span>}
+                  ))}
+                </div>
+              </Expandable>
+
+              {/* How to level up */}
+              <Expandable label="How to level up" color="#34d399">
+                <div className="text-left space-y-2.5 mb-2">
+                  {suggestions.levelTips.map((tip, i) => (
+                    <div key={i} className="flex gap-2.5">
+                      <span className="text-emerald-400/50 text-sm mt-0.5 flex-shrink-0">→</span>
+                      <p className="text-gray-300 text-sm leading-relaxed">{tip}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-gray-800/30 pt-2.5">
+                  <div className="flex gap-2.5">
+                    <span className="text-sm mt-0.5 flex-shrink-0 opacity-60">{relData.emoji}</span>
+                    <p className="text-gray-400 text-sm leading-relaxed italic">{suggestions.relationshipTip}</p>
                   </div>
-                ))}
-              </div>
-              <p className="text-gray-700 text-[9px] px-3 pt-2 italic">Your status combines how you treat AI (Tool, Colleague, Symbiont) with your engagement pattern (Casual, Committed, etc.).</p>
-            </Expandable>
+                </div>
+              </Expandable>
+
+              {/* Level scale */}
+              <Expandable label="See all 7 levels" color={data.color}>
+                <div className="space-y-0.5">
+                  {LEVEL_SCALE.map((l) => (
+                    <div key={l.level} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-left ${l.level === level ? "bg-gray-800/60" : ""}`}>
+                      <span className={`text-xs font-bold w-4 text-right ${l.level === level ? "text-white" : "text-gray-700"}`}>{l.level}</span>
+                      <span className={`text-[11px] flex-1 ${l.level === level ? "text-white font-medium" : "text-gray-600"}`}>{l.name}</span>
+                      <span className={`text-[9px] ${l.level === level ? "text-gray-400" : "text-gray-700"}`}>{l.short}</span>
+                      {l.level === level && <span className="text-[9px] ml-0.5" style={{ color: data.color }}>← You</span>}
+                    </div>
+                  ))}
+                  <p className="text-gray-700 text-[9px] px-3 pt-2 italic">Levels 5-6 require the full assessment (coming soon).</p>
+                </div>
+              </Expandable>
+
+              {/* Relationship types */}
+              <Expandable label="What are the relationship types?" color={relData.color}>
+                <div className="space-y-0.5 mt-1">
+                  {RELATIONSHIP_SCALE.map((r) => (
+                    <div key={r.key} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-left ${r.key === relationshipStatus ? "bg-gray-800/60" : ""}`}>
+                      <span className="text-sm w-5 flex-shrink-0">{RELATIONSHIP_DATA[r.key].emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[11px] ${r.key === relationshipStatus ? "text-white font-medium" : "text-gray-500"}`}>{r.label}</span>
+                          <span className="text-gray-700 text-[9px]">·</span>
+                          <span className={`text-[9px] ${r.key === relationshipStatus ? "" : "text-gray-600"}`} style={r.key === relationshipStatus ? { color: relData.color } : {}}>{r.tierLabel}</span>
+                        </div>
+                        <p className={`text-[9px] ${r.key === relationshipStatus ? "text-gray-400" : "text-gray-700"}`}>{r.short}</p>
+                      </div>
+                      {r.key === relationshipStatus && <span className="text-[9px] flex-shrink-0" style={{ color: relData.color }}>← You</span>}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-gray-700 text-[9px] px-3 pt-2 italic">Your status combines how you treat AI (Tool, Colleague, Symbiont) with your engagement pattern (Casual, Committed, etc.).</p>
+              </Expandable>
+            </div>
 
             {/* LearnTube footer */}
             <div className="pt-5 mt-4 border-t border-gray-800/20 text-center">
