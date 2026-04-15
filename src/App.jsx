@@ -5,6 +5,29 @@ import { utmTracker } from './utils/utmTracker.js';
 import PrivateRoute from './components/PrivateRoute.jsx';
 import AdminDashboard from './admin/components/AdminDashboard.jsx';
 
+// Reusable Header Component
+function Header() {
+  return (
+    <div className="w-full bg-gray-900/60 border-b border-gray-800/40 backdrop-blur-sm py-4 z-20 relative">
+      <div className="flex items-center justify-center">
+        {/* LearnTube Logo */}
+        <div className="inline-flex items-center gap-3 px-6 py-2">
+          <img 
+            src="/learntube-icon.svg" 
+            alt="LearnTube" 
+            className="w-8 h-8 flex-shrink-0"
+          />
+          <div className="flex items-center gap-3">
+            <span className="text-white text-sm font-bold tracking-wider">LearnTube.ai</span>
+            <span className="text-gray-700 text-sm">|</span>
+            <img src="/backed-by-google.png" alt="Backed by Google" className="h-7 opacity-80" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const SCREENS = {
   LANDING: "landing",
   ITEM1: "item1",
@@ -31,6 +54,12 @@ function computeLevel(scores) {
   const item3Correct = scores.item3Correct;
   const item4Choice = scores.item4Choice;
   const item6Level = scores.item6Level;
+
+  console.log(`\n🏆 FINAL SCORE CALCULATION:`);
+  console.log(`- Total Points: ${total} (Needs 18+ for L4)`);
+  console.log(`- Item 3 Correct: ${item3Correct} (Gatekeeper: Must be true)`);
+  console.log(`- Item 4 Choice: ${item4Choice} (Gatekeeper: Must be C or D)`);
+  console.log(`- Item 6 Level: ${item6Level} (Gatekeeper: Needs 3+ for L4)`);
 
   // L0: Very low engagement / scores
   if (total <= 4) return 0;
@@ -368,19 +397,19 @@ function Landing({ onStart }) {
 
         {/* Logo Bar at Top - Fade in first */}
         <FadeIn delay={200} direction="fade">
-          <div className="w-full px-6 pt-6 pb-4 z-20 relative">
+          <div className="w-full bg-gray-900/60 border-b border-gray-800/40 backdrop-blur-sm py-4 z-20 relative">
             <div className="flex items-center justify-center">
               {/* LearnTube Logo */}
-              <div className="inline-flex items-center gap-3 bg-gray-900/60 border border-gray-800/40 rounded-full px-6 py-3 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-3 px-6 py-2">
                 <img 
                   src="/learntube-icon.svg" 
                   alt="LearnTube" 
                   className="w-8 h-8 flex-shrink-0"
                 />
                 <div className="flex items-center gap-3">
-                  <span className="text-white text-sm font-bold tracking-wider">LEARNTUBE</span>
+                  <span className="text-white text-sm font-bold tracking-wider">LearnTube.ai</span>
                   <span className="text-gray-700 text-sm">|</span>
-                  <span className="text-gray-400 text-xs">3M+ users</span>
+                  <img src="/backed-by-google.png" alt="Backed by Google" className="h-7 opacity-80" />
                 </div>
               </div>
             </div>
@@ -390,18 +419,25 @@ function Landing({ onStart }) {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 pb-32">
           <div className="text-center max-w-md relative z-10">
+            {/* User Count Pill */}
+            <FadeIn delay={400} direction="up">
+              <div className="inline-flex items-center bg-blue-500/10 border border-blue-400/20 rounded-full px-4 py-1.5 mb-6">
+                <span className="text-blue-300 text-sm font-medium">3M+ users</span>
+              </div>
+            </FadeIn>
+            
             {/* Large Split Heading with staggered animation */}
-            <div className="text-6xl sm:text-7xl font-black leading-tight mb-4">
+            <div className="text-6xl sm:text-7xl font-black leading-none mb-4">
               <FadeIn delay={600} direction="up">
-                <div className="bg-gradient-to-br from-white via-blue-100 to-blue-400 bg-clip-text text-transparent">Find your</div>
+                <div className="bg-gradient-to-br from-white via-blue-200 to-blue-600 bg-clip-text text-transparent">Find your</div>
               </FadeIn>
               <FadeIn delay={800} direction="up">
-                <div className="bg-gradient-to-br from-white via-blue-100 to-blue-400 bg-clip-text text-transparent">AI Level</div>
+                <div className="bg-gradient-to-br from-white via-blue-200 to-blue-600 bg-clip-text text-transparent">AI Level</div>
               </FadeIn>
             </div>
             
             <FadeIn delay={1200} direction="up">
-              <p className="text-gray-400 text-lg sm:text-xl mb-8 leading-relaxed">
+              <p className="text-gray-400 text-lg sm:text-xl mb-8 leading-normal">
                 6 scenarios. 3 minutes.<br />
                 A score most people don't expect.
               </p>
@@ -471,10 +507,12 @@ function Landing({ onStart }) {
 function Item1({ onAnswer }) {
   return (
     <ScreenTransition>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col px-6 py-4">
-        <ProgressBar current={0} />
-        
-        <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full">
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col px-6 py-4">
+          <ProgressBar current={0} />
+          
+          <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full">
           <FadeIn delay={200} direction="fade">
             <div className="text-center mb-6">
               <p className="text-blue-400/50 text-xs font-medium mb-2">Let's start easy</p>
@@ -508,6 +546,7 @@ function Item1({ onAnswer }) {
               </button>
             </FadeIn>
           </div>
+        </div>
         </div>
       </div>
     </ScreenTransition>
@@ -569,8 +608,10 @@ function Item2({ onAnswer }) {
 
   return (
     <ScreenTransition>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-6 py-12">
-        <ProgressBar current={1} />
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <ProgressBar current={1} />
         <FadeIn>
           <div className="max-w-lg text-center mb-8">
             <h2 className="text-2xl font-bold mb-2">How good is AI, really?</h2>
@@ -615,6 +656,7 @@ function Item2({ onAnswer }) {
             </button>
           </FadeIn>
         )}
+        </div>
       </div>
     </ScreenTransition>
   );
@@ -693,8 +735,10 @@ function Item3({ onAnswer }) {
 
   return (
     <ScreenTransition>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-6 py-12">
-        <ProgressBar current={2} />
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <ProgressBar current={2} />
         <FadeIn>
           <div className="max-w-lg text-center mb-6">
             <h2 className="text-2xl font-bold mb-2">Which response is actually useful?</h2>
@@ -768,6 +812,7 @@ function Item3({ onAnswer }) {
             </div>
           </FadeIn>
         )}
+        </div>
       </div>
     </ScreenTransition>
   );
@@ -820,8 +865,10 @@ function Item4({ onAnswer }) {
 
   return (
     <ScreenTransition>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-6 py-12">
-        <ProgressBar current={3} />
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <ProgressBar current={3} />
         <FadeIn>
           <div className="max-w-lg text-center mb-4">
             <h2 className="text-2xl font-bold mb-2">What's your next move?</h2>
@@ -864,6 +911,7 @@ function Item4({ onAnswer }) {
             </button>
           </FadeIn>
         )}
+        </div>
       </div>
     </ScreenTransition>
   );
@@ -926,8 +974,10 @@ function Item5a({ onAnswer }) {
 
   return (
     <ScreenTransition>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-6 py-12">
-        <ProgressBar current={4} />
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <ProgressBar current={4} />
         <FadeIn>
           <div className="max-w-lg text-center mb-6">
             <h2 className="text-2xl font-bold mb-2">Would you use AI here?</h2>
@@ -981,6 +1031,7 @@ function Item5a({ onAnswer }) {
             </button>
           </FadeIn>
         )}
+        </div>
       </div>
     </ScreenTransition>
   );
@@ -1038,7 +1089,9 @@ function Item5b({ onAnswer }) {
 
   return (
     <ScreenTransition>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-6 py-12">
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <FadeIn>
           <div className="max-w-lg text-center mb-6">
             <h2 className="text-2xl font-bold mb-2">Fix this prompt.</h2>
@@ -1098,6 +1151,7 @@ function Item5b({ onAnswer }) {
             </div>
           </div>
         </FadeIn>
+        </div>
       </div>
     </ScreenTransition>
   );
@@ -1163,8 +1217,10 @@ function Item6({ onAnswer }) {
 
   return (
     <ScreenTransition>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-6 py-12">
-        <ProgressBar current={5} />
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <ProgressBar current={5} />
         <FadeIn>
           <div className="max-w-lg text-center mb-4">
             <h2 className="text-2xl font-bold mb-2">Last one. Then you'll see your results.</h2>
@@ -1216,6 +1272,7 @@ function Item6({ onAnswer }) {
             )}
           </div>
         </FadeIn>
+        </div>
       </div>
     </ScreenTransition>
   );
@@ -1618,13 +1675,13 @@ function renderShareCard(canvas, level, levelData, relationshipData, percentile)
   // Branding
   ctx.fillStyle = "#60a5fa";
   ctx.font = "700 15px system-ui, -apple-system, sans-serif";
-  ctx.fillText("LEARNTUBE", w / 2 - 50, h - 55);
+  ctx.fillText("LearnTube.ai", w / 2 - 50, h - 55);
   ctx.fillStyle = "#475569";
   ctx.font = "400 15px system-ui, -apple-system, sans-serif";
   ctx.fillText("|  AI Level Assessment", w / 2 + 30, h - 55);
   ctx.fillStyle = "#475569";
   ctx.font = "400 14px system-ui, -apple-system, sans-serif";
-  ctx.fillText("What's yours? → learntube.ai", w / 2, h - 32);
+  ctx.fillText("What's yours? → ai-level.learntube.ai", w / 2, h - 32);
 }
 
 // ─── Level Reveal ───────────────────────────────────────
@@ -1786,7 +1843,7 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
     }
   }, [stage, level, data, relData, percentile]);
 
-  const shareText = `I'm AI Level ${level >= 4 ? "4+" : level} — ${data.name} ${relData.emoji}\nMy AI Relationship Status: ${relData.status}\n\nTop ${percentile}% of test-takers.\nWhat's yours? → ai-level.learntube.ai`;
+  const shareText = `I'm AI Level ${level >= 4 ? "4+" : level} — ${data.name} ${relData.emoji}\nMy AI Relationship Status: ${relData.status}\n\nTop ${percentile}% of test-takers.\nWhat's yours? → https://ai-level.learntube.ai?utm_source=user_share`;
 
   const handleShare = async () => {
     setShareState("sharing");
@@ -1820,7 +1877,7 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
     }
     if (navigator.share) {
       try {
-        await navigator.share({ text: shareText, url: "https://ai-level.learntube.ai" });
+        await navigator.share({ text: shareText, url: "https://ai-level.learntube.ai?utm_source=user_share" });
         setShareState("shared");
         trackAnalyticsEvent('share_completed', { method: 'native_text', level, relationshipStatus });
         setTimeout(() => setShareState("idle"), 3000);
@@ -1879,12 +1936,14 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
 
   return (
     <ScreenTransition>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center px-5 py-8 relative overflow-hidden">
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col relative overflow-hidden">
         <canvas ref={canvasRef} style={{ display: "none" }} />
+        
+        <Header />
 
         {/* Enhanced background glow with multiple layers */}
         <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-[120px] transition-all duration-[2000ms] ease-out"
+          className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-[120px] transition-all duration-[2000ms] ease-out pointer-events-none"
           style={{ 
             backgroundColor: data.color, 
             opacity: stage >= 1 ? 0.12 : 0,
@@ -1893,7 +1952,7 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
         />
         {/* Secondary glow */}
         <div
-          className="absolute top-10 left-1/2 -translate-x-1/2 w-[300px] h-[300px] rounded-full blur-[80px] transition-all duration-[2500ms] ease-out delay-300"
+          className="absolute top-30 left-1/2 -translate-x-1/2 w-[300px] h-[300px] rounded-full blur-[80px] transition-all duration-[2500ms] ease-out delay-300 pointer-events-none"
           style={{ 
             backgroundColor: data.color, 
             opacity: stage >= 1 ? 0.08 : 0,
@@ -1901,38 +1960,22 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
           }}
         />
 
-        <div className="max-w-sm w-full relative z-10">
+        <div className="flex-1 flex flex-col items-center px-5 py-8 pb-32">
+          <div className="max-w-sm w-full relative z-10">
 
-          {/* ═══════════════════════════════════════════════════
-               ZONE 1: COMPRESSED HERO — fits in one mobile fold
-             ═══════════════════════════════════════════════════ */}
+            {/* ═══════════════════════════════════════════════════
+                 ZONE 1: COMPRESSED HERO — fits in one mobile fold
+               ═══════════════════════════════════════════════════ */}
 
-          {/* Header with LearnTube Logo - matching landing page style */}
-          <div className={`text-center transition-all duration-500 ${stage >= 0 ? "opacity-100" : "opacity-0"}`}>
-            <FadeIn delay={200} direction="fade">
-              <div className="flex items-center justify-center mb-4">
-                <div className="inline-flex items-center gap-3 bg-gray-900/60 border border-gray-800/40 rounded-full px-6 py-3 backdrop-blur-sm">
-                  <img 
-                    src="/learntube-icon.svg" 
-                    alt="LearnTube" 
-                    className="w-8 h-8 flex-shrink-0"
-                  />
-                  <div className="flex items-center gap-3">
-                    <span className="text-white text-sm font-bold tracking-wider">LEARNTUBE</span>
-                    <span className="text-gray-700 text-sm">|</span>
-                    <span className="text-gray-400 text-xs">AI LEVEL</span>
-                  </div>
-                </div>
+            {/* Level number + name — with proper spacing */}
+            <div className={`text-center transition-all duration-700 mt-4 ${stage >= 1 ? "opacity-100 scale-100" : "opacity-0 scale-75"}`}>
+              <p className="text-gray-400 text-xs font-bold tracking-[0.2em] mb-8">YOUR AI LEVEL</p>
+              <div className="py-4">
+                {stage >= 1 && <AnimatedNumber target={level} color={data.color} />}
               </div>
-            </FadeIn>
-          </div>
+            </div>
 
-          {/* Level number + name — with proper spacing */}
-          <div className={`text-center transition-all duration-700 ${stage >= 1 ? "opacity-100 scale-100" : "opacity-0 scale-75"}`}>
-            {stage >= 1 && <AnimatedNumber target={level} color={data.color} />}
-          </div>
-
-          <div className={`text-center transition-all duration-700 mt-6 ${stage >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+          <div className={`text-center transition-all duration-700 mt-10 ${stage >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <div className="text-xl font-bold text-white mb-1">{data.name}</div>
             <p className="text-gray-400 text-xs leading-relaxed mb-2 max-w-xs mx-auto">{data.tagline}</p>
             <div className="flex items-center justify-center gap-2 mb-3">
@@ -2151,15 +2194,16 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
             {/* LearnTube footer */}
             <div className="pt-5 mt-4 border-t border-gray-800/20 text-center">
               <div className="flex items-center justify-center gap-2 mb-1.5">
-                <span className="text-blue-400 text-[10px] font-bold tracking-wider">LEARNTUBE</span>
+                <span className="text-blue-400 text-[10px] font-bold tracking-wider">LearnTube.ai</span>
                 <span className="text-gray-700 text-[10px]">|</span>
-                <span className="text-gray-500 text-[10px]">3M+ users</span>
+                <img src="/backed-by-google.png" alt="Backed by Google" className="h-5 opacity-70" />
               </div>
               <p className="text-gray-700 text-[10px] leading-relaxed max-w-xs mx-auto">
                 AI Level & AI Relationship Status — LearnTube frameworks built on research from BCG, Anthropic & MIT Media Lab.
               </p>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </ScreenTransition>
@@ -2223,6 +2267,13 @@ function AILevel() {
     setScores((prev) => {
       const next = { ...prev, ...patch };
       scoresRef.current = next;
+      console.log(`\n📊 SCORE UPDATE:`, patch);
+      console.log(`📈 CURRENT TOTALS:`, {
+        a1: next.a1, a2: next.a2, a3: next.a3, a4: next.a4, a5: next.a5,
+        b1: next.b1, item2Correct: next.item2Correct, 
+        item3Correct: next.item3Correct, item4Choice: next.item4Choice, 
+        item6Level: next.item6Level, restraintScore: next.restraintScore
+      });
       return next;
     });
   };
