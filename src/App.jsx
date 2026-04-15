@@ -454,8 +454,8 @@ function Landing({ onStart }) {
             <p 
               className="text-gray-500 text-xs text-center mb-3 leading-relaxed opacity-0 animate-[fadeIn_0.6s_ease-out_2s_forwards]"
             >
-              Based on research from<br />
-              <span className="text-gray-400 font-medium">BCG, Anthropic & MIT Media Lab</span>
+              Benchmarked against AI proficiency standards from<br />
+              <span className="text-gray-400 font-medium">BCG, Anthropic, and MIT Media Lab</span>
             </p>
             
             <button
@@ -473,6 +473,10 @@ function Landing({ onStart }) {
               />
               
               <span className="flex items-center justify-center gap-3 relative z-10">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-90">
+                  <circle cx="12" cy="8" r="7"></circle>
+                  <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                </svg>
                 Take the AI Level Test
                 <span className="inline-block transition-all duration-300 group-hover:translate-x-1">
                   <svg 
@@ -496,6 +500,9 @@ function Landing({ onStart }) {
                 </span>
               </span>
             </button>
+            <p className="text-gray-500 text-xs text-center mt-3 opacity-0 animate-[fadeIn_0.6s_ease-out_2.5s_forwards]">
+              No credit card required. Instant results.
+            </p>
           </div>
         </div>
       </div>
