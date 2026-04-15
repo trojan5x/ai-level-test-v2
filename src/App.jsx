@@ -4,6 +4,7 @@ import { captureLeadData, captureIntentData, trackAnalyticsEvent, scoreLLMRespon
 import { utmTracker } from './utils/utmTracker.js';
 import PrivateRoute from './components/PrivateRoute.jsx';
 import AdminDashboard from './admin/components/AdminDashboard.jsx';
+import { AdminAuthProvider } from './admin/hooks/useAdminAuth.js';
 
 // Reusable Header Component
 function Header() {
@@ -2411,19 +2412,21 @@ function AILevel() {
 // Main App component with routing
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<AILevel />} />
-        <Route 
-          path="/admin" 
-          element={
-            <PrivateRoute>
-              <AdminDashboard />
-            </PrivateRoute>
-          } 
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+    <AdminAuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<AILevel />} />
+          <Route 
+            path="/admin" 
+            element={
+              <PrivateRoute>
+                <AdminDashboard />
+              </PrivateRoute>
+            } 
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AdminAuthProvider>
   );
 }

@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../../supabase.js';
 import bcrypt from 'bcryptjs';
 
 const SESSION_KEY = 'ai-level-admin-session';
 const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
 
-export const useAdminAuth = () => {
+const AdminAuthContext = createContext();
+
+export const AdminAuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loginError, setLoginError] = useState('');
@@ -56,7 +58,7 @@ export const useAdminAuth = () => {
         if (sessionCreated) {
           console.log('Session created successfully, setting authenticated state');
           setIsAuthenticated(true);
-          setIsLoading(false); // Set loading to false before returning
+          setIsLoading(false);
           return true;
         } else {
           setLoginError('Failed to create session');
@@ -169,7 +171,7 @@ export const useAdminAuth = () => {
     }
   };
 
-  return {
+  const value = {
     isAuthenticated,
     isLoading,
     loginError,
@@ -177,4 +179,18 @@ export const useAdminAuth = () => {
     logout,
     changePassword
   };
+
+  return (
+    <AdminAuthContext.Provider value={value}>
+      {children}
+    </AdminAuthContext.Provider>
+  );
+};
+
+export const useAdminAuth = () => {
+  const context = useContext(AdminAuthContext);
+  if (!context) {
+    throw new Error('useAdminAuth must be used within an AdminAuthProvider');
+  }
+  return context;
 };
