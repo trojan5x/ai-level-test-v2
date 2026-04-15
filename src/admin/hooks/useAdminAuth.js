@@ -56,22 +56,24 @@ export const useAdminAuth = () => {
         if (sessionCreated) {
           console.log('Session created successfully, setting authenticated state');
           setIsAuthenticated(true);
+          setIsLoading(false); // Set loading to false before returning
           return true;
         } else {
           setLoginError('Failed to create session');
+          setIsLoading(false);
           return false;
         }
       } else {
         console.log('Password mismatch');
         setLoginError('Invalid password');
+        setIsLoading(false);
         return false;
       }
     } catch (error) {
       console.error('Login error:', error);
       setLoginError('Login failed. Please try again.');
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
   };
 
