@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAdminAuth } from '../hooks/useAdminAuth.js';
+import { useAdminAuth } from '../hooks/useAdminAuth.jsx';
 import { adminRateLimiter, getClientIP, activityLogger } from '../utils/adminHelpers.js';
 
 const AdminLogin = () => {

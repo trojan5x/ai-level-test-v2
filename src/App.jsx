@@ -4,7 +4,7 @@ import { captureLeadData, captureIntentData, trackAnalyticsEvent, scoreLLMRespon
 import { utmTracker } from './utils/utmTracker.js';
 import PrivateRoute from './components/PrivateRoute.jsx';
 import AdminDashboard from './admin/components/AdminDashboard.jsx';
-import { AdminAuthProvider } from './admin/hooks/useAdminAuth.js';
+import { AdminAuthProvider } from './admin/hooks/useAdminAuth.jsx';
 
 // Reusable Header Component
 function Header() {
