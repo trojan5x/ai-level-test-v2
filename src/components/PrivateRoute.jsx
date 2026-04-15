@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAdminAuth } from '../admin/hooks/useAdminAuth.jsx';
+import { useAdminAuth } from '../admin/hooks/useAdminAuth.js';
 import AdminLogin from '../admin/components/AdminLogin.jsx';
 
 const PrivateRoute = ({ children }) => {
