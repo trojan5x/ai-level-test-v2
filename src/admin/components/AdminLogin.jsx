@@ -207,14 +207,6 @@ const AdminLogin = () => {
           </div>
         </div>
 
-        {/* Default password hint for development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-            <p className="text-amber-400 text-xs text-center">
-              <strong>Development:</strong> Default password is "LearnTube2026!" (change after first login)
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
