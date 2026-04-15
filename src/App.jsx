@@ -5,6 +5,22 @@ import { utmTracker } from './utils/utmTracker.js';
 import PrivateRoute from './components/PrivateRoute.jsx';
 import AdminDashboard from './admin/components/AdminDashboard.jsx';
 
+/*
+🚧 DEVELOPMENT TESTING SHORTCUTS:
+
+Method 1 - Persistent Flag:
+1. Find the AILevel function (around line 2270)
+2. Change DEV_SKIP_TO_REVEAL from false to true
+3. Save and refresh - you'll always start at the result screen
+
+Method 2 - Quick Keyboard Shortcut:
+Press Ctrl+Shift+R while on any screen to jump directly to reveal screen
+(Only works in development mode)
+
+Both methods set up realistic test data automatically.
+Remember to set DEV_SKIP_TO_REVEAL back to false before deploying!
+*/
+
 // Reusable Header Component
 function Header() {
   return (
@@ -1327,7 +1343,7 @@ function LoadingScreen({ onDone }) {
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className={`absolute w-1 h-1 bg-blue-400 rounded-full animate-pulse`}
+              className={`absolute w-1 h-1 bg-blue-400 rounded-full animate-pulse-smooth`}
               style={{
                 left: `${20 + i * 15}%`,
                 top: `${30 + (i % 3) * 20}%`,
@@ -1351,7 +1367,7 @@ function LoadingScreen({ onDone }) {
                 >
                   <div className="flex items-center justify-center gap-3">
                     <span className={`text-lg transition-all duration-500 ${
-                      i < step ? "text-blue-400 scale-110" : i === step ? "text-emerald-400 animate-pulse" : "text-gray-500"
+                      i < step ? "text-blue-400 scale-110" : i === step ? "text-emerald-400 animate-pulse-smooth" : "text-gray-500"
                     }`}>
                       {i < step ? "✓" : i === step ? "◆" : "◦"}
                     </span>
@@ -1376,7 +1392,7 @@ function LoadingScreen({ onDone }) {
               <div className="mb-4">
                 <div className="w-12 h-12 border-2 border-emerald-500/30 border-t-emerald-400 rounded-full mx-auto animate-spin" />
               </div>
-              <p className="text-emerald-400 text-lg font-medium animate-pulse">Your results are ready.</p>
+              <p className="text-emerald-400 text-lg font-medium animate-pulse-smooth">Your results are ready.</p>
               <p className="text-gray-500 text-sm mt-2">Preparing your personalized insights...</p>
             </div>
           </div>
@@ -1723,11 +1739,11 @@ function AnimatedNumber({ target, color, duration = 1200 }) {
       {done && showGlow && (
         <>
           <div
-            className="absolute w-32 h-32 rounded-full blur-3xl opacity-20 animate-pulse"
+            className="absolute w-32 h-32 rounded-full blur-3xl opacity-20 animate-glow-bubble"
             style={{ backgroundColor: color }}
           />
           <div
-            className="absolute w-40 h-40 rounded-full blur-xl opacity-10 animate-pulse delay-100"
+            className="absolute w-40 h-40 rounded-full blur-xl opacity-10 animate-glow-bubble-delayed"
             style={{ backgroundColor: color }}
           />
         </>
@@ -1745,7 +1761,7 @@ function AnimatedNumber({ target, color, duration = 1200 }) {
         className={`text-8xl font-extrabold transition-all duration-500 relative z-10 ${
           done 
             ? "scale-100 drop-shadow-2xl" 
-            : "scale-110 animate-pulse"
+            : "scale-110 animate-pulse-smooth"
         }`}
         style={{ 
           color,
@@ -1756,21 +1772,13 @@ function AnimatedNumber({ target, color, duration = 1200 }) {
         {done ? display : current}
       </span>
       
-      {/* Sparkle effects positioned around the circle */}
-      {done && showGlow && (
-        <>
-          <div className="absolute top-2 right-8 w-3 h-3 bg-white rounded-full opacity-60 animate-ping delay-500" />
-          <div className="absolute bottom-4 left-6 w-2 h-2 bg-white rounded-full opacity-40 animate-ping delay-700" />
-          <div className="absolute top-8 left-4 w-1.5 h-1.5 bg-white rounded-full opacity-50 animate-ping delay-900" />
-        </>
-      )}
     </div>
   );
 }
 
 // ─── Expandable Section ──────────────────────────────────
 function Expandable({ label, color, children }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   return (
     <div className="w-full">
       <button onClick={() => setOpen(!open)} className="w-full text-left py-1.5">
@@ -2032,7 +2040,7 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
                 </div>
                 <div className="flex items-center gap-3 mt-2.5">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-smooth" />
                     <span className="text-amber-400 text-[10px] font-semibold">Early access — limited spots</span>
                   </div>
                 </div>
@@ -2068,7 +2076,7 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
                 </div>
                 <div className="flex items-center gap-3 mt-2.5">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-smooth" />
                     <span className="text-emerald-400 text-[10px] font-semibold">Launching soon — first 100 get priority</span>
                   </div>
                 </div>
@@ -2255,8 +2263,19 @@ function generateInsights(scores, level) {
 
 // ─── Main App ───────────────────────────────────────────
 function AILevel() {
-  const [screen, setScreen] = useState(SCREENS.LANDING);
-  const [scores, setScores] = useState({
+  // 🚧 DEVELOPMENT FLAG - Set to true to skip directly to reveal screen for testing
+  const DEV_SKIP_TO_REVEAL = false; // Change this to true to test reveal screen
+  
+  const [screen, setScreen] = useState(DEV_SKIP_TO_REVEAL ? SCREENS.REVEAL : SCREENS.LANDING);
+  // Default test data for development mode
+  const DEFAULT_TEST_SCORES = {
+    a1: 2, a2: 3, a3: 4, a4: 4, a5: 4, b1: 1,
+    item3Correct: true, item4Choice: "C", item6Level: 3,
+    item2Correct: 3, restraintScore: 2,
+    apologyAnswer: false, allergyAnswer: false, promptLevel: 3,
+  };
+  
+  const [scores, setScores] = useState(DEV_SKIP_TO_REVEAL ? DEFAULT_TEST_SCORES : {
     a1: 0, a2: 0, a3: 0, a4: 0, a5: 0, b1: 0,
     item3Correct: false, item4Choice: null, item6Level: 1,
     item2Correct: 0, restraintScore: 0,
@@ -2268,7 +2287,43 @@ function AILevel() {
   // Initialize UTM tracking on component mount
   useEffect(() => {
     utmTracker.initialize();
-  }, []);
+    
+    // Set up test lead data for development mode
+    if (DEV_SKIP_TO_REVEAL && !window.__aiLevelLead) {
+      window.__aiLevelLead = {
+        name: "Test User",
+        phone: "+918888888888",
+        email: "test@example.com",
+        level: 3,
+        relationshipStatus: "committed",
+        timestamp: Date.now()
+      };
+    }
+    
+    // Development helper: Press Ctrl+Shift+R to quickly jump to reveal screen
+    const handleKeyPress = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'R' && process.env.NODE_ENV === 'development') {
+        console.log('🚧 DEV: Jumping to reveal screen for testing...');
+        setScreen(SCREENS.REVEAL);
+        // Set up test data if not already present
+        if (!window.__aiLevelLead) {
+          window.__aiLevelLead = {
+            name: "Dev Test User",
+            phone: "+919999999999",
+            email: "dev@test.com",
+            level: 3,
+            relationshipStatus: "committed",
+            timestamp: Date.now()
+          };
+        }
+      }
+    };
+    
+    if (process.env.NODE_ENV === 'development') {
+      document.addEventListener('keydown', handleKeyPress);
+      return () => document.removeEventListener('keydown', handleKeyPress);
+    }
+  }, [DEV_SKIP_TO_REVEAL]);
 
   const update = (patch) => {
     setScores((prev) => {
