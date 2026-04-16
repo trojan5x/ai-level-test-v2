@@ -286,3 +286,31 @@
 .animate-sparkle-flow {
   animation: sparkle-flow 4.5s ease-in-out infinite;
 }
+
+/* 3D Share Button */
+@keyframes btn-breathe {
+  0%, 100% { box-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 0 24px rgba(255,255,255,0.08); }
+  50%       { box-shadow: 0 8px 0 rgba(0,0,0,0.35), 0 0 32px rgba(255,255,255,0.14); }
+}
+.btn-3d-share {
+  transform: translateY(0px);
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 0 24px rgba(255,255,255,0.08);
+  animation: btn-breathe 2.8s ease-in-out infinite;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btn-3d-share:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.35), 0 0 12px rgba(255,255,255,0.06);
+  animation: none;
+}
+.btn-3d-share-lg {
+  transform: translateY(0px);
+  box-shadow: 0 8px 0 rgba(0,0,0,0.4), 0 0 32px rgba(255,255,255,0.1);
+  animation: btn-breathe 2.8s ease-in-out infinite;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btn-3d-share-lg:active {
+  transform: translateY(5px);
+  box-shadow: 0 3px 0 rgba(0,0,0,0.4), 0 0 16px rgba(255,255,255,0.06);
+  animation: none;
+}

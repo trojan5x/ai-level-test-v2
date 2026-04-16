@@ -30,9 +30,9 @@ function Header() {
       <div className="flex items-center justify-center">
         {/* LearnTube Logo */}
         <div className="inline-flex items-center gap-3 px-6 py-2">
-          <img 
-            src="/learntube-icon.svg" 
-            alt="LearnTube" 
+          <img
+            src="/learntube-icon.svg"
+            alt="LearnTube"
             className="w-8 h-8 flex-shrink-0"
           />
           <div className="flex items-center gap-3">
@@ -302,28 +302,28 @@ function FadeIn({ children, delay = 0, direction = 'up', duration = 600, classNa
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, delay);
-    
+
     return () => clearTimeout(timer);
   }, [delay]);
 
   const getAnimationClass = () => {
     if (!isVisible) return 'opacity-0';
-    
+
     const animations = {
       up: 'animate-[slideInUp_0.6s_ease-out_forwards] opacity-100',
-      right: 'animate-[slideInRight_0.6s_ease-out_forwards] opacity-100', 
+      right: 'animate-[slideInRight_0.6s_ease-out_forwards] opacity-100',
       left: 'animate-[slideInLeft_0.6s_ease-out_forwards] opacity-100',
       fade: 'animate-[fadeIn_0.6s_ease-out_forwards] opacity-100',
       scale: 'animate-[scaleIn_0.6s_ease-out_forwards] opacity-100'
     };
-    
+
     return animations[direction] || animations.up;
   };
 
   const getTransform = () => {
     if (isVisible) return '';
-    
-    switch(direction) {
+
+    switch (direction) {
       case 'up': return 'translate-y-8';
       case 'right': return 'translate-x-5';
       case 'left': return '-translate-x-5';
@@ -333,8 +333,8 @@ function FadeIn({ children, delay = 0, direction = 'up', duration = 600, classNa
   };
 
   return (
-    <div 
-      ref={ref} 
+    <div
+      ref={ref}
       className={`transition-all duration-600 ease-out ${getTransform()} ${getAnimationClass()} ${className}`}
     >
       {children}
@@ -357,11 +357,10 @@ function ScreenTransition({ children }) {
 
 function ResultBadge({ correct, label }) {
   return (
-    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6 ${
-      correct
+    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6 ${correct
         ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
         : "bg-amber-500/15 text-amber-400 border border-amber-500/20"
-    }`}>
+      }`}>
       <span className="text-lg">{correct ? "✦" : "✧"}</span>
       {label}
     </div>
@@ -380,22 +379,22 @@ function Landing({ onStart }) {
     testEl.style.backgroundClip = 'text';
     testEl.style.webkitTextFillColor = 'transparent';
     testEl.style.color = 'transparent';
-    
+
     // Check if gradient is actually applied (not supported in some browsers)
     document.body.appendChild(testEl);
     const computed = getComputedStyle(testEl);
-    
+
     // More robust detection
     const hasWebkitSupport = computed.webkitTextFillColor === 'transparent';
     const hasStandardSupport = computed.textFillColor === 'transparent' || computed.color === 'transparent';
     const hasBackgroundClip = computed.webkitBackgroundClip === 'text' || computed.backgroundClip === 'text';
-    
+
     document.body.removeChild(testEl);
-    
+
     // Only disable gradient if we're sure it's not supported (Safari iOS, Samsung Internet fallback)
     const hasGradientSupport = (hasWebkitSupport || hasStandardSupport) && hasBackgroundClip;
     setSupportsGradient(hasGradientSupport);
-    
+
     // Debug log for testing
     console.log('Gradient support detected:', hasGradientSupport);
   }, []);
@@ -409,8 +408,8 @@ function Landing({ onStart }) {
     <ScreenTransition>
       <div className="min-h-screen bg-gray-950 text-white flex flex-col relative overflow-hidden">
         {/* Ambient glow with premium animation */}
-        <div 
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500/6 rounded-full blur-3xl opacity-0 animate-[fadeInGlow_2s_ease-out_0.3s_forwards]" 
+        <div
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500/6 rounded-full blur-3xl opacity-0 animate-[fadeInGlow_2s_ease-out_0.3s_forwards]"
         />
 
         {/* Logo Bar at Top - Fade in first */}
@@ -419,9 +418,9 @@ function Landing({ onStart }) {
             <div className="flex items-center justify-center">
               {/* LearnTube Logo */}
               <div className="inline-flex items-center gap-3 px-6 py-2">
-                <img 
-                  src="/learntube-icon.svg" 
-                  alt="LearnTube" 
+                <img
+                  src="/learntube-icon.svg"
+                  alt="LearnTube"
                   className="w-8 h-8 flex-shrink-0"
                 />
                 <div className="flex items-center gap-3">
@@ -443,17 +442,17 @@ function Landing({ onStart }) {
                 <span className="text-blue-300 text-sm font-medium">3M+ users</span>
               </div>
             </FadeIn>
-            
+
             {/* Large Split Heading with staggered animation */}
             <div className="text-6xl sm:text-7xl font-black leading-none mb-4">
               <FadeIn delay={600} direction="up">
-                <div className="bg-gradient-to-br from-white via-blue-200 to-blue-600 bg-clip-text text-transparent">Find your</div>
+                <div className="bg-gradient-to-br from-white via-blue-200 to-blue-600 bg-clip-text text-transparent">Find Your</div>
               </FadeIn>
               <FadeIn delay={800} direction="up">
                 <div className="bg-gradient-to-br from-white via-blue-200 to-blue-600 bg-clip-text text-transparent">AI Level</div>
               </FadeIn>
             </div>
-            
+
             <FadeIn delay={1200} direction="up">
               <p className="text-gray-400 text-lg sm:text-xl mb-8 leading-normal">
                 6 scenarios. 3 minutes.<br />
@@ -464,51 +463,103 @@ function Landing({ onStart }) {
         </div>
 
         {/* Sticky Bottom CTA Bar with sophisticated entrance */}
-        <div 
+        <div
           className="fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-sm border-t border-gray-800/40 px-6 py-4 z-30 opacity-0 translate-y-8 animate-[slideUpFromBottom_1s_ease-out_1.5s_forwards]"
         >
           <div className="max-w-sm mx-auto">
             {/* Social Proof - Delayed fade in */}
-            <p 
+            <p
               className="text-gray-500 text-xs text-center mb-3 leading-relaxed opacity-0 animate-[fadeIn_0.6s_ease-out_2s_forwards]"
             >
-              Benchmarked against AI proficiency standards from<br />
-              <span className="text-gray-400 font-medium">BCG, Anthropic, and MIT Media Lab</span>
+              Built upon top AI proficiency standards from<br />
+              <span className="text-gray-400 font-medium">BCG, Anthropic, MIT Media Lab & LearnTube</span>
             </p>
-            
+
             <button
               onClick={handleStart}
-              className="group w-full bg-blue-500 hover:bg-blue-400 text-black font-bold px-8 py-4 rounded-2xl text-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg hover:shadow-blue-500/20 relative overflow-hidden opacity-0 animate-[scaleIn_0.8s_ease-out_1.8s_forwards]"
+              className="group w-full relative text-black font-bold px-8 py-4 rounded-2xl text-lg transition-all duration-300 hover:translate-y-[-2px] active:translate-y-[1px] opacity-0 animate-[scaleIn_0.8s_ease-out_1.8s_forwards] overflow-hidden"
+              style={{
+                background: 'linear-gradient(145deg, #60a5fa, #3b82f6)',
+                boxShadow: `
+                  0 8px 16px rgba(59, 130, 246, 0.3),
+                  0 4px 8px rgba(59, 130, 246, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.1)
+                `,
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.boxShadow = `
+                  0 12px 24px rgba(59, 130, 246, 0.4),
+                  0 6px 12px rgba(59, 130, 246, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.1)
+                `;
+                e.target.style.background = 'linear-gradient(145deg, #60a5fa, #2563eb)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.boxShadow = `
+                  0 8px 16px rgba(59, 130, 246, 0.3),
+                  0 4px 8px rgba(59, 130, 246, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.1)
+                `;
+                e.target.style.background = 'linear-gradient(145deg, #60a5fa, #3b82f6)';
+              }}
+              onMouseDown={(e) => {
+                e.target.style.boxShadow = `
+                  0 4px 8px rgba(59, 130, 246, 0.3),
+                  0 2px 4px rgba(59, 130, 246, 0.2),
+                  inset 0 1px 3px rgba(0, 0, 0, 0.2),
+                  inset 0 -1px 0 rgba(255, 255, 255, 0.1)
+                `;
+                e.target.style.background = 'linear-gradient(145deg, #3b82f6, #1d4ed8)';
+              }}
+              onMouseUp={(e) => {
+                e.target.style.boxShadow = `
+                  0 12px 24px rgba(59, 130, 246, 0.4),
+                  0 6px 12px rgba(59, 130, 246, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.1)
+                `;
+                e.target.style.background = 'linear-gradient(145deg, #60a5fa, #2563eb)';
+              }}
             >
-              {/* Shine effect overlay - starts after button appears */}
-              <div 
+              {/* Enhanced 3D shine effect - fully contained within button boundaries */}
+              <div
                 className="absolute inset-0 pointer-events-none opacity-0 animate-[fadeIn_0.5s_ease-out_2.5s_forwards]"
                 style={{
-                  background: 'linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)',
+                  background: 'linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%)',
                   animation: 'fadeIn 0.5s ease-out 2.5s forwards, shine 4s ease-in-out infinite 3s',
                   transform: 'translateX(-100%)',
+                  borderRadius: '1rem'
                 }}
               />
-              
+
+              {/* 3D highlight on top edge */}
+              <div
+                className="absolute top-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-t-2xl"
+              />
+
               <span className="flex items-center justify-center gap-3 relative z-10">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-90">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-90 drop-shadow-sm">
                   <circle cx="12" cy="8" r="7"></circle>
                   <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
                 </svg>
-                Take the AI Level Test
+                <span className="drop-shadow-sm">Take the AI Level Test</span>
                 <span className="inline-block transition-all duration-300 group-hover:translate-x-1">
-                  <svg 
-                    width="20" 
-                    height="20" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    className="transition-transform duration-300 group-hover:scale-110"
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
                   >
-                    <path 
-                      d="M5 12h14M12 5l7 7-7 7" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
+                    <path
+                      d="M5 12h14M12 5l7 7-7 7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
                       strokeLinejoin="round"
                       style={{
                         animation: 'slide 1.5s ease-in-out infinite 4s'
@@ -519,7 +570,7 @@ function Landing({ onStart }) {
               </span>
             </button>
             <p className="text-gray-500 text-xs text-center mt-3 opacity-0 animate-[fadeIn_0.6s_ease-out_2.5s_forwards]">
-              No credit card required. Instant results.
+              Complimentary until 30th April. Instant results.
             </p>
           </div>
         </div>
@@ -536,42 +587,42 @@ function Item1({ onAnswer }) {
         <Header />
         <div className="flex-1 flex flex-col px-6 py-4">
           <ProgressBar current={0} />
-          
+
           <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full">
-          <FadeIn delay={200} direction="fade">
-            <div className="text-center mb-6">
-              <p className="text-blue-400/50 text-xs font-medium mb-2">Let's start easy</p>
-              <h2 className="text-xl sm:text-2xl font-bold mb-2">Spot the human.</h2>
-              <p className="text-gray-500 text-sm">One was written by a person. One by AI. Just go with your gut.</p>
+            <FadeIn delay={200} direction="fade">
+              <div className="text-center mb-6">
+                <p className="text-blue-400/50 text-xs font-medium mb-2">Let's start easy</p>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2">Spot the human.</h2>
+                <p className="text-gray-500 text-sm">One was written by a person. One by AI. Just go with your gut.</p>
+              </div>
+            </FadeIn>
+
+            <div className="grid gap-3 sm:gap-4">
+              <FadeIn delay={400} direction="left">
+                <button
+                  onClick={() => onAnswer("A")}
+                  className="group text-left p-4 sm:p-5 rounded-2xl border border-gray-800/60 bg-gray-900/50 hover:border-blue-500/50 hover:bg-gray-900 transition-all duration-500 w-full hover:scale-[1.01] hover:shadow-lg hover:shadow-blue-500/10"
+                >
+                  <div className="text-blue-400/60 text-xs font-semibold mb-2 tracking-widest transition-colors group-hover:text-blue-400/80">A</div>
+                  <p className="text-gray-300 leading-relaxed text-sm group-hover:text-white transition-colors duration-300">
+                    Working from home kills focus. Set up in one spot, close every tab except what you need, and use a timer. Real work happens in blocks of uninterrupted time. Don't pretend you're being productive while scrolling. You're not.
+                  </p>
+                </button>
+              </FadeIn>
+
+              <FadeIn delay={550} direction="right">
+                <button
+                  onClick={() => onAnswer("B")}
+                  className="group text-left p-4 sm:p-5 rounded-2xl border border-gray-800/60 bg-gray-900/50 hover:border-blue-500/50 hover:bg-gray-900 transition-all duration-500 w-full hover:scale-[1.01] hover:shadow-lg hover:shadow-blue-500/10"
+                >
+                  <div className="text-blue-400/60 text-xs font-semibold mb-2 tracking-widest transition-colors group-hover:text-blue-400/80">B</div>
+                  <p className="text-gray-300 leading-relaxed text-sm group-hover:text-white transition-colors duration-300">
+                    To maximize productivity while working from home, establish a dedicated workspace and implement time-blocking techniques. Minimize digital distractions by organizing your digital environment and utilizing focus tools. Consistent routines enhance concentration and output quality.
+                  </p>
+                </button>
+              </FadeIn>
             </div>
-          </FadeIn>
-          
-          <div className="grid gap-3 sm:gap-4">
-            <FadeIn delay={400} direction="left">
-              <button
-                onClick={() => onAnswer("A")}
-                className="group text-left p-4 sm:p-5 rounded-2xl border border-gray-800/60 bg-gray-900/50 hover:border-blue-500/50 hover:bg-gray-900 transition-all duration-500 w-full hover:scale-[1.01] hover:shadow-lg hover:shadow-blue-500/10"
-              >
-                <div className="text-blue-400/60 text-xs font-semibold mb-2 tracking-widest transition-colors group-hover:text-blue-400/80">A</div>
-                <p className="text-gray-300 leading-relaxed text-sm group-hover:text-white transition-colors duration-300">
-                  Working from home kills focus. Set up in one spot, close every tab except what you need, and use a timer. Real work happens in blocks of uninterrupted time. Don't pretend you're being productive while scrolling. You're not.
-                </p>
-              </button>
-            </FadeIn>
-            
-            <FadeIn delay={550} direction="right">
-              <button
-                onClick={() => onAnswer("B")}
-                className="group text-left p-4 sm:p-5 rounded-2xl border border-gray-800/60 bg-gray-900/50 hover:border-blue-500/50 hover:bg-gray-900 transition-all duration-500 w-full hover:scale-[1.01] hover:shadow-lg hover:shadow-blue-500/10"
-              >
-                <div className="text-blue-400/60 text-xs font-semibold mb-2 tracking-widest transition-colors group-hover:text-blue-400/80">B</div>
-                <p className="text-gray-300 leading-relaxed text-sm group-hover:text-white transition-colors duration-300">
-                  To maximize productivity while working from home, establish a dedicated workspace and implement time-blocking techniques. Minimize digital distractions by organizing your digital environment and utilizing focus tools. Consistent routines enhance concentration and output quality.
-                </p>
-              </button>
-            </FadeIn>
           </div>
-        </div>
         </div>
       </div>
     </ScreenTransition>
@@ -609,7 +660,7 @@ function Item1Reveal({ correct, onContinue }) {
 function Item2({ onAnswer }) {
   const [ratings, setRatings] = useState({});
   const continueButtonRef = useRef(null);
-  
+
   const tasks = [
     { id: "email", text: "Write a professional email politely declining a job offer", icon: "✉" },
     { id: "finance", text: "Analyze your company's finances and decide where to cut costs", icon: "📊" },
@@ -623,9 +674,9 @@ function Item2({ onAnswer }) {
   useEffect(() => {
     if (allAnswered && continueButtonRef.current) {
       setTimeout(() => {
-        continueButtonRef.current.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
+        continueButtonRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
         });
       }, 300); // Wait for FadeIn animation
     }
@@ -637,50 +688,49 @@ function Item2({ onAnswer }) {
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
           <ProgressBar current={1} />
-        <FadeIn>
-          <div className="max-w-lg text-center mb-8">
-            <h2 className="text-2xl font-bold mb-2">How good is AI, really?</h2>
-            <p className="text-gray-500 text-sm">Rate each task. Would AI nail it, be OK, or fail?</p>
-          </div>
-        </FadeIn>
-        <div className="max-w-lg w-full space-y-3">
-          {tasks.map((task, i) => (
-            <FadeIn key={task.id} delay={i * 100}>
-              <div className="p-4 rounded-2xl bg-gray-900/50 border border-gray-800/60">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="text-lg">{task.icon}</span>
-                  <p className="text-gray-300 text-sm leading-relaxed">{task.text}</p>
-                </div>
-                <div className="flex gap-2 ml-8">
-                  {options.map((opt) => (
-                    <button
-                      key={opt}
-                      onClick={() => setRatings({ ...ratings, [task.id]: opt })}
-                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all duration-200 ${
-                        ratings[task.id] === opt
-                          ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
-                          : "bg-gray-800/60 text-gray-500 hover:bg-gray-800 hover:text-gray-300"
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
-        {allAnswered && (
-          <FadeIn delay={200}>
-            <button
-              ref={continueButtonRef}
-              onClick={() => onAnswer(ratings)}
-              className="mt-8 bg-white text-gray-950 font-semibold px-8 py-3 rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
-            >
-              Continue →
-            </button>
+          <FadeIn>
+            <div className="max-w-lg text-center mb-8">
+              <h2 className="text-2xl font-bold mb-2">How good is AI, really?</h2>
+              <p className="text-gray-500 text-sm">Rate each task. Would AI nail it, be OK, or fail?</p>
+            </div>
           </FadeIn>
-        )}
+          <div className="max-w-lg w-full space-y-3">
+            {tasks.map((task, i) => (
+              <FadeIn key={task.id} delay={i * 100}>
+                <div className="p-4 rounded-2xl bg-gray-900/50 border border-gray-800/60">
+                  <div className="flex items-start gap-3 mb-3">
+                    <span className="text-lg">{task.icon}</span>
+                    <p className="text-gray-300 text-sm leading-relaxed">{task.text}</p>
+                  </div>
+                  <div className="flex gap-2 ml-8">
+                    {options.map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setRatings({ ...ratings, [task.id]: opt })}
+                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all duration-200 ${ratings[task.id] === opt
+                            ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+                            : "bg-gray-800/60 text-gray-500 hover:bg-gray-800 hover:text-gray-300"
+                          }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+          {allAnswered && (
+            <FadeIn delay={200}>
+              <button
+                ref={continueButtonRef}
+                onClick={() => onAnswer(ratings)}
+                className="mt-8 bg-white text-gray-950 font-semibold px-8 py-3 rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
+              >
+                Continue →
+              </button>
+            </FadeIn>
+          )}
         </div>
       </div>
     </ScreenTransition>
@@ -705,11 +755,10 @@ function Item2Reveal({ scores, onContinue }) {
               {[0, 1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all ${
-                    i < correct
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all ${i < correct
                       ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                       : "bg-gray-800/40 text-gray-700 border border-gray-800/60"
-                  }`}
+                    }`}
                 >
                   {i < correct ? "✓" : "·"}
                 </div>
@@ -738,9 +787,9 @@ function Item3({ onAnswer }) {
   useEffect(() => {
     if (selected && confidenceRef.current) {
       setTimeout(() => {
-        confidenceRef.current.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
+        confidenceRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
         });
       }, 200); // Wait for FadeIn animation
     }
@@ -750,9 +799,9 @@ function Item3({ onAnswer }) {
   useEffect(() => {
     if (confidence && continueButtonRef.current) {
       setTimeout(() => {
-        continueButtonRef.current.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
+        continueButtonRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
         });
       }, 100); // Short delay since continue button appears immediately
     }
@@ -764,79 +813,76 @@ function Item3({ onAnswer }) {
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
           <ProgressBar current={2} />
-        <FadeIn>
-          <div className="max-w-lg text-center mb-6">
-            <h2 className="text-2xl font-bold mb-2">Which response is actually useful?</h2>
-            <p className="text-gray-500 text-sm">Someone asked AI: "How should we improve team productivity?"</p>
-          </div>
-        </FadeIn>
-        <div className="max-w-2xl w-full grid md:grid-cols-2 gap-4 mb-6">
-          <FadeIn delay={200}>
-            <button
-              onClick={() => setSelected("A")}
-              className={`text-left p-5 rounded-2xl border transition-all duration-300 w-full ${
-                selected === "A" ? "border-blue-500/60 bg-blue-500/5 shadow-lg shadow-blue-500/5" : "border-gray-800/60 bg-gray-900/50 hover:border-gray-700"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="text-blue-400/60 text-xs font-semibold tracking-widest">A</div>
-                {/* Visual "polished" indicator */}
-                <div className="flex gap-0.5 ml-auto">
-                  <div className="w-1 h-3 bg-gray-700 rounded-full" />
-                  <div className="w-1 h-3 bg-gray-700 rounded-full" />
-                  <div className="w-1 h-3 bg-gray-700 rounded-full" />
-                </div>
-              </div>
-              <p className="text-gray-300 text-xs leading-relaxed">
-                To boost team productivity, focus on three core pillars. <strong className="text-gray-200">First, optimize your workflow processes</strong> — streamline communication and reduce meeting overhead. <strong className="text-gray-200">Second, invest in the right tools</strong> — the tech stack matters more than most realize. <strong className="text-gray-200">Third, foster accountability.</strong> These levers create a multiplicative effect. Start by conducting a productivity audit.
-              </p>
-            </button>
-          </FadeIn>
-          <FadeIn delay={350}>
-            <button
-              onClick={() => setSelected("B")}
-              className={`text-left p-5 rounded-2xl border transition-all duration-300 w-full ${
-                selected === "B" ? "border-blue-500/60 bg-blue-500/5 shadow-lg shadow-blue-500/5" : "border-gray-800/60 bg-gray-900/50 hover:border-gray-700"
-              }`}
-            >
-              <div className="text-blue-400/60 text-xs font-semibold mb-3 tracking-widest">B</div>
-              <p className="text-gray-300 text-xs leading-relaxed">
-                Before you change anything, find where time actually goes. Most teams assume meetings kill productivity, but they'll cut meetings and nothing changes. The real leak is usually async work — Slack threads that should be decisions, emails that should be syncs. Watch what your best performer does differently. Most productivity gains come from stopping something, not adding to your stack.
-              </p>
-            </button>
-          </FadeIn>
-        </div>
-        {selected && (
-          <FadeIn delay={100}>
-            <div ref={confidenceRef} className="max-w-md text-center">
-              <p className="text-gray-600 text-xs mb-3">How confident are you?</p>
-              <div className="flex gap-2 justify-center mb-4">
-                {["Very sure", "Somewhat", "Guessing"].map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setConfidence(c)}
-                    className={`px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${
-                      confidence === c
-                        ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
-                        : "bg-gray-800/60 text-gray-500 hover:bg-gray-800 hover:text-gray-300"
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-              {confidence && (
-                <button
-                  ref={continueButtonRef}
-                  onClick={() => onAnswer(selected, confidence)}
-                  className="bg-white text-gray-950 font-semibold px-8 py-3 rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
-                >
-                  Continue →
-                </button>
-              )}
+          <FadeIn>
+            <div className="max-w-lg text-center mb-6">
+              <h2 className="text-2xl font-bold mb-2">Which response is actually useful?</h2>
+              <p className="text-gray-500 text-sm">Someone asked AI: "How should we improve team productivity?"</p>
             </div>
           </FadeIn>
-        )}
+          <div className="max-w-2xl w-full grid md:grid-cols-2 gap-4 mb-6">
+            <FadeIn delay={200}>
+              <button
+                onClick={() => setSelected("A")}
+                className={`text-left p-5 rounded-2xl border transition-all duration-300 w-full ${selected === "A" ? "border-blue-500/60 bg-blue-500/5 shadow-lg shadow-blue-500/5" : "border-gray-800/60 bg-gray-900/50 hover:border-gray-700"
+                  }`}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="text-blue-400/60 text-xs font-semibold tracking-widest">A</div>
+                  {/* Visual "polished" indicator */}
+                  <div className="flex gap-0.5 ml-auto">
+                    <div className="w-1 h-3 bg-gray-700 rounded-full" />
+                    <div className="w-1 h-3 bg-gray-700 rounded-full" />
+                    <div className="w-1 h-3 bg-gray-700 rounded-full" />
+                  </div>
+                </div>
+                <p className="text-gray-300 text-xs leading-relaxed">
+                  To boost team productivity, focus on three core pillars. <strong className="text-gray-200">First, optimize your workflow processes</strong> — streamline communication and reduce meeting overhead. <strong className="text-gray-200">Second, invest in the right tools</strong> — the tech stack matters more than most realize. <strong className="text-gray-200">Third, foster accountability.</strong> These levers create a multiplicative effect. Start by conducting a productivity audit.
+                </p>
+              </button>
+            </FadeIn>
+            <FadeIn delay={350}>
+              <button
+                onClick={() => setSelected("B")}
+                className={`text-left p-5 rounded-2xl border transition-all duration-300 w-full ${selected === "B" ? "border-blue-500/60 bg-blue-500/5 shadow-lg shadow-blue-500/5" : "border-gray-800/60 bg-gray-900/50 hover:border-gray-700"
+                  }`}
+              >
+                <div className="text-blue-400/60 text-xs font-semibold mb-3 tracking-widest">B</div>
+                <p className="text-gray-300 text-xs leading-relaxed">
+                  Before you change anything, find where time actually goes. Most teams assume meetings kill productivity, but they'll cut meetings and nothing changes. The real leak is usually async work — Slack threads that should be decisions, emails that should be syncs. Watch what your best performer does differently. Most productivity gains come from stopping something, not adding to your stack.
+                </p>
+              </button>
+            </FadeIn>
+          </div>
+          {selected && (
+            <FadeIn delay={100}>
+              <div ref={confidenceRef} className="max-w-md text-center">
+                <p className="text-gray-600 text-xs mb-3">How confident are you?</p>
+                <div className="flex gap-2 justify-center mb-4">
+                  {["Very sure", "Somewhat", "Guessing"].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setConfidence(c)}
+                      className={`px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${confidence === c
+                          ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+                          : "bg-gray-800/60 text-gray-500 hover:bg-gray-800 hover:text-gray-300"
+                        }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                {confidence && (
+                  <button
+                    ref={continueButtonRef}
+                    onClick={() => onAnswer(selected, confidence)}
+                    className="bg-white text-gray-950 font-semibold px-8 py-3 rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
+                  >
+                    Continue →
+                  </button>
+                )}
+              </div>
+            </FadeIn>
+          )}
         </div>
       </div>
     </ScreenTransition>
@@ -855,9 +901,8 @@ function Item3Reveal({ correct, onContinue }) {
                 ? "Response A has structure. Bold headers. Professional tone. But it says nothing specific. Response B has a real diagnosis. You caught that."
                 : "Response A looks like expertise — bold headers, structured pillars, clear recommendations. But strip the formatting and it says nothing specific. Response B actually diagnoses the problem."}
             </p>
-            <div className={`rounded-xl p-4 border mb-8 text-left ${
-              correct ? "bg-emerald-500/5 border-emerald-500/15" : "bg-amber-500/5 border-amber-500/15"
-            }`}>
+            <div className={`rounded-xl p-4 border mb-8 text-left ${correct ? "bg-emerald-500/5 border-emerald-500/15" : "bg-amber-500/5 border-amber-500/15"
+              }`}>
               <p className={`text-xs font-medium mb-1 ${correct ? "text-emerald-400/80" : "text-amber-400/80"}`}>
                 {correct ? "Why this matters" : "This has a name"}
               </p>
@@ -894,48 +939,47 @@ function Item4({ onAnswer }) {
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
           <ProgressBar current={3} />
-        <FadeIn>
-          <div className="max-w-lg text-center mb-4">
-            <h2 className="text-2xl font-bold mb-2">What's your next move?</h2>
-          </div>
-        </FadeIn>
-        <FadeIn delay={100}>
-          <div className="max-w-lg w-full bg-gray-900/50 rounded-2xl p-5 mb-6 border border-gray-800/60">
-            <p className="text-gray-500 text-xs mb-3">You're prepping for a quarterly review with your VP. You asked AI to structure a 10-min summary. Your team shipped on time, but resource constraints forced deprioritizing some features. AI gave you:</p>
-            <div className="bg-gray-800/50 rounded-xl p-4 border-l-2 border-blue-500/50">
-              <p className="text-gray-400 text-xs leading-relaxed italic">
-                "Start with an executive summary: what you shipped and when. Walk through the timeline and challenges. Mention the resource constraints. End with lessons learned. Use concrete numbers where possible."
-              </p>
+          <FadeIn>
+            <div className="max-w-lg text-center mb-4">
+              <h2 className="text-2xl font-bold mb-2">What's your next move?</h2>
             </div>
+          </FadeIn>
+          <FadeIn delay={100}>
+            <div className="max-w-lg w-full bg-gray-900/50 rounded-2xl p-5 mb-6 border border-gray-800/60">
+              <p className="text-gray-500 text-xs mb-3">You're prepping for a quarterly review with your VP. You asked AI to structure a 10-min summary. Your team shipped on time, but resource constraints forced deprioritizing some features. AI gave you:</p>
+              <div className="bg-gray-800/50 rounded-xl p-4 border-l-2 border-blue-500/50">
+                <p className="text-gray-400 text-xs leading-relaxed italic">
+                  "Start with an executive summary: what you shipped and when. Walk through the timeline and challenges. Mention the resource constraints. End with lessons learned. Use concrete numbers where possible."
+                </p>
+              </div>
+            </div>
+          </FadeIn>
+          <div className="max-w-lg w-full space-y-2.5">
+            {options.map((opt, i) => (
+              <FadeIn key={opt.id} delay={200 + i * 80}>
+                <button
+                  onClick={() => setSelected(opt.id)}
+                  className={`text-left w-full p-4 rounded-2xl border transition-all duration-200 ${selected === opt.id
+                      ? "border-blue-500/60 bg-blue-500/5 shadow-lg shadow-blue-500/5"
+                      : "border-gray-800/60 bg-gray-900/30 hover:border-gray-700 hover:bg-gray-900/50"
+                    }`}
+                >
+                  <span className="text-blue-400/50 text-xs font-semibold mr-2">{opt.id}.</span>
+                  <span className="text-gray-300 text-sm">{opt.text}</span>
+                </button>
+              </FadeIn>
+            ))}
           </div>
-        </FadeIn>
-        <div className="max-w-lg w-full space-y-2.5">
-          {options.map((opt, i) => (
-            <FadeIn key={opt.id} delay={200 + i * 80}>
+          {selected && (
+            <FadeIn delay={100}>
               <button
-                onClick={() => setSelected(opt.id)}
-                className={`text-left w-full p-4 rounded-2xl border transition-all duration-200 ${
-                  selected === opt.id
-                    ? "border-blue-500/60 bg-blue-500/5 shadow-lg shadow-blue-500/5"
-                    : "border-gray-800/60 bg-gray-900/30 hover:border-gray-700 hover:bg-gray-900/50"
-                }`}
+                onClick={() => onAnswer(selected)}
+                className="mt-8 bg-white text-gray-950 font-semibold px-8 py-3 rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
               >
-                <span className="text-blue-400/50 text-xs font-semibold mr-2">{opt.id}.</span>
-                <span className="text-gray-300 text-sm">{opt.text}</span>
+                Continue →
               </button>
             </FadeIn>
-          ))}
-        </div>
-        {selected && (
-          <FadeIn delay={100}>
-            <button
-              onClick={() => onAnswer(selected)}
-              className="mt-8 bg-white text-gray-950 font-semibold px-8 py-3 rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
-            >
-              Continue →
-            </button>
-          </FadeIn>
-        )}
+          )}
         </div>
       </div>
     </ScreenTransition>
@@ -1003,59 +1047,57 @@ function Item5a({ onAnswer }) {
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
           <ProgressBar current={4} />
-        <FadeIn>
-          <div className="max-w-lg text-center mb-6">
-            <h2 className="text-2xl font-bold mb-2">Would you use AI here?</h2>
-            <p className="text-gray-500 text-sm">The hardest AI skill: knowing when not to.</p>
-          </div>
-        </FadeIn>
-        <div className="max-w-lg w-full space-y-4">
-          {scenarios.map((s, i) => (
-            <FadeIn key={s.key} delay={i * 150}>
-              <div className="p-5 rounded-2xl bg-gray-900/50 border border-gray-800/60">
-                <div className="flex items-start gap-3 mb-4">
-                  <span className="text-xl">{s.icon}</span>
-                  <div>
-                    <p className="text-gray-200 text-sm font-medium">{s.text}</p>
-                    <p className="text-gray-500 text-xs mt-1">{s.subtext}</p>
+          <FadeIn>
+            <div className="max-w-lg text-center mb-6">
+              <h2 className="text-2xl font-bold mb-2">Would you use AI here?</h2>
+              <p className="text-gray-500 text-sm">The hardest AI skill: knowing when not to.</p>
+            </div>
+          </FadeIn>
+          <div className="max-w-lg w-full space-y-4">
+            {scenarios.map((s, i) => (
+              <FadeIn key={s.key} delay={i * 150}>
+                <div className="p-5 rounded-2xl bg-gray-900/50 border border-gray-800/60">
+                  <div className="flex items-start gap-3 mb-4">
+                    <span className="text-xl">{s.icon}</span>
+                    <div>
+                      <p className="text-gray-200 text-sm font-medium">{s.text}</p>
+                      <p className="text-gray-500 text-xs mt-1">{s.subtext}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 ml-9">
+                    <button
+                      onClick={() => setters[s.key](true)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${answers[s.key] === true
+                          ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+                          : "bg-gray-800/60 text-gray-500 hover:bg-gray-800 hover:text-gray-300"
+                        }`}
+                    >
+                      Yes, use AI
+                    </button>
+                    <button
+                      onClick={() => setters[s.key](false)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${answers[s.key] === false
+                          ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+                          : "bg-gray-800/60 text-gray-500 hover:bg-gray-800 hover:text-gray-300"
+                        }`}
+                    >
+                      Skip AI
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-3 ml-9">
-                  <button
-                    onClick={() => setters[s.key](true)}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      answers[s.key] === true
-                        ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
-                        : "bg-gray-800/60 text-gray-500 hover:bg-gray-800 hover:text-gray-300"
-                    }`}
-                  >
-                    Yes, use AI
-                  </button>
-                  <button
-                    onClick={() => setters[s.key](false)}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      answers[s.key] === false
-                        ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
-                        : "bg-gray-800/60 text-gray-500 hover:bg-gray-800 hover:text-gray-300"
-                    }`}
-                  >
-                    Skip AI
-                  </button>
-                </div>
-              </div>
+              </FadeIn>
+            ))}
+          </div>
+          {allDone && (
+            <FadeIn delay={200}>
+              <button
+                onClick={() => onAnswer(a1, a2)}
+                className="mt-8 bg-white text-gray-950 font-semibold px-8 py-3 rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
+              >
+                Continue →
+              </button>
             </FadeIn>
-          ))}
-        </div>
-        {allDone && (
-          <FadeIn delay={200}>
-            <button
-              onClick={() => onAnswer(a1, a2)}
-              className="mt-8 bg-white text-gray-950 font-semibold px-8 py-3 rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
-            >
-              Continue →
-            </button>
-          </FadeIn>
-        )}
+          )}
         </div>
       </div>
     </ScreenTransition>
@@ -1117,65 +1159,64 @@ function Item5b({ onAnswer }) {
       <div className="min-h-screen bg-gray-950 text-white flex flex-col">
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        <FadeIn>
-          <div className="max-w-lg text-center mb-6">
-            <h2 className="text-2xl font-bold mb-2">Fix this prompt.</h2>
-            <p className="text-gray-500 text-sm">Someone typed this into ChatGPT. The response was useless. Why?</p>
-          </div>
-        </FadeIn>
-        <FadeIn delay={200}>
-          <div className="max-w-lg w-full mb-6">
-            <div className="bg-gray-900/50 rounded-2xl p-5 border border-gray-800/60 mb-3">
-              <p className="text-gray-600 text-xs mb-2 font-medium">The prompt</p>
-              <p className="text-gray-300 text-sm font-mono bg-gray-800/40 rounded-xl px-4 py-3">"what are some ways to get better at sales"</p>
+          <FadeIn>
+            <div className="max-w-lg text-center mb-6">
+              <h2 className="text-2xl font-bold mb-2">Fix this prompt.</h2>
+              <p className="text-gray-500 text-sm">Someone typed this into ChatGPT. The response was useless. Why?</p>
             </div>
-            <div className="bg-gray-900/30 rounded-2xl p-5 border border-gray-800/40">
-              <p className="text-gray-600 text-xs mb-2 font-medium">ChatGPT said</p>
-              <p className="text-gray-500 text-sm italic leading-relaxed">
-                "Here are some ways to improve: 1. Practice active listening 2. Build rapport 3. Understand customer needs 4. Learn objection handling 5. Study successful salespeople. Keep practicing!"
-              </p>
+          </FadeIn>
+          <FadeIn delay={200}>
+            <div className="max-w-lg w-full mb-6">
+              <div className="bg-gray-900/50 rounded-2xl p-5 border border-gray-800/60 mb-3">
+                <p className="text-gray-600 text-xs mb-2 font-medium">The prompt</p>
+                <p className="text-gray-300 text-sm font-mono bg-gray-800/40 rounded-xl px-4 py-3">"what are some ways to get better at sales"</p>
+              </div>
+              <div className="bg-gray-900/30 rounded-2xl p-5 border border-gray-800/40">
+                <p className="text-gray-600 text-xs mb-2 font-medium">ChatGPT said</p>
+                <p className="text-gray-500 text-sm italic leading-relaxed">
+                  "Here are some ways to improve: 1. Practice active listening 2. Build rapport 3. Understand customer needs 4. Learn objection handling 5. Study successful salespeople. Keep practicing!"
+                </p>
+              </div>
             </div>
-          </div>
-        </FadeIn>
-        <FadeIn delay={400}>
-          <div className="max-w-lg w-full">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-500 text-xs font-medium">Rewrite this prompt so ChatGPT gives a useful answer.</p>
-              <span className="text-amber-400/60 text-[10px] font-medium bg-amber-400/10 px-2 py-0.5 rounded-full">This one counts</span>
+          </FadeIn>
+          <FadeIn delay={400}>
+            <div className="max-w-lg w-full">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-gray-500 text-xs font-medium">Rewrite this prompt so ChatGPT gives a useful answer.</p>
+                <span className="text-amber-400/60 text-[10px] font-medium bg-amber-400/10 px-2 py-0.5 rounded-full">This one counts</span>
+              </div>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={`e.g. "I'm a B2B SaaS account exec, 2 years in. My close rate dropped from 22% to 14% this quarter. Help me diagnose what's going wrong..."`}
+                rows={3}
+                className="w-full bg-gray-900/50 border border-gray-800/60 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all placeholder-gray-700 resize-none"
+                disabled={isSubmitting}
+              />
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-gray-700 text-xs">{text.length > 0 ? `${text.length} chars` : "A sentence or two is enough"}</span>
+                {text.length > 10 && (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className={`font-semibold px-6 py-2.5 rounded-2xl text-sm transition-all duration-300 ${isSubmitting
+                        ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                        : "bg-white text-gray-950 hover:scale-[1.03] active:scale-[0.97]"
+                      }`}
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+                        Analyzing...
+                      </span>
+                    ) : (
+                      "Continue →"
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={`e.g. "I'm a B2B SaaS account exec, 2 years in. My close rate dropped from 22% to 14% this quarter. Help me diagnose what's going wrong..."`}
-              rows={3}
-              className="w-full bg-gray-900/50 border border-gray-800/60 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all placeholder-gray-700 resize-none"
-              disabled={isSubmitting}
-            />
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-gray-700 text-xs">{text.length > 0 ? `${text.length} chars` : "A sentence or two is enough"}</span>
-              {text.length > 10 && (
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className={`font-semibold px-6 py-2.5 rounded-2xl text-sm transition-all duration-300 ${
-                    isSubmitting
-                      ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                      : "bg-white text-gray-950 hover:scale-[1.03] active:scale-[0.97]"
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
-                      Analyzing...
-                    </span>
-                  ) : (
-                    "Continue →"
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-        </FadeIn>
+          </FadeIn>
         </div>
       </div>
     </ScreenTransition>
@@ -1205,9 +1246,8 @@ function Item5bReveal({ level, onContinue }) {
               {bars.map((b, i) => (
                 <div
                   key={i}
-                  className={`h-2 rounded-full transition-all duration-500 ${
-                    b.active ? "bg-blue-500 w-20" : "bg-gray-800 w-16"
-                  }`}
+                  className={`h-2 rounded-full transition-all duration-500 ${b.active ? "bg-blue-500 w-20" : "bg-gray-800 w-16"
+                    }`}
                 />
               ))}
             </div>
@@ -1246,57 +1286,56 @@ function Item6({ onAnswer }) {
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
           <ProgressBar current={5} />
-        <FadeIn>
-          <div className="max-w-lg text-center mb-4">
-            <h2 className="text-2xl font-bold mb-2">Last one. Then you'll see your results.</h2>
-            <p className="text-gray-500 text-sm">You asked AI to analyze why your team's project fell behind. It said:</p>
-          </div>
-        </FadeIn>
-        <FadeIn delay={200}>
-          <div className="max-w-lg w-full bg-gray-900/50 rounded-2xl p-5 border border-gray-800/60 mb-6">
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Your sprint underperformance likely stems from three factors: scope creep, resource constraints (two members on leave), and estimation gaps. To improve: lock requirements before sprint start, build buffer for absences, and run estimation retros. These changes should help you hit 90%+ completion next quarter.
-            </p>
-          </div>
-        </FadeIn>
-        <FadeIn delay={400}>
-          <div className="max-w-lg w-full">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-500 text-xs font-medium">What's the ONE follow-up question you'd ask?</p>
-              <span className="text-blue-400/60 text-[10px] font-medium bg-blue-400/10 px-2 py-0.5 rounded-full">Separates L2 from L3</span>
+          <FadeIn>
+            <div className="max-w-lg text-center mb-4">
+              <h2 className="text-2xl font-bold mb-2">Last one. Then you'll see your results.</h2>
+              <p className="text-gray-500 text-sm">You asked AI to analyze why your team's project fell behind. It said:</p>
             </div>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="The obvious move is asking for more detail. The interesting move is challenging the analysis itself..."
-              rows={2}
-              className="w-full bg-gray-900/50 border border-gray-800/60 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all placeholder-gray-700 resize-none"
-              disabled={isSubmitting}
-            />
-            {text.length > 10 && (
-              <div className="flex justify-end mt-3">
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className={`font-semibold px-6 py-2.5 rounded-2xl text-sm transition-all duration-300 ${
-                    isSubmitting
-                      ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                      : "bg-white text-gray-950 hover:scale-[1.03] active:scale-[0.97]"
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
-                      Analyzing...
-                    </span>
-                  ) : (
-                    "See my results →"
-                  )}
-                </button>
+          </FadeIn>
+          <FadeIn delay={200}>
+            <div className="max-w-lg w-full bg-gray-900/50 rounded-2xl p-5 border border-gray-800/60 mb-6">
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Your sprint underperformance likely stems from three factors: scope creep, resource constraints (two members on leave), and estimation gaps. To improve: lock requirements before sprint start, build buffer for absences, and run estimation retros. These changes should help you hit 90%+ completion next quarter.
+              </p>
+            </div>
+          </FadeIn>
+          <FadeIn delay={400}>
+            <div className="max-w-lg w-full">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-gray-500 text-xs font-medium">What's the ONE follow-up question you'd ask?</p>
+                <span className="text-blue-400/60 text-[10px] font-medium bg-blue-400/10 px-2 py-0.5 rounded-full">Separates L2 from L3</span>
               </div>
-            )}
-          </div>
-        </FadeIn>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="The obvious move is asking for more detail. The interesting move is challenging the analysis itself..."
+                rows={2}
+                className="w-full bg-gray-900/50 border border-gray-800/60 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all placeholder-gray-700 resize-none"
+                disabled={isSubmitting}
+              />
+              {text.length > 10 && (
+                <div className="flex justify-end mt-3">
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className={`font-semibold px-6 py-2.5 rounded-2xl text-sm transition-all duration-300 ${isSubmitting
+                        ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                        : "bg-white text-gray-950 hover:scale-[1.03] active:scale-[0.97]"
+                      }`}
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+                        Analyzing...
+                      </span>
+                    ) : (
+                      "See my results →"
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </FadeIn>
         </div>
       </div>
     </ScreenTransition>
@@ -1310,7 +1349,7 @@ function LoadingScreen({ onDone }) {
 
   const labels = [
     "Reading your patterns",
-    "Scoring your judgment", 
+    "Scoring your judgment",
     "Detecting your AI relationship",
     "Building your profile",
   ];
@@ -1329,15 +1368,12 @@ function LoadingScreen({ onDone }) {
       <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
         {/* Animated background glow with multiple layers */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className={`absolute w-96 h-96 rounded-full transition-all duration-[3000ms] ease-out ${
-            phase >= 1 ? "bg-blue-500/8 scale-200 blur-3xl" : "bg-blue-500/4 scale-100 blur-2xl"
-          }`} />
-          <div className={`absolute w-64 h-64 rounded-full transition-all duration-[2500ms] ease-out delay-300 ${
-            phase >= 1 ? "bg-emerald-500/6 scale-150 blur-2xl" : "bg-emerald-500/3 scale-90 blur-xl"
-          }`} />
-          <div className={`absolute w-32 h-32 rounded-full transition-all duration-[2000ms] ease-out delay-500 ${
-            phase >= 1 ? "bg-white/4 scale-125 blur-xl" : "bg-white/2 scale-80 blur-lg"
-          }`} />
+          <div className={`absolute w-96 h-96 rounded-full transition-all duration-[3000ms] ease-out ${phase >= 1 ? "bg-blue-500/8 scale-200 blur-3xl" : "bg-blue-500/4 scale-100 blur-2xl"
+            }`} />
+          <div className={`absolute w-64 h-64 rounded-full transition-all duration-[2500ms] ease-out delay-300 ${phase >= 1 ? "bg-emerald-500/6 scale-150 blur-2xl" : "bg-emerald-500/3 scale-90 blur-xl"
+            }`} />
+          <div className={`absolute w-32 h-32 rounded-full transition-all duration-[2000ms] ease-out delay-500 ${phase >= 1 ? "bg-white/4 scale-125 blur-xl" : "bg-white/2 scale-80 blur-lg"
+            }`} />
         </div>
 
         {/* Particle effect overlay */}
@@ -1357,25 +1393,21 @@ function LoadingScreen({ onDone }) {
         </div>
 
         <div className="relative z-10 text-center max-w-md">
-          <div className={`transition-all duration-1000 ease-out ${
-            phase === 0 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 scale-95"
-          }`}>
+          <div className={`transition-all duration-1000 ease-out ${phase === 0 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 scale-95"
+            }`}>
             {labels.map((label, i) => (
               <FadeIn key={i} delay={i * 300 + 200} direction="up">
                 <div
-                  className={`transition-all duration-700 ease-out mb-6 ${
-                    i <= step ? "opacity-100 translate-y-0 scale-100" : "opacity-30 translate-y-2 scale-95"
-                  }`}
+                  className={`transition-all duration-700 ease-out mb-6 ${i <= step ? "opacity-100 translate-y-0 scale-100" : "opacity-30 translate-y-2 scale-95"
+                    }`}
                 >
                   <div className="flex items-center justify-center gap-3">
-                    <span className={`text-lg transition-all duration-500 ${
-                      i < step ? "text-blue-400 scale-110" : i === step ? "text-emerald-400 animate-pulse-smooth" : "text-gray-500"
-                    }`}>
+                    <span className={`text-lg transition-all duration-500 ${i < step ? "text-blue-400 scale-110" : i === step ? "text-emerald-400 animate-pulse-smooth" : "text-gray-500"
+                      }`}>
                       {i < step ? "✓" : i === step ? "◆" : "◦"}
                     </span>
-                    <span className={`text-sm font-medium transition-all duration-500 ${
-                      i < step ? "text-blue-300" : i === step ? "text-white" : "text-gray-400"
-                    }`}>
+                    <span className={`text-sm font-medium transition-all duration-500 ${i < step ? "text-blue-300" : i === step ? "text-white" : "text-gray-400"
+                      }`}>
                       {label}
                     </span>
                   </div>
@@ -1387,9 +1419,8 @@ function LoadingScreen({ onDone }) {
             ))}
           </div>
 
-          <div className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ease-out ${
-            phase >= 1 ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-4"
-          }`}>
+          <div className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ease-out ${phase >= 1 ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-4"
+            }`}>
             <div className="text-center">
               <div className="mb-4">
                 <div className="w-12 h-12 border-2 border-emerald-500/30 border-t-emerald-400 rounded-full mx-auto animate-spin" />
@@ -1424,28 +1455,28 @@ function LeadCapture({ level, scores, relationshipStatus, onSubmit }) {
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
-    
-    const leadData = { 
-      name: name.trim(), 
-      phone: `+91${phone.trim()}`, 
-      email: email.trim() || null, 
-      level, 
+
+    const leadData = {
+      name: name.trim(),
+      phone: `+91${phone.trim()}`,
+      email: email.trim() || null,
+      level,
       relationshipStatus,
       scores,
-      timestamp: Date.now() 
+      timestamp: Date.now()
     };
-    
+
     // Track lead capture event
     trackAnalyticsEvent('lead_captured', { level, name: name.trim() });
-    
+
     // Capture to Supabase
     const result = await captureLeadData(leadData);
-    
+
     // Store lead ID for intent tracking later
     if (result.success && result.data) {
       leadData.id = result.data.id;
     }
-    
+
     onSubmit(leadData);
   };
 
@@ -1536,7 +1567,7 @@ function LeadCapture({ level, scores, relationshipStatus, onSubmit }) {
                       className="w-full bg-gray-800/60 border border-gray-700/50 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all placeholder-gray-500 hover:bg-gray-800/80"
                     />
                   </FadeIn>
-                  
+
                   <FadeIn delay={1250} direction="up">
                     <div className="flex items-center gap-0 bg-gray-800/60 border border-gray-700/50 rounded-xl overflow-hidden focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all hover:bg-gray-800/80">
                       <span className="text-gray-400 text-sm pl-4 pr-1 py-2.5 select-none">+91</span>
@@ -1549,7 +1580,7 @@ function LeadCapture({ level, scores, relationshipStatus, onSubmit }) {
                       />
                     </div>
                   </FadeIn>
-                  
+
                   {showEmail ? (
                     <FadeIn delay={1400} direction="up">
                       <input
@@ -1576,11 +1607,10 @@ function LeadCapture({ level, scores, relationshipStatus, onSubmit }) {
                   <button
                     onClick={handleSubmit}
                     disabled={!canSubmit}
-                    className={`w-full font-semibold py-3.5 px-4 rounded-2xl text-sm transition-all duration-300 min-h-[48px] ${
-                      canSubmit
+                    className={`w-full font-semibold py-3.5 px-4 rounded-2xl text-sm transition-all duration-300 min-h-[48px] ${canSubmit
                         ? "bg-white text-gray-950 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-white/10 hover:shadow-white/20"
                         : "bg-gray-700/50 text-gray-500 cursor-not-allowed"
-                    }`}
+                      }`}
                   >
                     {canSubmit ? "Unlock my results →" : "Unlock my results"}
                   </button>
@@ -1750,22 +1780,21 @@ function AnimatedNumber({ target, color, duration = 1200 }) {
           />
         </>
       )}
-      
+
       {/* Perfect circular border ring */}
       {done && (
-        <div 
+        <div
           className="absolute w-36 h-36 border-2 rounded-full opacity-0 animate-[scaleIn_1s_ease-out_0.5s_forwards] pointer-events-none"
           style={{ borderColor: `${color}40` }}
         />
       )}
-      
+
       <span
-        className={`text-8xl font-extrabold transition-all duration-500 relative z-10 ${
-          done 
-            ? "scale-100 drop-shadow-2xl" 
+        className={`text-8xl font-extrabold transition-all duration-500 relative z-10 ${done
+            ? "scale-100 drop-shadow-2xl"
             : "scale-110 animate-pulse-smooth"
-        }`}
-        style={{ 
+          }`}
+        style={{
           color,
           filter: showGlow ? `drop-shadow(0 0 20px ${color}40)` : 'none',
           textShadow: showGlow ? `0 0 30px ${color}60` : 'none'
@@ -1773,9 +1802,34 @@ function AnimatedNumber({ target, color, duration = 1200 }) {
       >
         {done ? display : current}
       </span>
-      
+
     </div>
   );
+}
+
+// ─── Animated Percentile ────────────────────────────────
+function AnimatedPercentile({ target, duration = 1200 }) {
+  const [current, setCurrent] = useState(100);
+
+  useEffect(() => {
+    const steps = 100 - target;
+    if (steps <= 0) {
+      setCurrent(target);
+      return;
+    }
+    const interval = duration / steps;
+    let i = 100;
+    const timer = setInterval(() => {
+      i--;
+      setCurrent(i);
+      if (i <= target) {
+        clearInterval(timer);
+      }
+    }, interval);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+
+  return <>{current}</>;
 }
 
 // ─── Expandable Section ──────────────────────────────────
@@ -1791,11 +1845,10 @@ function Expandable({ label, color, children }) {
           </svg>
         </div>
       </button>
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-        open 
-          ? "max-h-screen opacity-100 pb-3" 
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${open
+          ? "max-h-screen opacity-100 pb-3"
           : "max-h-0 opacity-0 pb-0"
-      }`}>
+        }`}>
         <div className={`${open ? "" : "hidden"}`}>
           {children}
         </div>
@@ -1829,6 +1882,9 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
   const [shareState, setShareState] = useState("idle"); // idle | sharing | shared | fallback
   const [proveReserved, setProveReserved] = useState(false);
   const [improveReserved, setImproveReserved] = useState(false);
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
+  const [previewDataUrl, setPreviewDataUrl] = useState(null);
   const canvasRef = useRef(null);
   const previewRef = useRef(null);
   const data = LEVEL_DATA[level] || LEVEL_DATA[4];
@@ -1864,10 +1920,10 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
 
   const handleShare = async () => {
     setShareState("sharing");
-    
+
     // Track share initiated
     trackAnalyticsEvent('share_initiated', { level, relationshipStatus });
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     renderShareCard(canvas, level, data, relData, percentile);
@@ -1885,10 +1941,10 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
           return;
         }
       } catch (e) {
-        if (e.name === "AbortError") { 
+        if (e.name === "AbortError") {
           setShareState("idle");
           trackAnalyticsEvent('share_cancelled', { method: 'native_files', level, relationshipStatus });
-          return; 
+          return;
         }
       }
     }
@@ -1900,10 +1956,10 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
         setTimeout(() => setShareState("idle"), 3000);
         return;
       } catch (e) {
-        if (e.name === "AbortError") { 
+        if (e.name === "AbortError") {
           setShareState("idle");
           trackAnalyticsEvent('share_cancelled', { method: 'native_text', level, relationshipStatus });
-          return; 
+          return;
         }
       }
     }
@@ -1930,39 +1986,36 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
     const lead = window.__aiLevelLead || {};
     if (type === "prove") setProveReserved(true);
     if (type === "improve") setImproveReserved(true);
-    
+
     // Track product reservation
     trackAnalyticsEvent('product_reserved', { type, level, relationshipStatus });
-    
+
     // Capture intent to Supabase (now uses upsert to prevent duplicates)
-    const intentData = { 
-      [type]: true, 
-      level, 
-      relationshipStatus, 
-      timestamp: Date.now() 
+    const intentData = {
+      [type]: true,
+      level,
+      relationshipStatus,
+      timestamp: Date.now()
     };
-    
+
     await captureIntentData(intentData);
-    
+
     // Store intent — keep for backward compatibility
     window.__aiLevelIntent = { ...(window.__aiLevelIntent || {}), [type]: true, lead, level, relationshipStatus, timestamp: Date.now() };
   };
-
-  // One-liner hook insight for the hero — the most impactful thing
-  const hookInsight = insights[0];
 
   return (
     <ScreenTransition>
       <div className="min-h-screen bg-gray-950 text-white flex flex-col relative overflow-hidden">
         <canvas ref={canvasRef} style={{ display: "none" }} />
-        
+
         <Header />
 
         {/* Enhanced background glow with multiple layers */}
         <div
           className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-[120px] transition-all duration-[2000ms] ease-out pointer-events-none"
-          style={{ 
-            backgroundColor: data.color, 
+          style={{
+            backgroundColor: data.color,
             opacity: stage >= 1 ? 0.12 : 0,
             transform: `translateX(-50%) ${stage >= 1 ? 'scale(1.2)' : 'scale(0.8)'}`
           }}
@@ -1970,14 +2023,14 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
         {/* Secondary glow */}
         <div
           className="absolute top-30 left-1/2 -translate-x-1/2 w-[300px] h-[300px] rounded-full blur-[80px] transition-all duration-[2500ms] ease-out delay-300 pointer-events-none"
-          style={{ 
-            backgroundColor: data.color, 
+          style={{
+            backgroundColor: data.color,
             opacity: stage >= 1 ? 0.08 : 0,
             transform: `translateX(-50%) ${stage >= 1 ? 'scale(1)' : 'scale(0.6)'}`
           }}
         />
 
-        <div className="flex-1 flex flex-col items-center px-5 py-8 pb-32">
+        <div className="flex-1 flex flex-col items-center px-5 py-8 pb-12">
           <div className="max-w-sm w-full relative z-10">
 
             {/* ═══════════════════════════════════════════════════
@@ -1985,269 +2038,353 @@ function LevelReveal({ level, scores, insights, relationshipStatus }) {
                ═══════════════════════════════════════════════════ */}
 
             {/* Level number + name — with proper spacing */}
-            <div className={`text-center transition-all duration-700 mt-4 ${stage >= 1 ? "opacity-100 scale-100" : "opacity-0 scale-75"}`}>
-              <p className="text-gray-400 text-xs font-bold tracking-[0.2em] mb-8">YOUR AI LEVEL</p>
-              <div className="py-4">
+            <div className={`text-center transition-all duration-700 py-2 ${stage >= 1 ? "opacity-100 scale-100" : "opacity-0 scale-75"}`}>
+              <p className="text-gray-400 text-xs font-bold tracking-[0.2em] mb-10">YOUR AI LEVEL</p>
+              <div className="py-2 flex flex-col items-center justify-center w-full relative">
                 {stage >= 1 && <AnimatedNumber target={level} color={data.color} />}
-              </div>
-            </div>
 
-          <div className={`text-center transition-all duration-700 mt-10 ${stage >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-            <div className="text-xl font-bold text-white mb-1">{data.name}</div>
-            <p className="text-gray-400 text-xs leading-relaxed mb-2 max-w-xs mx-auto">{data.tagline}</p>
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <span className="text-xs font-semibold" style={{ color: data.color }}>{data.tier}</span>
-              <span className="text-gray-700 text-xs">·</span>
-              <span className="text-gray-400 text-xs">Top <span className="text-white font-semibold">{percentile}%</span></span>
-            </div>
-
-            {/* Relationship status — inline compact */}
-            <div className="flex items-center justify-center gap-2 bg-gray-900/60 rounded-full px-4 py-2 mb-3 mx-auto" style={{ maxWidth: "fit-content" }}>
-              <span className="text-lg">{relData.emoji}</span>
-              <span className="text-white text-sm font-semibold">{relData.status}</span>
-              <span className="text-gray-600 text-[10px]">·</span>
-              <span className="text-[11px]" style={{ color: relData.color }}>
-                {relData.tier === "Pet / Mixed" ? "Pet & Tool" : relData.tier === "Pre-Tool" ? "Pre-AI" : relData.tier}
-              </span>
-            </div>
-
-            {/* Hook insight — one line to create curiosity */}
-            <div className="bg-gray-900/40 rounded-xl px-4 py-2.5 border border-gray-800/30 mb-4 text-left">
-              <p className="text-[11px] font-semibold mb-0.5" style={{ color: data.color }}>{hookInsight.label}</p>
-              <p className="text-gray-300 text-xs leading-relaxed">{hookInsight.text}</p>
-            </div>
-          </div>
-
-          {/* ═══════════════════════════════════════════════════
-               ZONE 2: PRODUCT CARDS — "Prove it" & "Improve it"
-               Psychology: scarcity, curiosity, FOMO, loss aversion
-             ═══════════════════════════════════════════════════ */}
-
-          <div className={`transition-all duration-700 ${stage >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
-
-            {/* Prove It card */}
-            <div className="rounded-2xl border overflow-hidden mb-3" style={{ borderColor: `${data.color}30`, background: `linear-gradient(135deg, ${data.color}08, ${data.color}03)` }}>
-              <div className="px-4 pt-4 pb-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-base">🏆</span>
-                      <span className="text-white text-sm font-bold">Prove your level</span>
-                    </div>
-                    <p className="text-gray-400 text-[11px] leading-relaxed">
-                      Full 25-min assessment across all 8 abilities.{" "}
-                      <span className="text-white font-medium">Get a certified AI Level score</span> you can add to LinkedIn.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 mt-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-smooth" />
-                    <span className="text-amber-400 text-[10px] font-semibold">Early access — limited spots</span>
-                  </div>
+                <div className={`mt-8 transition-all duration-700 delay-[600ms] ${stage >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+                  {stage >= 2 && (
+                    <span className="text-[10px] font-bold text-gray-400 bg-gray-900/80 px-2.5 py-0.5 rounded-full border border-gray-800/80 shadow-[0_0_15px_rgba(0,0,0,0.5)] inline-flex items-center gap-1 uppercase tracking-wider backdrop-blur-sm">
+                      Top <span className="text-white text-[11px]"><AnimatedPercentile target={percentile} />%</span>
+                    </span>
+                  )}
                 </div>
               </div>
+            </div>
+
+            <div className={`text-center transition-all duration-700 mt-2 w-full ${stage >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+              <div className="text-xl font-bold text-white mb-1">{data.name}</div>
+              <p className="text-gray-400 text-[11px] leading-relaxed mb-4 max-w-xs mx-auto px-4">{data.tagline}</p>
+
+              {/* Status Pills */}
+              <div className="flex flex-wrap items-center justify-center gap-2.5 mb-5">
+                <span className="text-[10px] font-bold bg-transparent border px-3 py-1.5 rounded-full tracking-wider uppercase" style={{ color: data.color, borderColor: `${data.color}40`, backgroundColor: `${data.color}10` }}>
+                  {data.tier}
+                </span>
+                <span className="text-[11px] font-medium bg-gray-900/60 border border-gray-800/80 text-gray-200 px-3 py-1 rounded-full flex items-center gap-1.5 tracking-wide shadow-sm">
+                  <span className="text-sm -mt-0.5 drop-shadow-sm">{relData.emoji}</span>
+                  <span>{relData.status}</span>
+                </span>
+              </div>
+
+              {/* Inline Details Expander */}
               <button
-                onClick={() => handleReserve("prove")}
-                disabled={proveReserved}
-                className={`w-full py-3 text-sm font-semibold transition-all duration-300 ${
-                  proveReserved
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "text-white hover:brightness-110 active:scale-[0.98]"
-                }`}
-                style={!proveReserved ? { backgroundColor: `${data.color}25`, color: data.color } : {}}
+                onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
+                className="text-[10px] font-medium text-gray-400 hover:text-white bg-gray-900/30 border border-gray-800/60 hover:border-gray-700 hover:bg-gray-800/50 transition-all rounded-full px-4 py-1.5 flex items-center gap-1.5 mx-auto mb-2 pointer-events-auto shadow-sm tracking-wide"
               >
-                {proveReserved ? "✓ You're on the list" : "Reserve my spot →"}
+                See more details
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-300 ${isDetailsExpanded ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
               </button>
-            </div>
 
-            {/* Improve It card */}
-            <div className="rounded-2xl border overflow-hidden mb-4" style={{ borderColor: "#10b98130", background: "linear-gradient(135deg, #10b98108, #10b98103)" }}>
-              <div className="px-4 pt-4 pb-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-base">🚀</span>
-                      <span className="text-white text-sm font-bold">Level up with a learning path</span>
+              {/* EXPANDABLE INLINE ACCORDION */}
+              <div className={`overflow-hidden transition-all duration-500 ease-in-out px-1 ${isDetailsExpanded ? 'max-h-[1000px] opacity-100 mt-4 mb-4' : 'max-h-0 opacity-0 mt-0 mb-0'}`}>
+                <div className="bg-gray-950/80 rounded-2xl border border-gray-800 flex flex-col overflow-hidden text-left shadow-2xl divide-y divide-gray-800/60 backdrop-blur-md">
+                  {/* Level Scale */}
+                  <div className="p-4 bg-gray-900/20">
+                    <h4 className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.15em] mb-3 ml-1">All 7 Levels</h4>
+                    <div className="space-y-1">
+                      {LEVEL_SCALE.map((l) => (
+                        <div key={l.level} className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-colors ${l.level === level ? "bg-blue-500/10 border border-blue-500/30 shadow-[inset_0_0_15px_rgba(59,130,246,0.05)]" : "hover:bg-gray-900/40"}`}>
+                          <span className={`text-[11px] font-bold w-4 text-center ${l.level === level ? "text-blue-400" : "text-gray-600"}`}>{l.level}</span>
+                          <div className="flex-1">
+                            <p className={`text-[11px] flex items-center gap-2 ${l.level === level ? "text-white font-bold" : "text-gray-300 font-medium"}`}>
+                              {l.name}
+                              {l.level === level && <span className="text-[8px] font-bold text-blue-300 px-1.5 py-0.5 bg-blue-500/25 rounded-md uppercase tracking-wider">You</span>}
+                            </p>
+                            <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">{l.short}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-gray-400 text-[11px] leading-relaxed">
-                      Personalized for your gaps. Go from L{level} to L{Math.min(level + 2, 6)} with{" "}
-                      <span className="text-white font-medium">guided exercises + certification</span>.
-                    </p>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 mt-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-smooth" />
-                    <span className="text-emerald-400 text-[10px] font-semibold">Launching soon — first 100 get priority</span>
+                  {/* Relationship Scale */}
+                  <div className="p-4 bg-gray-900/20">
+                    <h4 className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.15em] mb-3 ml-1">Relationship Types</h4>
+                    <div className="space-y-1">
+                      {RELATIONSHIP_SCALE.map((r) => (
+                        <div key={r.key} className={`flex gap-3 px-3 py-2 rounded-xl transition-colors ${r.key === relationshipStatus ? "bg-emerald-500/10 border border-emerald-500/30 shadow-[inset_0_0_15px_rgba(16,185,129,0.05)]" : "hover:bg-gray-900/40"}`}>
+                          <span className="text-lg flex-shrink-0 pt-0.5 drop-shadow-sm">{RELATIONSHIP_DATA[r.key].emoji}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className={`text-[11px] ${r.key === relationshipStatus ? "text-white font-bold" : "text-gray-300 font-medium"}`}>{r.label}</span>
+                              <span className="text-gray-600 text-[10px]">·</span>
+                              <span className="text-[9px] font-medium" style={r.key === relationshipStatus ? { color: relData.color } : { color: '#6b7280' }}>{r.tierLabel}</span>
+                            </div>
+                            <p className="text-[10px] text-gray-500 leading-tight">{r.short}</p>
+                          </div>
+                          {r.key === relationshipStatus && <span className="text-[8px] font-bold text-emerald-300 px-1.5 py-0.5 bg-emerald-500/25 rounded-md uppercase tracking-wider self-start mt-1">You</span>}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => handleReserve("improve")}
-                disabled={improveReserved}
-                className={`w-full py-3 text-sm font-semibold transition-all duration-300 ${
-                  improveReserved
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 active:scale-[0.98]"
-                }`}
-              >
-                {improveReserved ? "✓ You're on the list" : "Reserve my spot →"}
-              </button>
+
+              {/* ═══════════════════════════════════════════════════
+                 CHALLENGE YOUR FRIENDS — SHARE SECTION
+               ═══════════════════════════════════════════════════ */}
+              <div className={`transition-all duration-700 pt-4 pb-6 ${stage >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+                {/* Section header */}
+                <div className="text-left mb-4">
+                  <h3 className="text-white text-base font-bold mb-1">Challenge your friends</h3>
+                  <p className="text-gray-500 text-xs leading-relaxed">See where they land. Share on WhatsApp, LinkedIn or Instagram.</p>
+                </div>
+
+                {/* Card row: thumbnail left, action right */}
+                <div className="flex items-start gap-4 bg-gray-900/40 border border-gray-800/60 rounded-2xl p-4 backdrop-blur-sm">
+                  {/* Thumbnail — always shows expand icon badge */}
+                  <button
+                    onClick={() => {
+                      if (canvasRef.current) {
+                        // Render the full-res share card first, then capture
+                        renderShareCard(canvasRef.current, level, data, relData, percentile);
+                        setPreviewDataUrl(canvasRef.current.toDataURL());
+                      }
+                      setIsPreviewExpanded(true);
+                    }}
+                    className="flex-shrink-0 relative rounded-xl overflow-hidden border border-gray-700/50 shadow-lg active:scale-95 transition-transform"
+                    style={{ width: 80, height: 80 }}
+                  >
+                    <canvas
+                      ref={previewRef}
+                      className="rounded-xl"
+                      style={{ width: 80, height: 80 }}
+                    />
+                    {/* Always-visible expand badge */}
+                    <div className="absolute bottom-1 right-1 bg-gray-950/80 backdrop-blur-sm rounded-md p-1">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                    </div>
+                  </button>
+
+                  {/* Right: description + share button */}
+                  <div className="flex-1 flex flex-col gap-3">
+                    <p className="text-gray-400 text-[11px] leading-relaxed">
+                      Share your <span className="text-white font-semibold">AI Level {level >= 4 ? "4+" : level}</span> card — a custom image with your score.
+                    </p>
+                    <button
+                      onClick={handleShare}
+                      disabled={shareState === "sharing"}
+                      className={`w-full font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors duration-200 ${shareState === "shared" || shareState === "fallback"
+                          ? "bg-emerald-500 text-white"
+                          : "bg-white text-gray-950 btn-3d-share"
+                        }`}
+                    >
+                      {shareState === "shared" || shareState === "fallback" ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+                      )}
+                      {shareLabel}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* ═══════════════════════════════════════════════════
-                 ZONE 3: SHARE CTA — with compact card preview
+                 THE "MEAT": STREAMLINED INSIGHTS
                ═══════════════════════════════════════════════════ */}
+            <div className={`transition-all duration-700 w-full mb-8 ${stage >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
 
-            <div className="flex items-center gap-3 mb-5">
-              <div className="bg-gray-900/40 rounded-xl p-2 border border-gray-800/30 flex-shrink-0">
-                <canvas
-                  ref={previewRef}
-                  className="rounded-lg"
-                  style={{ width: 80, height: 80 }}
-                />
-              </div>
-              <div className="flex-1">
-                <button
-                  onClick={handleShare}
-                  disabled={shareState === "sharing"}
-                  className={`w-full font-semibold py-3 rounded-xl text-sm transition-all duration-300 mb-1.5 ${
-                    shareState === "shared" || shareState === "fallback"
-                      ? "bg-emerald-500 text-white"
-                      : "bg-white text-gray-950 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-white/10"
-                  }`}
-                >
-                  {shareLabel}
-                </button>
-                <p className="text-gray-600 text-[9px] text-center">Challenge your friends — WhatsApp, LinkedIn, IG</p>
-              </div>
-            </div>
-          </div>
-
-          {/* ═══════════════════════════════════════════════════
-               ZONE 4: LAYERED DEPTH — for those who scroll
-               Everything below is expandable / optional
-             ═══════════════════════════════════════════════════ */}
-
-          <div className={`transition-all duration-700 ${stage >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-
-            {/* Divider */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-gray-800/40" />
-              <span className="text-gray-600 text-[9px] tracking-widest uppercase">Your full breakdown</span>
-              <div className="flex-1 h-px bg-gray-800/40" />
-            </div>
-
-            {/* Expandable sections container - fixed mobile spacing */}
-            <div className="space-y-2">
-              {/* All insights */}
-              <Expandable label={`Your profile insights (${insights.length})`} color={data.color}>
-                <div className="space-y-2 text-left">
-                  {insights.map((insight, i) => (
-                    <div key={i} className="bg-gray-900/50 rounded-xl px-4 py-3 border border-gray-800/30">
-                      <p className="text-xs font-semibold mb-0.5" style={{ color: data.color }}>{insight.label}</p>
-                      <p className="text-gray-300 text-sm leading-relaxed">{insight.text}</p>
-                    </div>
-                  ))}
+              {/* ═══════════════════════════════════════════════════
+                   HEAVYWEIGHT CTAs
+                 ═══════════════════════════════════════════════════ */}
+              <div className="space-y-4 mb-8 w-full text-left">
+                {/* Prove It card */}
+                <div className="rounded-2xl border p-4 shadow-[0_0_25px_rgba(59,130,246,0.05)] text-left" style={{ borderColor: `${data.color}40`, backgroundColor: '#0f172a' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">🏆</span>
+                    <span className="text-white text-sm font-bold">Prove your level</span>
+                  </div>
+                  <p className="text-gray-400 text-xs leading-relaxed mb-4">
+                    Full 25-min assessment across all 8 abilities. <span className="text-white font-medium">Get a certified AI Level score</span> you can add to LinkedIn.
+                  </p>
+                  <button
+                    onClick={() => handleReserve("prove")}
+                    disabled={proveReserved}
+                    className={`w-full py-3.5 text-sm font-bold rounded-xl transition-all duration-300 ${proveReserved
+                        ? "bg-blue-500/20 text-blue-300"
+                        : "bg-blue-600 text-white hover:bg-blue-500 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] active:scale-[0.98]"
+                      }`}
+                  >
+                    {proveReserved ? "✓ You're on the list" : "Reserve my spot"}
+                  </button>
+                  <p className="text-center text-blue-400/60 text-[10px] font-medium mt-3">Early access — limited spots</p>
                 </div>
-              </Expandable>
 
-              {/* How to level up */}
-              <Expandable label="How to level up" color="#34d399">
-                <div className="text-left space-y-2.5 mb-2">
-                  {suggestions.levelTips.map((tip, i) => (
-                    <div key={i} className="flex gap-2.5">
-                      <span className="text-emerald-400/50 text-sm mt-0.5 flex-shrink-0">→</span>
-                      <p className="text-gray-300 text-sm leading-relaxed">{tip}</p>
-                    </div>
-                  ))}
+                {/* Improve It card */}
+                <div className="rounded-2xl border p-4 shadow-[0_0_30px_rgba(16,185,129,0.07)] text-left" style={{ borderColor: "#10b98150", backgroundColor: '#064e3b15' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">📈</span>
+                    <span className="text-white text-sm font-bold">Level up with a learning path</span>
+                  </div>
+                  <p className="text-gray-400 text-xs leading-relaxed mb-4">
+                    Personalized for your gaps. Go from L{level} to L{Math.min(level + 2, 6)} with <span className="text-white font-medium">guided exercises + certification</span>.
+                  </p>
+                  <button
+                    onClick={() => handleReserve("improve")}
+                    disabled={improveReserved}
+                    className={`w-full py-3.5 text-sm font-bold rounded-xl transition-all duration-300 ${improveReserved
+                        ? "bg-emerald-500/20 text-emerald-300"
+                        : "bg-emerald-500 text-white hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.5)] active:scale-[0.98]"
+                      }`}
+                  >
+                    {improveReserved ? "✓ You're on the list" : "Reserve my spot"}
+                  </button>
+                  <p className="text-center text-emerald-400/60 text-[10px] font-medium mt-3">Launching soon — first 100 get priority</p>
                 </div>
-                <div className="border-t border-gray-800/30 pt-2.5">
-                  <div className="flex gap-2.5">
-                    <span className="text-sm mt-0.5 flex-shrink-0 opacity-60">{relData.emoji}</span>
-                    <p className="text-gray-400 text-sm leading-relaxed italic">{suggestions.relationshipTip}</p>
+              </div>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gray-800/60" />
+                <span className="text-gray-500 text-[10px] font-bold tracking-[0.15em] uppercase">Your Full Breakdown</span>
+                <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gray-800/60" />
+              </div>
+
+              <div className="space-y-3 mb-10 w-full text-left">
+                {/* Card 1: Your Edge */}
+                <div className="bg-gray-900/40 rounded-2xl p-4 border border-gray-800/60 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">✨</span>
+                    <h3 className="text-white text-sm font-bold">Your Edge</h3>
+                  </div>
+                  <p className="text-gray-300 text-sm leading-relaxed">{insights.edge}</p>
+                </div>
+
+                {/* Card 2: Your Evaluation Instinct */}
+                <div className="bg-gray-900/40 rounded-2xl p-4 border border-gray-800/60 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">🎯</span>
+                    <h3 className="text-white text-sm font-bold">Your Evaluation Instinct</h3>
+                  </div>
+                  <p className="text-gray-300 text-sm leading-relaxed">{insights.instinct}</p>
+                </div>
+
+                {/* Card 3: How to Level Up */}
+                <div className="bg-gradient-to-b from-gray-900/80 to-gray-900/40 rounded-2xl p-4 border border-emerald-900/30 backdrop-blur-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/20 via-emerald-400/40 to-emerald-500/20" />
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">🚀</span>
+                    <h3 className="text-emerald-400 text-sm font-bold">How to Level Up</h3>
+                  </div>
+
+                  <p className="text-white text-sm font-medium leading-relaxed mb-4">{insights.bridge}</p>
+
+                  <div className="space-y-3 mb-4">
+                    {suggestions.levelTips.map((tip, i) => (
+                      <div key={i} className="flex gap-2.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 mt-1.5 flex-shrink-0" />
+                        <p className="text-gray-300 text-sm leading-relaxed">{tip}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-3 border-t border-gray-800/50 flex gap-2.5">
+                    <span className="text-sm mt-0.5 flex-shrink-0 opacity-80">{relData.emoji}</span>
+                    <p className="text-gray-400 text-xs leading-relaxed italic">{suggestions.relationshipTip}</p>
                   </div>
                 </div>
-              </Expandable>
-
-              {/* Level scale */}
-              <Expandable label="See all 7 levels" color={data.color}>
-                <div className="space-y-0.5">
-                  {LEVEL_SCALE.map((l) => (
-                    <div key={l.level} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-left ${l.level === level ? "bg-gray-800/60" : ""}`}>
-                      <span className={`text-xs font-bold w-4 text-right ${l.level === level ? "text-white" : "text-gray-700"}`}>{l.level}</span>
-                      <span className={`text-[11px] flex-1 ${l.level === level ? "text-white font-medium" : "text-gray-600"}`}>{l.name}</span>
-                      <span className={`text-[9px] ${l.level === level ? "text-gray-400" : "text-gray-700"}`}>{l.short}</span>
-                      {l.level === level && <span className="text-[9px] ml-0.5" style={{ color: data.color }}>← You</span>}
-                    </div>
-                  ))}
-                  <p className="text-gray-700 text-[9px] px-3 pt-2 italic">Levels 5-6 require the full assessment (coming soon).</p>
-                </div>
-              </Expandable>
-
-              {/* Relationship types */}
-              <Expandable label="What are the relationship types?" color={relData.color}>
-                <div className="space-y-0.5 mt-1">
-                  {RELATIONSHIP_SCALE.map((r) => (
-                    <div key={r.key} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-left ${r.key === relationshipStatus ? "bg-gray-800/60" : ""}`}>
-                      <span className="text-sm w-5 flex-shrink-0">{RELATIONSHIP_DATA[r.key].emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-[11px] ${r.key === relationshipStatus ? "text-white font-medium" : "text-gray-500"}`}>{r.label}</span>
-                          <span className="text-gray-700 text-[9px]">·</span>
-                          <span className={`text-[9px] ${r.key === relationshipStatus ? "" : "text-gray-600"}`} style={r.key === relationshipStatus ? { color: relData.color } : {}}>{r.tierLabel}</span>
-                        </div>
-                        <p className={`text-[9px] ${r.key === relationshipStatus ? "text-gray-400" : "text-gray-700"}`}>{r.short}</p>
-                      </div>
-                      {r.key === relationshipStatus && <span className="text-[9px] flex-shrink-0" style={{ color: relData.color }}>← You</span>}
-                    </div>
-                  ))}
-                </div>
-                <p className="text-gray-700 text-[9px] px-3 pt-2 italic">Your status combines how you treat AI (Tool, Colleague, Symbiont) with your engagement pattern (Casual, Committed, etc.).</p>
-              </Expandable>
-            </div>
-
-            {/* LearnTube footer */}
-            <div className="pt-5 mt-4 border-t border-gray-800/20 text-center">
-              <div className="flex items-center justify-center gap-2 mb-1.5">
-                <span className="text-blue-400 text-[10px] font-bold tracking-wider">LearnTube.ai</span>
-                <span className="text-gray-700 text-[10px]">|</span>
-                <img src="/backed-by-google.png" alt="Backed by Google" className="h-5 opacity-70" />
               </div>
-              <p className="text-gray-700 text-[10px] leading-relaxed max-w-xs mx-auto">
-                AI Level & AI Relationship Status — LearnTube frameworks built on research from BCG, Anthropic & MIT Media Lab.
-              </p>
+
+              {/* LearnTube footer */}
+              <div className="pt-8 border-t border-gray-800/30 text-center w-full">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <div className="flex items-center gap-2">
+                    <img src="/learntube-icon.svg" alt="LearnTube" className="w-5 h-5 flex-shrink-0" />
+                    <span className="text-white/60 text-[11px] font-bold tracking-wider">LearnTube.ai</span>
+                  </div>
+                  <span className="text-gray-800 text-[10px]">|</span>
+                  <img src="/backed-by-google.png" alt="Backed by Google" className="h-6 opacity-80" />
+                </div>
+                <p className="text-gray-600 text-[10px] leading-relaxed max-w-xs mx-auto mt-4 px-2">
+                  AI Level & AI Relationship Status — LearnTube frameworks built on research from BCG, Anthropic & MIT Media Lab.
+                </p>
+              </div>
             </div>
+
           </div>
         </div>
-        </div>
+
       </div>
+
+      {/* Fullscreen Image Preview Lightbox */}
+      {isPreviewExpanded && (
+        <div
+          className="fixed inset-0 z-[100] flex flex-col bg-gray-950 animate-[fadeIn_0.2s_ease-out]"
+          onClick={() => setIsPreviewExpanded(false)}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 z-10" onClick={e => e.stopPropagation()}>
+            <p className="text-gray-400 text-sm font-medium">Your AI Level Card</p>
+            <button
+              onClick={() => setIsPreviewExpanded(false)}
+              className="text-gray-400 hover:text-white transition-colors bg-gray-900 p-2 rounded-full"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            </button>
+          </div>
+
+          {/* Image — fills remaining space */}
+          <div className="flex-1 flex items-center justify-center px-6 overflow-hidden" onClick={e => e.stopPropagation()}>
+            {previewDataUrl ? (
+              <img
+                src={previewDataUrl}
+                alt="Your AI Level Share Card"
+                className="w-full max-w-sm rounded-2xl shadow-2xl ring-1 ring-white/10 animate-[scaleIn_0.25s_ease-out]"
+              />
+            ) : (
+              <div className="w-full max-w-sm aspect-square rounded-2xl bg-gray-900 flex items-center justify-center">
+                <p className="text-gray-600 text-sm">Loading preview…</p>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom: share button */}
+          <div className="px-6 pb-10 pt-4 flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => {
+                handleShare();
+                setIsPreviewExpanded(false);
+              }}
+              disabled={shareState === "sharing"}
+              className={`w-full font-bold py-4 rounded-xl text-base flex items-center justify-center gap-3 transition-colors duration-200 ${shareState === "shared" || shareState === "fallback"
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white text-gray-950 btn-3d-share-lg"
+                }`}
+            >
+              {shareState === "shared" || shareState === "fallback" ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+              )}
+              {shareLabel}
+            </button>
+            <p className="text-gray-600 text-xs text-center">Tap outside or press ✕ to dismiss</p>
+          </div>
+        </div>
+      )}
+
     </ScreenTransition>
   );
 }
 
 // ─── Generate Insights ──────────────────────────────────
 function generateInsights(scores, level) {
-  const ins = [];
+  const edge = scores.item3Correct
+    ? "You saw through the Artifact Effect when most people don't. You judge output by substance, not polish."
+    : scores.item2Correct >= 3
+      ? "You know AI's boundary — where it shines and where it breaks. That's rarer than it sounds."
+      : "You're early in understanding what AI can and can't do. That's normal — and the fastest skill to build.";
 
-  if (scores.item3Correct) {
-    ins.push({ label: "Your evaluation instinct", text: "You saw through the Artifact Effect when most people don't. You judge output by substance, not polish." });
-  } else if (scores.item2Correct >= 3) {
-    ins.push({ label: "Your calibration", text: "You know AI's boundary — where it shines and where it breaks. That's rarer than it sounds." });
-  } else {
-    ins.push({ label: "Your starting point", text: "You're early in understanding what AI can and can't do. That's normal — and the fastest skill to build." });
-  }
-
-  if (!scores.item3Correct) {
-    ins.push({ label: "Your biggest gap", text: "You chose polish over substance. The Artifact Effect — trusting AI output because it looks professional — is the #1 thing keeping people at Level 2." });
-  } else if (scores.item4Choice === "B" || scores.item4Choice === "A") {
-    ins.push({ label: "Your iteration pattern", text: "When AI's output was 80% there, you focused on format instead of substance. The question isn't 'how does this look?' — it's 'is the reasoning right?'" });
-  } else if (scores.restraintScore < 2) {
-    ins.push({ label: "Your delegation gap", text: "You're tempted to use AI everywhere. But knowing when NOT to use it is just as important as knowing when to." });
-  } else {
-    ins.push({ label: "Your edge", text: "No major gaps in the quick assessment. The detailed breakdown would reveal the subtler patterns." });
-  }
+  const instinct = !scores.item3Correct
+    ? "You chose polish over substance. The Artifact Effect — trusting AI output because it looks professional — is the #1 thing keeping people at Level 2."
+    : (scores.item4Choice === "B" || scores.item4Choice === "A")
+      ? "When AI's output was 80% there, you focused on format instead of substance. The question isn't 'how does this look?' — it's 'is the reasoning right?'"
+      : scores.restraintScore < 2
+        ? "You're tempted to use AI everywhere. But knowing when NOT to use it is just as important as knowing when to."
+        : "No major gaps in the quick assessment. The detailed breakdown would reveal the subtler patterns.";
 
   const bridges = {
     0: "Start by trying AI for one writing task this week. Just one. See what happens.",
@@ -2258,27 +2395,29 @@ function generateInsights(scores, level) {
     5: "You build systems that make others better. The next step is advancing the practice itself.",
     6: "You're at the frontier. The practice evolves because people like you refuse to accept the current ceiling.",
   };
-  ins.push({ label: level < 6 ? "The bridge to next level" : "What's next", text: bridges[Math.min(level, 6)] });
 
-  return ins;
+  return {
+    edge,
+    instinct,
+    bridge: bridges[Math.min(level, 6)]
+  };
 }
 
 // ─── Main App ───────────────────────────────────────────
 function AILevel() {
   // 🚧 DEVELOPMENT FLAG - Set to true to skip directly to reveal screen for testing
   const DEV_SKIP_TO_REVEAL = false; // Change this to true to test reveal screen
-  
   console.log('🔍 DEBUG: DEV_SKIP_TO_REVEAL value:', DEV_SKIP_TO_REVEAL);
   console.log('🔍 DEBUG: Initial screen will be:', DEV_SKIP_TO_REVEAL ? 'REVEAL' : 'LANDING');
   console.log('🔍 DEBUG: window.__aiLevelLead exists:', !!window.__aiLevelLead);
   console.log('🔍 DEBUG: window.__aiLevelLead value:', window.__aiLevelLead);
-  
+
   const [screen, setScreen] = useState(() => {
     const initialScreen = DEV_SKIP_TO_REVEAL ? SCREENS.REVEAL : SCREENS.LANDING;
     console.log('🔍 DEBUG: useState callback - setting initial screen to:', initialScreen);
     return initialScreen;
   });
-  
+
   // Debug wrapper for setScreen to track all screen changes
   const debugSetScreen = (newScreen) => {
     console.log('🔍 SCREEN CHANGE:', { from: screen, to: newScreen, timestamp: new Date().toISOString() });
@@ -2292,7 +2431,7 @@ function AILevel() {
     item2Correct: 3, restraintScore: 2,
     apologyAnswer: false, allergyAnswer: false, promptLevel: 3,
   };
-  
+
   const [scores, setScores] = useState(DEV_SKIP_TO_REVEAL ? DEFAULT_TEST_SCORES : {
     a1: 0, a2: 0, a3: 0, a4: 0, a5: 0, b1: 0,
     item3Correct: false, item4Choice: null, item6Level: 1,
@@ -2308,7 +2447,7 @@ function AILevel() {
   // Initialize UTM tracking on component mount
   useEffect(() => {
     utmTracker.initialize();
-    
+
     // Set up test lead data for development mode
     if (DEV_SKIP_TO_REVEAL && !window.__aiLevelLead) {
       window.__aiLevelLead = {
@@ -2320,7 +2459,7 @@ function AILevel() {
         timestamp: Date.now()
       };
     }
-    
+
     // Development helper: Press Ctrl+Shift+R to quickly jump to reveal screen
     const handleKeyPress = (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'R' && process.env.NODE_ENV === 'development') {
@@ -2339,7 +2478,7 @@ function AILevel() {
         }
       }
     };
-    
+
     if (process.env.NODE_ENV === 'development') {
       document.addEventListener('keydown', handleKeyPress);
       return () => document.removeEventListener('keydown', handleKeyPress);
@@ -2353,8 +2492,8 @@ function AILevel() {
       console.log(`\n📊 SCORE UPDATE:`, patch);
       console.log(`📈 CURRENT TOTALS:`, {
         a1: next.a1, a2: next.a2, a3: next.a3, a4: next.a4, a5: next.a5,
-        b1: next.b1, item2Correct: next.item2Correct, 
-        item3Correct: next.item3Correct, item4Choice: next.item4Choice, 
+        b1: next.b1, item2Correct: next.item2Correct,
+        item3Correct: next.item3Correct, item4Choice: next.item4Choice,
         item6Level: next.item6Level, restraintScore: next.restraintScore
       });
       return next;
@@ -2411,7 +2550,7 @@ function AILevel() {
   const handleItem5b = async (text) => {
     // Try LLM scoring first, fallback to keyword scoring
     const llmResult = await scoreLLMResponse('5b', text);
-    
+
     let level;
     if (llmResult.useFallback) {
       // Keyword-based fallback scoring
@@ -2421,11 +2560,11 @@ function AILevel() {
       level = llmResult.score;
       console.log('🤖 Using LLM scoring for Item 5B:', level, llmResult.reasoning);
     }
-    
+
     update({ a2: level, promptLevel: level });
-    trackAnalyticsEvent('item_completed', { 
-      item: '5b', 
-      promptLevel: level, 
+    trackAnalyticsEvent('item_completed', {
+      item: '5b',
+      promptLevel: level,
       textLength: text.length,
       scoringMethod: llmResult.useFallback ? 'keyword' : 'llm'
     });
@@ -2435,7 +2574,7 @@ function AILevel() {
   const handleItem6 = async (text) => {
     // Try LLM scoring first, fallback to keyword scoring  
     const llmResult = await scoreLLMResponse('6', text);
-    
+
     let level;
     if (llmResult.useFallback) {
       // Keyword-based fallback scoring
@@ -2445,12 +2584,12 @@ function AILevel() {
       level = llmResult.score;
       console.log('🤖 Using LLM scoring for Item 6:', level, llmResult.reasoning);
     }
-    
+
     const scoreMap = { 1: 1, 2: 2, 3: 4, 4: 5 };
     update({ a5: scoreMap[level] || 2, item6Level: level });
-    trackAnalyticsEvent('item_completed', { 
-      item: 6, 
-      followUpLevel: level, 
+    trackAnalyticsEvent('item_completed', {
+      item: 6,
+      followUpLevel: level,
       textLength: text.length,
       scoringMethod: llmResult.useFallback ? 'keyword' : 'llm'
     });
@@ -2490,13 +2629,13 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<AILevel />} />
-        <Route 
-          path="/admin" 
+        <Route
+          path="/admin"
           element={
             <PrivateRoute>
               <AdminDashboard />
             </PrivateRoute>
-          } 
+          }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
