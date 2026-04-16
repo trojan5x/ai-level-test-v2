@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://ai-level.learntube.ai/sitemap.xml
+
+# Optimal crawling
+Crawl-delay: 1
+
+# Block access to sensitive files
+Disallow: /.env
+Disallow: /src/
+Disallow: /node_modules/
