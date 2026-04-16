@@ -2266,7 +2266,23 @@ function AILevel() {
   // 🚧 DEVELOPMENT FLAG - Set to true to skip directly to reveal screen for testing
   const DEV_SKIP_TO_REVEAL = false; // Change this to true to test reveal screen
   
-  const [screen, setScreen] = useState(DEV_SKIP_TO_REVEAL ? SCREENS.REVEAL : SCREENS.LANDING);
+  console.log('🔍 DEBUG: DEV_SKIP_TO_REVEAL value:', DEV_SKIP_TO_REVEAL);
+  console.log('🔍 DEBUG: Initial screen will be:', DEV_SKIP_TO_REVEAL ? 'REVEAL' : 'LANDING');
+  console.log('🔍 DEBUG: window.__aiLevelLead exists:', !!window.__aiLevelLead);
+  console.log('🔍 DEBUG: window.__aiLevelLead value:', window.__aiLevelLead);
+  
+  const [screen, setScreen] = useState(() => {
+    const initialScreen = DEV_SKIP_TO_REVEAL ? SCREENS.REVEAL : SCREENS.LANDING;
+    console.log('🔍 DEBUG: useState callback - setting initial screen to:', initialScreen);
+    return initialScreen;
+  });
+  
+  // Debug wrapper for setScreen to track all screen changes
+  const debugSetScreen = (newScreen) => {
+    console.log('🔍 SCREEN CHANGE:', { from: screen, to: newScreen, timestamp: new Date().toISOString() });
+    console.trace('🔍 SCREEN CHANGE STACK TRACE');
+    setScreen(newScreen);
+  };
   // Default test data for development mode
   const DEFAULT_TEST_SCORES = {
     a1: 2, a2: 3, a3: 4, a4: 4, a5: 4, b1: 1,
@@ -2281,6 +2297,9 @@ function AILevel() {
     item2Correct: 0, restraintScore: 0,
     apologyAnswer: null, allergyAnswer: null, promptLevel: 1,
   });
+  
+  console.log('🔍 DEBUG: Scores initialized with:', DEV_SKIP_TO_REVEAL ? 'DEFAULT_TEST_SCORES' : 'EMPTY_SCORES');
+  console.log('🔍 DEBUG: Actual scores:', scores);
   const scoresRef = useRef(scores);
   scoresRef.current = scores;
 
@@ -2304,7 +2323,7 @@ function AILevel() {
     const handleKeyPress = (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'R' && process.env.NODE_ENV === 'development') {
         console.log('🚧 DEV: Jumping to reveal screen for testing...');
-        setScreen(SCREENS.REVEAL);
+        debugSetScreen(SCREENS.REVEAL);
         // Set up test data if not already present
         if (!window.__aiLevelLead) {
           window.__aiLevelLead = {
