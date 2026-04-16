@@ -19,6 +19,8 @@ Press Ctrl+Shift+R while on any screen to jump directly to reveal screen
 
 Both methods set up realistic test data automatically.
 Remember to set DEV_SKIP_TO_REVEAL back to false before deploying!
+
+Note: Debugging enabled to troubleshoot screen initialization issues.
 */
 
 // Reusable Header Component
