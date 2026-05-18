@@ -19,7 +19,7 @@ function Header() {
           <div className="flex items-center gap-3">
             <span className="text-white text-sm font-bold tracking-wider">LearnTube.ai</span>
             <span className="text-gray-700 text-sm">|</span>
-            <img src="/backed-by-google.png" alt="Backed by Google" className="h-7 opacity-80" />
+            <img src="/imaginxt-logo.avif" alt="ImagiNxt" className="h-7 opacity-85" />
           </div>
         </div>
       </div>

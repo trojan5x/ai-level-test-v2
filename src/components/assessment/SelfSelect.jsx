@@ -1,6 +1,7 @@
 /**
  * SelfSelect Component - Calibration Assessment
- * User estimates their AI level (L0-L5) before starting assessment
+ * User estimates their AI level (L0-L6) before starting assessment
+ * L6 is shown for completeness but is not awarded by this assessment
  * Creates perception gap data for results sharing
  */
 
@@ -40,6 +41,11 @@ const LEVEL_OPTIONS = [
     level: 5,
     title: "AI-Native Builder",
     description: "I build AI systems and help others use AI"
+  },
+  {
+    level: 6,
+    title: "Pioneer",
+    description: "I'm advancing the frontier — pushing what AI itself can do (not measured here)"
   }
 ];
 

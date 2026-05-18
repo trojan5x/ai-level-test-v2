@@ -588,6 +588,7 @@ function SelfSelect({ onSelect }) {
     { level: 3, label: "Effective Practitioner", desc: "I evaluate AI output critically and iterate on substance" },
     { level: 4, label: "AI-Native Performer", desc: "AI is embedded in how I think and work — I've redesigned my workflow around it" },
     { level: 5, label: "AI-Native Builder", desc: "I build AI systems and workflows that multiply others' capabilities" },
+    { level: 6, label: "Pioneer", desc: "I advance the frontier — not something this assessment awards" },
   ];
 
   return (
