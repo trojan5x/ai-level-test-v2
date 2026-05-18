@@ -1278,15 +1278,7 @@ function LevelReveal({ assessmentContext }) {
                 </span>
               </div>
 
-              {/* Temporary testing PDF download button */}
-              <div className="mb-4">
-                <button
-                  onClick={handleTestPDFDownload}
-                  className="text-[10px] font-semibold text-blue-400 hover:text-blue-300 bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/20 transition-all rounded-full px-4 py-2 flex items-center gap-1.5 mx-auto shadow-[0_0_15px_rgba(59,130,246,0.15)] active:scale-95 cursor-pointer tracking-wider uppercase"
-                >
-                  📥 [TEST] Download PDF Report
-                </button>
-              </div>
+              {/* PDF download available via handleTestPDFDownload() */}
 
               {/* Inline Details Expander */}
               <button
