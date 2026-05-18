@@ -275,7 +275,7 @@ function AIDiet({ assessmentContext }) {
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-800/40 w-full max-w-lg mx-auto">
               <button
                 onClick={() => setStep(0)}
-                className="flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2"
+                className="flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2 invisible"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -340,7 +340,7 @@ function AIDiet({ assessmentContext }) {
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-800/40 w-full max-w-lg mx-auto">
               <button
                 onClick={() => setStep(1)}
-                className="flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2"
+                className="flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2 invisible"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
