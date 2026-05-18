@@ -53,7 +53,7 @@ function Item1({ assessmentContext }) {
         <div className="flex-1 flex flex-col px-6 py-4">
           <ProgressBar current={progressInfo.current} total={progressInfo.total} showStepNumbers={true} />
 
-          <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full">
+          <div className="flex-1 flex flex-col pt-4 max-w-2xl mx-auto w-full">
             <FadeIn delay={200} direction="fade">
               <div className="text-center mb-6">
                 <p className="text-blue-400/50 text-xs font-medium mb-2">Let's start easy</p>

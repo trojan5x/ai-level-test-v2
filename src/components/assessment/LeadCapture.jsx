@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import ScreenTransition from '../ScreenTransition.jsx';
 import FadeIn from '../FadeIn.jsx';
+import Header from '../Header.jsx';
 import { trackAnalyticsEvent } from '../../supabase.js';
 import { updateAssessmentWithContact, getSessionId } from '../../utils/stateManager.js';
 import { trackLeadFormCompleted, identifyUser } from '../../mixpanel.js';
@@ -190,19 +191,21 @@ function LeadCapture({ assessmentContext }) {
 
   return (
     <ScreenTransition>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center px-5 py-6 sm:py-8 relative overflow-auto">
-        {/* Level-colored background glow */}
-        <div
-          className="absolute top-20 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full blur-[100px] opacity-[0.07] pointer-events-none"
-          style={{ backgroundColor: data.color }}
-        />
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col relative overflow-hidden">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-start pt-12 pb-8 px-5 overflow-auto relative">
+          {/* Level-colored background glow */}
+          <div
+            className="absolute top-20 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full blur-[100px] opacity-[0.07] pointer-events-none"
+            style={{ backgroundColor: data.color }}
+          />
 
-        <div className="max-w-sm w-full relative z-10">
+          <div className="max-w-sm w-full relative z-10">
           {/* Level number */}
           <div className="text-center mb-3 sm:mb-4">
             <p className="text-gray-500 text-[10px] font-semibold tracking-[0.25em] uppercase mb-1">Your AI Level</p>
             <div className="text-4xl sm:text-5xl font-extrabold leading-none" style={{ color: data.color }}>
-              {level >= 4 ? "4+" : level}
+              {level >= 5 ? "5+" : level}
             </div>
           </div>
 
@@ -311,6 +314,7 @@ function LeadCapture({ assessmentContext }) {
               </div>
             </FadeIn>
           </div>
+        </div>
         </div>
       </div>
     </ScreenTransition>

@@ -148,7 +148,7 @@ export function createLinkedInPostContent(userData, referralLink) {
 
   const postContent = `🚀 Just discovered my AI relationship level!
 
-I'm AI Level ${level >= 4 ? '4+' : level} — ${levelData.name} ${relationshipData.emoji}
+I'm AI Level ${level >= 5 ? '5+' : level} — ${levelData.name} ${relationshipData.emoji}
 My AI Relationship Status: ${relationshipData.status}
 
 ${insightsSummary ? insightsSummary + '\n\n' : ''}Top ${percentile}% of test-takers! 🎯

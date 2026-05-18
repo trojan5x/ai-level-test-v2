@@ -73,8 +73,9 @@ function Context({ assessmentContext }) {
     <ScreenTransition>
       <div className="min-h-screen bg-gray-950 text-white flex flex-col">
         <Header />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-4">
+        <div className="flex-1 flex flex-col px-6 py-8">
           <ProgressBar current={2} total={10} showStepNumbers={true} />
+          <div className="flex-1 flex flex-col items-center w-full max-w-2xl mx-auto pt-4">
           
           <FadeIn delay={200} direction="fade">
             <div className="max-w-md text-center mb-6">
@@ -158,6 +159,7 @@ function Context({ assessmentContext }) {
                 </button>
               </div>
             </FadeIn>
+          </div>
           </div>
         </div>
       </div>

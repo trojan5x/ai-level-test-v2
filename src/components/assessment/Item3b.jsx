@@ -46,7 +46,7 @@ function Item3b({ assessmentContext }) {
             showStepNumbers={true} 
           />
 
-          <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full">
+          <div className="flex-1 flex flex-col pt-4 max-w-2xl mx-auto w-full">
             <FadeIn delay={200} direction="fade">
               <div className="text-center mb-6">
                 <p className="text-blue-400/50 text-xs font-medium mb-2">Critical thinking check</p>

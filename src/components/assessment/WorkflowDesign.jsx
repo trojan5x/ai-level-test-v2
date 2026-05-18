@@ -59,7 +59,7 @@ function WorkflowDesign({ assessmentContext }) {
             showStepNumbers={true} 
           />
 
-          <div className="flex-1 flex flex-col justify-center max-w-3xl mx-auto w-full">
+          <div className="flex-1 flex flex-col pt-4 max-w-3xl mx-auto w-full">
             <FadeIn delay={200} direction="fade">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 rounded-full px-3 py-1 mb-3">

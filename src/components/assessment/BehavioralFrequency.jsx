@@ -73,8 +73,9 @@ function BehavioralFrequency({ assessmentContext }) {
     <ScreenTransition>
       <div className="min-h-screen bg-gray-950 text-white flex flex-col">
         <Header />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-4">
+        <div className="flex-1 flex flex-col px-6 py-8">
           <ProgressBar current={3} total={10} showStepNumbers={true} />
+          <div className="flex-1 flex flex-col items-center w-full max-w-2xl mx-auto pt-4">
           
           {/* Step dots */}
           <div className="flex items-center gap-2 mb-8">
@@ -137,6 +138,7 @@ function BehavioralFrequency({ assessmentContext }) {
                 {pair.b}
               </p>
             </button>
+          </div>
           </div>
         </div>
       </div>

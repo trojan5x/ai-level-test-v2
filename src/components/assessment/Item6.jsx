@@ -77,8 +77,9 @@ function Item6({ assessmentContext }) {
     <ScreenTransition>
       <div className="min-h-screen bg-gray-950 text-white flex flex-col">
         <Header />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+        <div className="flex-1 flex flex-col px-6 py-8">
           <ProgressBar current={progressInfo.current} total={progressInfo.total} showStepNumbers={true} />
+          <div className="flex-1 flex flex-col items-center w-full max-w-2xl mx-auto pt-4">
           <FadeIn>
             <div className="max-w-lg text-center mb-4">
               <h2 className="text-2xl font-bold mb-2">Last one. Then you'll see your results.</h2>
@@ -143,6 +144,7 @@ function Item6({ assessmentContext }) {
               </button>
             </div>
           </FadeIn>
+          </div>
         </div>
       </div>
     </ScreenTransition>

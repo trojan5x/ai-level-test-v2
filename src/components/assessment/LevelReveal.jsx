@@ -9,6 +9,11 @@ import FadeIn from '../FadeIn.jsx';
 import Header from '../Header.jsx';
 import { trackResultPageViewed, trackCTAClicked, identifyUser, trackLinkedInShareInitiated, trackLinkedInOAuthStarted, trackReferralLinkGenerated, trackLinkedInOAuthCompleted, trackLinkedInShareCompleted, trackLinkedInShareFailed, trackShareAttempted, trackShareCompleted, trackChallengeSent } from '../../mixpanel.js';
 import { trackAnalyticsEvent, captureIntentData } from '../../supabase.js';
+import { MessageCircle, Mail, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
+
+const LinkedinIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+);
 import { generateReferralId, createReferralLink } from '../../utils/referralGenerator.js';
 import { generateLinkedInAuthUrl, linkedInSession, parseOAuthCallback, validateOAuthCallback, createLinkedInPostContent, getLinkedInRedirectUri } from '../../utils/linkedinAuth.js';
 import { generateAIReportPDF } from '../../utils/pdfGenerator.js';
@@ -253,7 +258,7 @@ function renderShareCard(canvas, level, levelData, relationshipData, percentile,
 
   const t = BADGE_GEM_TIERS[Math.min(level, 6)] || BADGE_GEM_TIERS[0];
   const cx = S / 2;
-  const levelDisplay = level >= 4 ? "4+" : String(level);
+  const levelDisplay = level >= 5 ? "5+" : String(level);
 
   let _seed = level * 1000 + 42;
   function rand() { _seed = (_seed * 16807) % 2147483647; return _seed / 2147483647; }
@@ -499,7 +504,7 @@ function AnimatedNumber({ target, color, duration = 1200 }) {
   const [current, setCurrent] = useState(0);
   const [done, setDone] = useState(false);
   const [showGlow, setShowGlow] = useState(false);
-  const display = target >= 4 ? "4+" : String(target);
+  const display = target >= 5 ? "5+" : String(target);
 
   useEffect(() => {
     if (target === 0) { setDone(true); return; }
@@ -730,7 +735,7 @@ function LevelReveal({ assessmentContext }) {
     }
   }, []);
 
-  const shareText = `I'm AI Level ${level >= 4 ? "4+" : level} — ${data.name} ${relData.emoji}\nMy AI Relationship Status: ${relData.status}\n\nTop ${percentile}% of test-takers.\nWhat's yours? → ${window.location.origin}?utm_source=user_share`;
+  const shareText = `I'm AI Level ${level >= 5 ? "5+" : level} — ${data.name} ${relData.emoji}\nMy AI Relationship Status: ${relData.status}\n\nTop ${percentile}% of test-takers.\nWhat's yours? → ${window.location.origin}?utm_source=user_share`;
 
   const handleShare = async () => {
     setShareState("sharing");
@@ -781,7 +786,7 @@ function LevelReveal({ assessmentContext }) {
       }
     }
     const link = document.createElement("a");
-    link.download = `ai-level-${level >= 4 ? "4plus" : level}.png`;
+    link.download = `ai-level-${level >= 5 ? "5plus" : level}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
     if (navigator.clipboard) {
@@ -1409,7 +1414,7 @@ function LevelReveal({ assessmentContext }) {
                   {/* Right: description + share button */}
                   <div className="flex-1 flex flex-col gap-3">
                     <p className="text-gray-400 text-[11px] leading-relaxed">
-                      Share your <span className="text-white font-semibold">AI Level {level >= 4 ? "4+" : level}</span> card — a custom image with your score.
+                      Share your <span className="text-white font-semibold">AI Level {level >= 5 ? "5+" : level}</span> card — a custom image with your score.
                     </p>
 
                     {/* LinkedIn Share Button */}
@@ -1562,36 +1567,49 @@ function LevelReveal({ assessmentContext }) {
                   <div className="grid grid-cols-3 gap-2 mb-2">
                     <button
                       onClick={() => handleChallenge("whatsapp")}
-                      className="py-3 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-semibold transition-all hover:bg-emerald-500/25 active:scale-[0.97]"
+                      className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 active:scale-[0.97] transition-all"
                       aria-label="Challenge via WhatsApp"
                     >
-                      WhatsApp
+                      <MessageCircle className="w-4 h-4" />
+                      <span className="text-[10px] font-semibold">WhatsApp</span>
                     </button>
                     <button
                       onClick={() => handleChallenge("linkedin")}
-                      className="py-3 rounded-xl bg-blue-500/15 text-blue-400 text-xs font-semibold transition-all hover:bg-blue-500/25 active:scale-[0.97]"
+                      className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 active:scale-[0.97] transition-all"
                       aria-label="Challenge via LinkedIn"
                     >
-                      LinkedIn
+                      <LinkedinIcon className="w-4 h-4" />
+                      <span className="text-[10px] font-semibold">LinkedIn</span>
                     </button>
                     <button
                       onClick={() => handleChallenge("email")}
-                      className="py-3 rounded-xl bg-purple-500/15 text-purple-400 text-xs font-semibold transition-all hover:bg-purple-500/25 active:scale-[0.97]"
+                      className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 active:scale-[0.97] transition-all"
                       aria-label="Challenge via Email"
                     >
-                      Email
+                      <Mail className="w-4 h-4" />
+                      <span className="text-[10px] font-semibold">Email</span>
                     </button>
                   </div>
                   <button
                     onClick={() => handleChallenge("copy")}
                     aria-label="Copy challenge link to clipboard"
-                    className={`w-full py-2.5 rounded-xl text-xs font-medium transition-all ${
+                    className={`w-full py-2.5 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 ${
                       challengeLink
                         ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-gray-800/40 text-gray-500 hover:text-gray-300 hover:bg-gray-800/60"
+                        : "bg-gray-800/40 text-gray-400 hover:text-white hover:bg-gray-800/60"
                     }`}
                   >
-                    {challengeLink ? "Link copied!" : "Copy challenge link"}
+                    {challengeLink ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Link copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <LinkIcon className="w-4 h-4" />
+                        <span>Copy challenge link</span>
+                      </>
+                    )}
                   </button>
                   {challengeSent && (
                     <p className="text-emerald-400/70 text-[10px] text-center mt-2 animate-pulse">Challenge sent! See who beats you when they share back.</p>

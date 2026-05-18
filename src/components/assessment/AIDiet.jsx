@@ -171,7 +171,7 @@ function AIDiet({ assessmentContext }) {
       <ScreenTransition>
         <div className="min-h-screen bg-gray-950 text-white flex flex-col">
           <Header />
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-4">
+          <div className="flex-1 flex flex-col items-center justify-start pt-8 pb-4 px-6">
             <ProgressBar current={4} total={10} showStepNumbers={true} />
             
             <FadeIn delay={200} direction="fade">
@@ -212,7 +212,7 @@ function AIDiet({ assessmentContext }) {
       <ScreenTransition>
         <div className="min-h-screen bg-gray-950 text-white flex flex-col">
           <Header />
-          <div className="flex-1 flex flex-col items-center px-6 py-4 overflow-auto">
+          <div className="flex-1 flex flex-col items-center justify-start pt-8 pb-4 px-6 overflow-auto">
             <ProgressBar current={4} total={10} showStepNumbers={true} />
             
             <FadeIn delay={200} direction="fade">
@@ -306,7 +306,7 @@ function AIDiet({ assessmentContext }) {
     <ScreenTransition>
       <div className="min-h-screen bg-gray-950 text-white flex flex-col">
         <Header />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-4">
+        <div className="flex-1 flex flex-col items-center justify-start pt-8 pb-4 px-6">
           <ProgressBar current={4} total={8} showStepNumbers={true} />
           
           <FadeIn delay={200} direction="fade">

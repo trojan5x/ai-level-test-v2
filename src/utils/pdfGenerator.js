@@ -230,7 +230,7 @@ export const generateAIReportPDF = async (leadData) => {
   y += 2;
 
   // Giant level number
-  const display = lvl >= 4 ? '4+' : String(lvl);
+  const display = lvl >= 5 ? '5+' : String(lvl);
   bold(60); color(ac);
   doc.text(display, W / 2, y + 22, { align: 'center' });
   y += 25;
