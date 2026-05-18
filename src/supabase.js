@@ -64,9 +64,13 @@ export const captureLeadData = async (leadData) => {
   window.__aiLevelLead = leadData;
   
   try {
-    // Get UTM attribution data
+    // Get UTM attribution data and referral info
     const attribution = utmTracker.formatForDatabase();
+    const referralId = utmTracker.getReferralId();
     console.log('🎯 Attribution data:', attribution);
+    if (referralId) {
+      console.log('🔗 Referral ID detected:', referralId);
+    }
 
     const { data, error } = await supabase
       .from('ai_level_leads')
@@ -103,6 +107,11 @@ export const captureLeadData = async (leadData) => {
     // Store lead ID for intent tracking
     sessionStorage.setItem('ai-level-lead-id', data.id);
     
+    // If user was referred by someone, credit the referral conversion
+    if (referralId) {
+      await utmTracker.creditReferralConversion(referralId, data);
+    }
+    
     return { success: true, data, attribution };
     
   } catch (err) {
@@ -114,70 +123,44 @@ export const captureLeadData = async (leadData) => {
 // Intent capture with Supabase integration (check for existing record first)
 export const captureIntentData = async (intentData) => {
   console.log('💾 Capturing intent data:', intentData);
-  
+
   // Keep window global for backward compatibility
-  window.__aiLevelIntent = intentData;
-  
+  window.__aiLevelIntent = { ...(window.__aiLevelIntent || {}), ...intentData };
+
   try {
-    // Get lead_id from the most recent lead capture
-    const leadData = window.__aiLevelLead;
-    const lead_id = leadData?.id || null; // Will be null if Supabase capture failed
-    
-    if (!lead_id) {
-      console.warn('⚠️ No lead_id found, skipping intent capture');
-      return { success: false, error: 'No lead_id found' };
+    // Resolve session_id — prefer the persistent key used by stateManager
+    const sessionId =
+      localStorage.getItem('ai-level-session-id') ||
+      sessionStorage.getItem('ai-level-session-id') ||
+      getSessionId();
+
+    if (!sessionId) {
+      console.warn('⚠️ No session_id found, skipping intent capture');
+      return { success: false, error: 'No session_id found' };
     }
-    
-    // Check if record already exists for this lead_id
-    const { data: existingRecord, error: selectError } = await supabase
-      .from('ai_level_intents')
-      .select('*')
-      .eq('lead_id', lead_id)
-      .single();
-    
-    if (selectError && selectError.code !== 'PGRST116') { // PGRST116 = no rows returned
-      console.error('❌ Error checking existing record:', selectError);
-      return { success: false, error: selectError };
-    }
-    
-    const intentRecord = {
-      lead_id,
-      prove_interest: intentData.prove || (existingRecord?.prove_interest || false),
-      improve_interest: intentData.improve || (existingRecord?.improve_interest || false),
-      level: intentData.level,
-      relationship_status: intentData.relationshipStatus,
-      created_at: existingRecord?.created_at || new Date().toISOString()
+
+    // Build the update patch — only set columns to true, never reset to false
+    const patch = {
+      intent_captured_at: new Date().toISOString(),
+      ...(intentData.prove   ? { prove_interest:   true } : {}),
+      ...(intentData.improve ? { improve_interest: true } : {}),
     };
-    
-    let data, error;
-    
-    if (existingRecord) {
-      // Update existing record
-      ({ data, error } = await supabase
-        .from('ai_level_intents')
-        .update(intentRecord)
-        .eq('lead_id', lead_id)
-        .select()
-        .single());
-      console.log('📝 Updating existing intent record');
-    } else {
-      // Insert new record
-      ({ data, error } = await supabase
-        .from('ai_level_intents')
-        .insert([intentRecord])
-        .select()
-        .single());
-      console.log('📝 Creating new intent record');
-    }
-    
+
+    const { data, error } = await supabase
+      .from('ai_level_assessments')
+      .update(patch)
+      .eq('session_id', sessionId)
+      .select('id, prove_interest, improve_interest')
+      .single();
+
     if (error) {
-      console.error('❌ Supabase intent capture error:', error);
+      console.error('❌ Intent capture error:', error);
       return { success: false, error };
     }
-    
-    console.log('✅ Intent captured successfully:', data);
+
+    console.log('✅ Intent captured on assessment record:', data);
     return { success: true, data };
-    
+
   } catch (err) {
     console.error('❌ Intent capture exception:', err);
     return { success: false, error: err };
@@ -231,6 +214,93 @@ export const setupAdminTables = async () => {
     return { success: true };
   } catch (error) {
     console.error('❌ Admin tables setup failed:', error);
+    return { success: false, error };
+  }
+};
+
+// Assessment table setup for new routing system
+export const setupAssessmentTables = async () => {
+  try {
+    console.log('🔄 Setting up assessment tables...');
+
+    // Create ai_level_assessments table
+    const createAssessmentsTable = `
+      CREATE TABLE IF NOT EXISTS ai_level_assessments (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        session_id TEXT NOT NULL UNIQUE,
+        
+        -- Assessment data
+        responses JSONB NOT NULL,
+        scores JSONB NOT NULL,
+        level INTEGER NOT NULL,
+        relationship_status TEXT NOT NULL,
+        insights JSONB,
+        
+        -- Timing data
+        started_at TIMESTAMPTZ NOT NULL,
+        completed_at TIMESTAMPTZ NOT NULL,
+        
+        -- Browser/device info
+        user_agent TEXT,
+        ip_address INET,
+        
+        -- Attribution data
+        utm_data JSONB DEFAULT '{}',
+        referrer TEXT,
+        
+        -- User linking (populated when user submits contact form)
+        linked_lead_id UUID,
+        linked_at TIMESTAMPTZ,
+        
+        -- Metadata
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
+    const { error: tableError } = await supabase.rpc('exec_sql', { sql: createAssessmentsTable });
+    if (tableError) {
+      console.error('Error creating assessments table:', tableError);
+    }
+
+    // Create indexes
+    const createIndexes = [
+      'CREATE INDEX IF NOT EXISTS idx_ai_level_assessments_session_id ON ai_level_assessments(session_id);',
+      'CREATE INDEX IF NOT EXISTS idx_ai_level_assessments_completed_at ON ai_level_assessments(completed_at);',
+      'CREATE INDEX IF NOT EXISTS idx_ai_level_assessments_linked_lead_id ON ai_level_assessments(linked_lead_id);',
+      'CREATE INDEX IF NOT EXISTS idx_ai_level_assessments_level ON ai_level_assessments(level);'
+    ];
+
+    for (const indexSql of createIndexes) {
+      const { error: indexError } = await supabase.rpc('exec_sql', { sql: indexSql });
+      if (indexError) {
+        console.warn('Warning creating index:', indexError);
+      }
+    }
+
+    // Add assessment_id column to ai_level_leads if it doesn't exist
+    const alterLeadsTable = `
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='ai_level_leads' AND column_name='assessment_id'
+        ) THEN
+          ALTER TABLE ai_level_leads ADD COLUMN assessment_id UUID;
+          CREATE INDEX idx_ai_level_leads_assessment_id ON ai_level_leads(assessment_id);
+        END IF;
+      END $$;
+    `;
+
+    const { error: alterError } = await supabase.rpc('exec_sql', { sql: alterLeadsTable });
+    if (alterError) {
+      console.warn('Warning altering leads table:', alterError);
+    }
+
+    console.log('✅ Assessment tables setup completed');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Assessment tables setup failed:', error);
     return { success: false, error };
   }
 };

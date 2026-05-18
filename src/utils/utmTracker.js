@@ -1,5 +1,6 @@
 // UTM Parameter and Attribution Tracking Utility
 import { supabase } from '../supabase.js';
+import { isValidReferralId } from './referralGenerator.js';
 
 const UTM_STORAGE_KEY = 'ai-level-utm-data';
 const UTM_EXPIRY_DAYS = 30; // UTM attribution window
@@ -159,13 +160,9 @@ export const utmTracker = {
         expires_at: Date.now() + (UTM_EXPIRY_DAYS * 24 * 60 * 60 * 1000)
       };
 
-      // Always log the visit to track landing page analytics
-      await this.logVisit(utmData);
-
-      // Mark as captured for this session
-      sessionStorage.setItem(captureKey, 'true');
-
-      // Only store in session/localStorage if we have tracking data
+      // Store UTM data synchronously before any async operations.
+      // This must happen first so navigation away from the page (e.g. clicking Start)
+      // cannot interrupt the write — the DB call below is fire-and-forget.
       const hasTrackingData = UTM_PARAMS.some(param => utmData[param]) || 
                              TRACKING_PARAMS.some(param => utmData[param]) ||
                              utmData.referrer;
@@ -178,13 +175,21 @@ export const utmTracker = {
         if (!existingData || this.hasNewUtmData(utmData, existingData)) {
           localStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(utmData));
         }
-        
+      }
+
+      // Mark as captured for this session (sync, before async work)
+      sessionStorage.setItem(captureKey, 'true');
+
+      // Fire-and-forget: log the visit to the database without blocking
+      this.logVisit(utmData);
+
+      if (hasTrackingData) {
         console.log('🎯 UTM tracking captured for session:', sessionId, utmData);
         return utmData;
       }
 
       console.log('🎯 No tracking data found, visit logged only for session:', sessionId);
-      return utmData; // Return even if no UTM data for visit tracking
+      return utmData;
     } catch (error) {
       console.error('Error capturing UTM data:', error);
       return null;
@@ -351,7 +356,120 @@ export const utmTracker = {
     if (attribution.utm_source) parts.push(`Source: ${attribution.utm_source}`);
     if (attribution.utm_medium) parts.push(`Medium: ${attribution.utm_medium}`);
     if (attribution.utm_campaign) parts.push(`Campaign: ${attribution.utm_campaign}`);
+    if (attribution.ref && isValidReferralId(attribution.ref)) parts.push(`Referral: ${attribution.ref}`);
     
     return parts.length > 0 ? parts.join(' | ') : 'Direct traffic';
+  },
+
+  // Referral-specific methods
+  
+  /**
+   * Get the current referral ID from URL or stored data
+   * @returns {string|null} Referral ID if found and valid
+   */
+  getReferralId() {
+    // Check URL first
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlRef = urlParams.get('ref');
+    if (urlRef && isValidReferralId(urlRef)) {
+      return urlRef;
+    }
+
+    // Check stored attribution data
+    const attribution = this.getAttributionData();
+    if (attribution && attribution.ref && isValidReferralId(attribution.ref)) {
+      return attribution.ref;
+    }
+
+    return null;
+  },
+
+  /**
+   * Track a referral visit - called when someone clicks a referral link
+   * @param {string} referralId - The referral ID from the link
+   */
+  async trackReferralVisit(referralId) {
+    if (!referralId || !isValidReferralId(referralId)) {
+      console.warn('Invalid referral ID provided:', referralId);
+      return null;
+    }
+
+    try {
+      const sessionId = this.getSessionId();
+      
+      // Check if we've already tracked this referral visit
+      const visitKey = `ai-level-referral-${referralId}-${sessionId}`;
+      if (sessionStorage.getItem(visitKey)) {
+        console.log('🔗 Referral visit already tracked for:', referralId);
+        return null;
+      }
+
+      const visitRecord = {
+        referral_id: referralId,
+        session_id: sessionId,
+        visitor_ip: null, // Will be set by backend if needed
+        user_agent: navigator.userAgent,
+        referrer: document.referrer || null,
+        landing_page: window.location.href,
+        visited_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('referral_visits')
+        .insert([visitRecord])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error tracking referral visit:', error);
+        return null;
+      }
+
+      // Mark as tracked to prevent duplicates
+      sessionStorage.setItem(visitKey, 'true');
+      
+      console.log('🔗 Referral visit tracked:', referralId, 'Session:', sessionId);
+      return data;
+    } catch (error) {
+      console.error('Exception tracking referral visit:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Credit a referral conversion when a referred user completes the assessment
+   * @param {string} referralId - The referral ID
+   * @param {Object} leadData - The completed lead data
+   */
+  async creditReferralConversion(referralId, leadData) {
+    if (!referralId || !isValidReferralId(referralId)) {
+      return null;
+    }
+
+    try {
+      // Update the referral visit record to mark as converted
+      const { data, error } = await supabase
+        .from('referral_visits')
+        .update({
+          converted: true,
+          converted_lead_id: leadData.id,
+          converted_at: new Date().toISOString()
+        })
+        .eq('referral_id', referralId)
+        .eq('session_id', this.getSessionId())
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error crediting referral conversion:', error);
+        return null;
+      }
+
+      console.log('🎯 Referral conversion credited:', referralId, '→ Lead:', leadData.id);
+      return data;
+    } catch (error) {
+      console.error('Exception crediting referral conversion:', error);
+      return null;
+    }
   }
 };

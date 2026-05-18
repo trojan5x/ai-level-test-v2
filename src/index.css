@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Session Replay Privacy - Hide sensitive elements */
+.mp-sensitive {
+  /* This class blocks elements from Mixpanel session replay */
+}
+
+/* Hide specific sensitive inputs during replay */
+input[type="email"].mp-sensitive,
+input[type="tel"].mp-sensitive,
+input[type="text"].mp-sensitive {
+  /* These will be blocked from session recording */
+}
+
 /* Custom animations */
 @keyframes slide {
   0%, 100% {

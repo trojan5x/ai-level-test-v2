@@ -1,5 +1,6 @@
 // Test script to verify the scoring scenarios from the handoff document
-import { computeLevel, computeRelationshipStatus } from './App.jsx';
+import { EnhancedScoring } from './utils/stateManager.js';
+const { computeLevel, computeRelationshipStatus } = EnhancedScoring;
 
 // Test scenarios from Section 4.2 of the handoff document
 const testScenarios = [
