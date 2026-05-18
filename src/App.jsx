@@ -161,7 +161,7 @@ function Landing() {
 
   return (
     <ScreenTransition>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col relative overflow-hidden">
+      <div className="h-screen bg-gray-950 text-white flex flex-col relative overflow-hidden">
         {/* Ambient glow with premium animation */}
         <div
           className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500/6 rounded-full blur-3xl opacity-0 animate-[fadeInGlow_2s_ease-out_0.3s_forwards]"
@@ -171,22 +171,16 @@ function Landing() {
         <FadeIn delay={200} direction="fade">
           <div className="w-full bg-gray-900/60 border-b border-gray-800/40 backdrop-blur-sm py-3 z-20 relative">
             <div className="flex items-center justify-between px-4 sm:px-8 max-w-4xl mx-auto">
-              {/* LearnTube Logo */}
-              <div className="inline-flex items-center gap-2.5">
+              {/* Left: LearnTube + Imaginext side by side */}
+              <div className="flex items-center gap-3">
                 <img src="/learntube-icon.svg" alt="LearnTube" className="w-7 h-7 flex-shrink-0" />
-                <div className="flex items-center gap-2.5">
-                  <span className="text-white text-sm font-bold tracking-wider">LearnTube.ai</span>
-                  <span className="text-gray-700 text-xs">|</span>
-                  <img src="/backed-by-google.png" alt="Backed by Google" className="h-6 opacity-75" />
-                </div>
-              </div>
-
-              {/* Imaginext Partnership */}
-              <div className="flex items-center gap-2">
-                <span className="text-gray-600 text-[10px] font-medium tracking-widest uppercase hidden sm:block">In partnership with</span>
-                <span className="text-gray-600 text-[10px] font-medium tracking-widest uppercase sm:hidden">×</span>
+                <span className="text-white text-sm font-bold tracking-wider">LearnTube.ai</span>
+                <span className="text-gray-700 text-xs">×</span>
                 <img src="/imaginxt-logo.avif" alt="Imaginext" className="h-6 opacity-80" />
               </div>
+
+              {/* Right: Backed by Google */}
+              <img src="/backed-by-google.png" alt="Backed by Google" className="h-6 opacity-75" />
             </div>
           </div>
         </FadeIn>
