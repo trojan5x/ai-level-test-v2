@@ -1,13 +1,13 @@
 import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
-// Level names + accent colors — exact match to LEVEL_DATA in LevelReveal.jsx
 const LEVEL_METADATA = {
-  0: { color: [100, 116, 139], name: "Non-User",               tier: "Explorer",     percentile: 95 },
-  1: { color: [129, 140, 248], name: "Experimenter",           tier: "Explorer",     percentile: 65 },
-  2: { color: [59,  130, 246], name: "Functional User",        tier: "Practitioner", percentile: 34 },
-  3: { color: [16,  185, 129], name: "Effective Practitioner", tier: "Operator",     percentile: 12 },
-  4: { color: [245, 158, 11],  name: "AI-Native Performer",    tier: "Strategist",   percentile: 5  },
-  5: { color: [239, 68,  68],  name: "AI-Native Builder",      tier: "Architect",    percentile: 1  },
+  0: { color: "#94a3b8", name: "Non-User",               tier: "Explorer",     percentile: 95 },
+  1: { color: "#818cf8", name: "Experimenter",           tier: "Explorer",     percentile: 65 },
+  2: { color: "#3b82f6", name: "Functional User",        tier: "Practitioner", percentile: 34 },
+  3: { color: "#10b981", name: "Effective Practitioner", tier: "Operator",     percentile: 12 },
+  4: { color: "#f59e0b", name: "AI-Native Performer",    tier: "Strategist",   percentile: 5  },
+  5: { color: "#ef4444", name: "AI-Native Builder",      tier: "Architect",    percentile: 1  },
 };
 
 const PROFILE_TEXT = {
@@ -70,10 +70,6 @@ const GROWTH_ROADMAPS = {
   ],
 };
 
-/**
- * Load any image URL (including AVIF, SVG, PNG) into a PNG data URL via canvas.
- * Returns null on failure so callers can degrade gracefully.
- */
 const loadImgDataUrl = (src) =>
   new Promise((resolve) => {
     const img = new window.Image();
@@ -93,305 +89,251 @@ const loadImgDataUrl = (src) =>
     img.src = src;
   });
 
-/**
- * Generates a premium dark-mode 2-page PDF.
- * Async because it pre-loads brand logos before rendering.
- */
 export const generateAIReportPDF = async (leadData) => {
   const { name, phone, email, level, relationshipStatus, scores, referralId } = leadData;
   const lvl  = Math.max(0, Math.min(5, parseInt(level) || 0));
   const meta  = LEVEL_METADATA[lvl];
   const ac    = meta.color;
-
-  // Pre-load logos — all three in parallel; failures are silently ignored
+  
   const [ltLogo, googleLogo, imaginxtLogo] = await Promise.all([
     loadImgDataUrl('/learntube-logo.png'),
     loadImgDataUrl('/backed-by-google.png'),
     loadImgDataUrl('/imaginxt-logo.avif'),
   ]);
 
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const W = 210, H = 297, P = 14;
-  const CW = W - P * 2;
+  const ltImg = ltLogo ? ltLogo.dataUrl : "";
+  const googleImg = googleLogo ? googleLogo.dataUrl : "";
+  const ixImg = imaginxtLogo ? imaginxtLogo.dataUrl : "";
 
-  // ── Palette ──
-  const BG   = [9,   9,  11];
-  const SURF = [17, 24,  39];
-  const BRD  = [31, 41,  55];
-  const G500 = [107,114, 128];
-  const G400 = [156,163, 175];
-  const G300 = [209,213, 219];
-  const WHT  = [255,255, 255];
-  const TEAL = [45, 212, 191];
-  const AMB  = [251,191,  36];
-
-  // ── Helpers ──
-  const fill   = (rgb) => doc.setFillColor(...rgb);
-  const stroke = (rgb) => doc.setDrawColor(...rgb);
-  const color  = (rgb) => doc.setTextColor(...rgb);
-  const bold   = (sz)  => { doc.setFont('helvetica','bold');   doc.setFontSize(sz); };
-  const reg    = (sz)  => { doc.setFont('helvetica','normal'); doc.setFontSize(sz); };
-
-  const card = (x, y, w, h, fillClr, strokeClr, radius = 2.5) => {
-    fill(fillClr); stroke(strokeClr);
-    doc.setLineWidth(0.25);
-    doc.roundedRect(x, y, w, h, radius, radius, 'DF');
+  // Helper for generating dimensions bars
+  const renderDims = () => {
+    // CORRECTED KEYS mapping to scores
+    const dims = [
+      { key: 'dietScore',          label: 'AI Diet & Variety' },
+      { key: 'featureDepthScore',  label: 'Context Depth' },
+      { key: 'behavFreqScore',     label: 'Behavioral Frequency' },
+      { key: 'workflowScore',      label: 'Workflow Integration' },
+      { key: 'systemBuilderScore', label: 'System Architecture' },
+    ];
+    return dims.map((d, i) => {
+      const val = Math.min(scores?.[d.key] ?? 0, 6);
+      const pct = (val / 6) * 100;
+      const isLast = i === dims.length - 1;
+      return `
+        <div style="margin-bottom: ${isLast ? '0' : '16px'};">
+          <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: #d1d5db; margin-bottom: 8px;">
+            <span>${d.label}</span>
+            <span style="color: ${ac}">${val}/6</span>
+          </div>
+          <div style="width: 100%; height: 8px; background-color: #374151; border-radius: 4px; overflow: hidden;">
+            <div style="width: ${pct}%; height: 100%; background-color: ${ac}; border-radius: 4px;"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
   };
 
-  const divider = (y, label) => {
-    const lw = (CW - label.length * 2.1 - 6) / 2;
-    stroke(BRD); doc.setLineWidth(0.25);
-    doc.line(P, y + 2, P + lw, y + 2);
-    doc.line(W - P - lw, y + 2, W - P, y + 2);
-    bold(6); color(G500);
-    doc.text(label, W / 2, y + 3, { align: 'center' });
-    return y + 8;
+  const renderSteps = () => {
+    const steps = GROWTH_ROADMAPS[lvl] || GROWTH_ROADMAPS[4];
+    return steps.map((step, i) => {
+      const isLast = i === steps.length - 1;
+      return `
+      <div style="display: flex; gap: 20px; margin-bottom: ${isLast ? '0' : '24px'};">
+        <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background-color: ${ac}25; color: ${ac}; text-align: center; line-height: 38px; font-weight: bold; font-size: 18px; border: 1px solid ${ac}40; box-sizing: border-box;">
+          ${i + 1}
+        </div>
+        <div>
+          <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700; color: #f3f4f6;">Step ${i + 1}</h4>
+          <p style="margin: 0; font-size: 15px; color: #9ca3af; line-height: 1.6;">${step}</p>
+        </div>
+      </div>
+    `}).join('');
   };
 
-  // ── Place a logo image, preserving aspect ratio, centered in a bounding box ──
-  const placeImg = (imgInfo, cx, cy, maxW, maxH) => {
-    if (!imgInfo) return;
-    const ratio = imgInfo.w / imgInfo.h;
-    let w = maxW, h = maxW / ratio;
-    if (h > maxH) { h = maxH; w = maxH * ratio; }
-    doc.addImage(imgInfo.dataUrl, 'PNG', cx - w / 2, cy - h / 2, w, h);
-  };
+  // Create an offscreen div
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.style.width = '800px';
+  container.style.zIndex = '-1';
+  
+  const pageStyle = `width: 800px; height: 1130px; background-color: #09090b; padding: 48px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ui-sans-serif, system-ui, sans-serif; position: relative; color: #ffffff;`;
+  
+  const headerHTML = `
+    <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid #1f2937; margin-bottom: 32px;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        ${ltImg ? `<img src="${ltImg}" style="height: 24px;" />` : '<div style="font-weight: 900; font-size: 18px; color: #ffffff;">LEARNTUBE.AI</div>'}
+      </div>
+      <div style="display: flex; align-items: center; gap: 20px;">
+        ${googleImg ? `<img src="${googleImg}" style="height: 18px;" />` : ''}
+        <div style="width: 1px; height: 20px; background-color: #374151;"></div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 10px; font-weight: 600; color: #9ca3af; letter-spacing: 0.05em;">IN PARTNERSHIP WITH</span>
+          ${ixImg ? `<img src="${ixImg}" style="height: 18px;" />` : '<div style="font-weight: 800; font-size: 13px; color: #ffffff;">IMAGINEXT</div>'}
+        </div>
+      </div>
+    </div>
+  `;
 
-  // ── Page chrome: background, border, footer ──
-  const chrome = (pg) => {
-    fill(BG); doc.rect(0, 0, W, H, 'F');
-    stroke(BRD); doc.setLineWidth(0.2);
-    doc.rect(5, 5, W - 10, H - 10);
-    // Footer
-    stroke(BRD); doc.setLineWidth(0.2);
-    doc.line(P, H - 12, W - P, H - 12);
-    reg(5.5); color(G500);
-    doc.text(`REF: ${referralId || 'SYSTEM'}  ·  ${new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase()}`, P, H - 7.5);
-    doc.text(`${pg} / 2`, W - P, H - 7.5, { align: 'right' });
-  };
+  container.innerHTML = `
+    <div id="pdf-page-1" style="${pageStyle}">
+      <div style="position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px; border: 1px solid #1f2937; pointer-events: none; border-radius: 8px;"></div>
+      ${headerHTML}
+      
+      <!-- Hero Section (Side-by-side layout) -->
+      <div style="background-color: #111827; border: 1px solid #1f2937; border-top: 4px solid ${ac}; border-radius: 24px; padding: 40px; margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
+        <!-- Left Side: Level & Info -->
+        <div style="display: flex; align-items: center; gap: 32px;">
+          <div style="font-size: 100px; font-weight: 900; color: ${ac}; line-height: 1; padding-bottom: 8px;">${lvl >= 5 ? '5+' : lvl}</div>
+          <div style="text-align: left;">
+            <div style="font-size: 14px; font-weight: 800; color: #9ca3af; letter-spacing: 0.15em; margin-bottom: 8px; text-transform: uppercase;">Your AI Level</div>
+            <div style="font-size: 26px; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 16px;">${meta.name}</div>
+            <div style="display: inline-block; background-color: #1f2937; border: 1px solid #374151; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #e5e7eb; letter-spacing: 0.05em;">
+              TOP ${meta.percentile}% OF USERS
+            </div>
+          </div>
+        </div>
+        
+        <!-- Right Side: Badges -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="background-color: ${ac}20; color: ${ac}; border: 1px solid ${ac}40; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; min-width: 140px;">
+            ${meta.tier}
+          </div>
+          <div style="background-color: #1f2937; color: #d1d5db; border: 1px solid #374151; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 700; text-align: center; min-width: 140px;">
+            ${(relationshipStatus || 'casual').charAt(0).toUpperCase() + (relationshipStatus || 'casual').slice(1)}
+          </div>
+        </div>
+      </div>
 
-  // ── Branded header strip (page 1 only) ──
-  const brandHeader = () => {
-    // Dark strip background
-    fill(SURF); stroke(BRD); doc.setLineWidth(0.2);
-    doc.roundedRect(P, 8, CW, 16, 1.5, 1.5, 'DF');
+      <!-- Candidate Profile -->
+      <div style="margin-bottom: 32px;">
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 16px;">
+          <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
+          <div style="font-size: 13px; font-weight: 800; color: #6b7280; letter-spacing: 0.15em; text-transform: uppercase;">Candidate Profile</div>
+          <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
+        </div>
+        
+        <div style="background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 6px; letter-spacing: 0.05em;">NAME</div>
+            <div style="font-size: 18px; font-weight: 700; color: #f3f4f6;">${name || 'N/A'}</div>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 6px; letter-spacing: 0.05em;">EMAIL</div>
+            <div style="font-size: 18px; font-weight: 700; color: #f3f4f6;">${email || 'Not provided'}</div>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 6px; letter-spacing: 0.05em;">PHONE</div>
+            <div style="font-size: 18px; font-weight: 700; color: #f3f4f6;">${phone || 'N/A'}</div>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 6px; letter-spacing: 0.05em;">REF CODE</div>
+            <div style="font-size: 18px; font-weight: 700; color: #f3f4f6;">${referralId || 'SYSTEM'}</div>
+          </div>
+        </div>
+      </div>
 
-    // Left: LearnTube logo
-    if (ltLogo) {
-      placeImg(ltLogo, P + 22, 16, 32, 9);
-    } else {
-      bold(7); color(WHT); doc.text('LEARNTUBE.AI', P + 5, 17.5);
-    }
+      <!-- Skill Dimensions -->
+      <div>
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 16px;">
+          <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
+          <div style="font-size: 13px; font-weight: 800; color: #6b7280; letter-spacing: 0.15em; text-transform: uppercase;">Skill Dimensions</div>
+          <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
+        </div>
+        
+        <div style="background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 24px;">
+          ${renderDims()}
+        </div>
+      </div>
+      
+      <div style="margin-top: auto; padding-top: 24px; display: flex; justify-content: space-between; font-size: 12px; color: #4b5563; font-weight: 600; letter-spacing: 0.05em; border-top: 1px solid #1f2937;">
+        <span>AI COGNITIVE BLUEPRINT · CONFIDENTIAL</span>
+        <span>PAGE 1 / 2</span>
+      </div>
+    </div>
 
-    // Vertical separator 1
-    stroke(BRD); doc.setLineWidth(0.2);
-    doc.line(W / 2 - 22, 10.5, W / 2 - 22, 21.5);
+    <!-- PAGE 2 -->
+    <div id="pdf-page-2" style="${pageStyle}">
+      <div style="position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px; border: 1px solid #1f2937; pointer-events: none; border-radius: 8px;"></div>
+      ${headerHTML}
+      
+      <!-- Your Profile -->
+      <div style="margin-bottom: 32px;">
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+          <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
+          <div style="font-size: 13px; font-weight: 800; color: #6b7280; letter-spacing: 0.15em; text-transform: uppercase;">Your Profile</div>
+          <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
+        </div>
+        
+        <div style="background: #111827; border: 1px solid #1f2937; border-left: 6px solid ${ac}; border-radius: 16px; padding: 24px;">
+          <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #d1d5db;">${PROFILE_TEXT[lvl]}</p>
+        </div>
+      </div>
 
-    // Center: Backed by Google
-    if (googleLogo) {
-      placeImg(googleLogo, W / 2, 16, 32, 8);
-    } else {
-      reg(6); color(G400); doc.text('BACKED BY GOOGLE', W / 2, 17, { align: 'center' });
-    }
+      <!-- Strengths & Blindspots -->
+      <div style="display: flex; gap: 24px; margin-bottom: 32px;">
+        <div style="flex: 1; background: #064e3b20; border: 1px solid #064e3b80; border-top: 6px solid #10b981; border-radius: 16px; padding: 24px;">
+          <div style="font-size: 12px; font-weight: 800; color: #34d399; margin-bottom: 12px; letter-spacing: 0.1em; text-transform: uppercase;">What's Working</div>
+          <h3 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 800; color: #f3f4f6;">${STRENGTH_CARDS[lvl].label}</h3>
+          <p style="margin: 0; font-size: 14px; color: #a7f3d0; line-height: 1.6;">${STRENGTH_CARDS[lvl].text}</p>
+        </div>
+        <div style="flex: 1; background: #7c2d1220; border: 1px solid #7c2d1280; border-top: 6px solid #f59e0b; border-radius: 16px; padding: 24px;">
+          <div style="font-size: 12px; font-weight: 800; color: #fbbf24; margin-bottom: 12px; letter-spacing: 0.1em; text-transform: uppercase;">Watch Out For</div>
+          <h3 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 800; color: #f3f4f6;">${BLINDSPOT_CARDS[lvl].label}</h3>
+          <p style="margin: 0; font-size: 14px; color: #fde68a; line-height: 1.6;">${BLINDSPOT_CARDS[lvl].text}</p>
+        </div>
+      </div>
 
-    // Vertical separator 2
-    stroke(BRD); doc.setLineWidth(0.2);
-    doc.line(W / 2 + 22, 10.5, W / 2 + 22, 21.5);
+      <!-- Growth Roadmap -->
+      <div>
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px;">
+          <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
+          <div style="font-size: 13px; font-weight: 800; color: #6b7280; letter-spacing: 0.15em; text-transform: uppercase;">Growth Roadmap</div>
+          <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
+        </div>
+        
+        <div style="background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 32px;">
+          ${renderSteps()}
+        </div>
+      </div>
 
-    // Right: Imaginext logo with "In partnership with" label
-    reg(5); color(G500);
-    doc.text('IN PARTNERSHIP WITH', W - P - 22, 12.5, { align: 'center' });
-    if (imaginxtLogo) {
-      placeImg(imaginxtLogo, W - P - 22, 18, 30, 7);
-    } else {
-      bold(6.5); color(WHT); doc.text('IMAGINEXT', W - P - 22, 19, { align: 'center' });
-    }
-  };
+      <div style="margin-top: auto; padding-top: 24px; display: flex; justify-content: space-between; font-size: 12px; color: #4b5563; font-weight: 600; letter-spacing: 0.05em; border-top: 1px solid #1f2937;">
+        <span>AI COGNITIVE BLUEPRINT · CONFIDENTIAL</span>
+        <span>PAGE 2 / 2</span>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(container);
 
-  // ══════════════════════════════════════════
-  // PAGE 1
-  // ══════════════════════════════════════════
-  chrome(1);
-  brandHeader();
-  let y = 29;
+  // Allow styles to apply and images to load
+  await new Promise(r => setTimeout(r, 150));
 
-  // ── Accent glow strip behind hero ──
-  const acDim = ac.map(c => Math.round(c * 0.08 + BG[0] * 0.92));
-  fill(acDim);
-  doc.roundedRect(P, y, CW, 56, 3, 3, 'F');
+  try {
+    const page1Element = document.getElementById('pdf-page-1');
+    const page2Element = document.getElementById('pdf-page-2');
 
-  // Top accent line
-  fill(ac); doc.rect(P, y, CW, 1.2, 'F');
+    const canvas1 = await html2canvas(page1Element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#09090b' });
+    const canvas2 = await html2canvas(page2Element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#09090b' });
 
-  // "YOUR AI LEVEL" label
-  y += 7;
-  bold(6.5); color(G400);
-  doc.text('YOUR AI LEVEL', W / 2, y, { align: 'center' });
-  y += 2;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pdfW = 210;
+    const pdfH = 297;
 
-  // Giant level number
-  const display = lvl >= 5 ? '5+' : String(lvl);
-  bold(60); color(ac);
-  doc.text(display, W / 2, y + 22, { align: 'center' });
-  y += 25;
+    doc.addImage(canvas1.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, pdfH);
+    doc.addPage();
+    doc.addImage(canvas2.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, pdfH);
 
-  // TOP X% badge
-  const pct = meta.percentile;
-  fill(SURF); stroke(BRD); doc.setLineWidth(0.2);
-  doc.roundedRect(W / 2 - 16, y, 32, 7, 3.5, 3.5, 'DF');
-  bold(6.5); color(G400);
-  doc.text(`TOP ${pct}% OF USERS`, W / 2, y + 4.8, { align: 'center' });
-  y += 12;
-
-  // Level name
-  bold(14); color(WHT);
-  doc.text(meta.name.toUpperCase(), W / 2, y + 5, { align: 'center' });
-  y += 11;
-
-  // Tier pill + Relationship pill
-  const tierText = meta.tier.toUpperCase();
-  const rel = (relationshipStatus || 'casual');
-  const relLabel = rel.charAt(0).toUpperCase() + rel.slice(1);
-
-  const acPill = ac.map(c => Math.round(c * 0.15 + BG[0] * 0.85));
-  fill(acPill); stroke(ac); doc.setLineWidth(0.3);
-  doc.roundedRect(W / 2 - 36, y, 34, 7, 3.5, 3.5, 'DF');
-  bold(7); color(ac);
-  doc.text(tierText, W / 2 - 19, y + 5, { align: 'center' });
-
-  fill(SURF); stroke(BRD); doc.setLineWidth(0.2);
-  doc.roundedRect(W / 2 + 2, y, 34, 7, 3.5, 3.5, 'DF');
-  reg(7); color(G300);
-  doc.text(relLabel, W / 2 + 19, y + 5, { align: 'center' });
-  y += 14;
-
-  // ── CANDIDATE PROFILE ──
-  y = divider(y, 'CANDIDATE PROFILE');
-  card(P, y, CW, 24, SURF, BRD);
-  fill(ac); doc.rect(P, y, CW, 1.2, 'F');
-
-  const col2 = W / 2 + 2;
-  bold(6); color(G500); doc.text('NAME',     P + 4, y + 8);
-  bold(6); color(G500); doc.text('PHONE',    P + 4, y + 16);
-  bold(6); color(G500); doc.text('EMAIL',    col2,  y + 8);
-  bold(6); color(G500); doc.text('REF CODE', col2,  y + 16);
-
-  reg(8); color(WHT);
-  doc.text((name  || 'N/A').substring(0, 26),        P + 20, y + 8);
-  doc.text((phone || 'N/A').substring(0, 22),        P + 20, y + 16);
-  doc.text((email || 'Not provided').substring(0, 20), col2 + 18, y + 8);
-  doc.text((referralId || 'N/A').substring(0, 16),    col2 + 18, y + 16);
-  y += 30;
-
-  // ── COGNITIVE METRICS ──
-  y = divider(y, 'COGNITIVE METRICS');
-  const hw = (CW - 4) / 2;
-
-  card(P, y, hw, 30, SURF, BRD);
-  fill(ac); doc.rect(P, y, hw, 1.5, 'F');
-  bold(6); color(G500); doc.text('AI RELATIONSHIP LEVEL', P + 4, y + 9);
-  bold(28); color(ac);  doc.text(`${lvl}/5`, P + 5, y + 23);
-  bold(8);  color(WHT); doc.text(meta.name,   P + 4, y + 28);
-
-  card(P + hw + 4, y, hw, 30, SURF, BRD);
-  fill(G400); doc.rect(P + hw + 4, y, hw, 1.5, 'F');
-  bold(6); color(G500); doc.text('RELATIONSHIP STATUS',  P + hw + 8, y + 9);
-  bold(14); color(WHT); doc.text(relLabel.toUpperCase(), P + hw + 8, y + 21);
-  reg(7);   color(G400); doc.text('Behavioral integration depth', P + hw + 8, y + 27);
-  y += 36;
-
-  // ── SKILL DIMENSIONS ──
-  y = divider(y, 'SKILL DIMENSIONS');
-  const dims = [
-    { key: 'diet',      label: 'AI Diet & Variety' },
-    { key: 'context',   label: 'Context Depth' },
-    { key: 'frequency', label: 'Behavioral Frequency' },
-    { key: 'workflow',  label: 'Workflow Integration' },
-    { key: 'system',    label: 'System Architecture' },
-  ];
-  dims.forEach((d) => {
-    const val = Math.min(scores?.[d.key] ?? 0, 6);
-    const pct2 = val / 6;
-    reg(7.5); color(G300); doc.text(d.label, P, y);
-    bold(7.5); color(ac);  doc.text(`${val}/6`, W - P, y, { align: 'right' });
-    fill(BRD); doc.roundedRect(P, y + 2, CW, 2.5, 1.25, 1.25, 'F');
-    if (pct2 > 0) { fill(ac); doc.roundedRect(P, y + 2, CW * pct2, 2.5, 1.25, 1.25, 'F'); }
-    y += 11;
-  });
-
-  // ══════════════════════════════════════════
-  // PAGE 2
-  // ══════════════════════════════════════════
-  doc.addPage();
-  chrome(2);
-
-  // Compact page 2 brand strip
-  fill(SURF); stroke(BRD); doc.setLineWidth(0.15);
-  doc.roundedRect(P, 8, CW, 10, 1.5, 1.5, 'DF');
-  bold(6); color(G500);
-  doc.text('LEARNTUBE.AI  ×  IMAGINEXT', W / 2, 14.5, { align: 'center' });
-  reg(5.5); color(G500);
-  doc.text('AI COGNITIVE BLUEPRINT  ·  CONFIDENTIAL', W - P - 2, 14.5, { align: 'right' });
-  y = 24;
-
-  // ── YOUR PROFILE ──
-  y = divider(y, 'YOUR PROFILE');
-  card(P, y, CW, 36, SURF, BRD);
-  fill(ac); doc.rect(P, y + 3, 2.5, 30, 'F');
-  reg(8); color(G300);
-  const profileSplit = doc.splitTextToSize(PROFILE_TEXT[lvl], CW - 12);
-  doc.text(profileSplit, P + 7, y + 8);
-  y += 42;
-
-  // ── WHAT'S WORKING (teal) ──
-  y = divider(y, "WHAT'S WORKING");
-  const str = STRENGTH_CARDS[lvl];
-  fill([8, 35, 32]); stroke([20, 90, 78]); doc.setLineWidth(0.3);
-  doc.roundedRect(P, y, CW, 30, 2.5, 2.5, 'DF');
-  fill(TEAL); doc.rect(P, y, 2.5, 30, 'F');
-  bold(7.5); color(TEAL);
-  doc.text(str.label.toUpperCase(), P + 7, y + 8);
-  reg(8); color(G300);
-  doc.text(doc.splitTextToSize(str.text, CW - 10), P + 7, y + 15);
-  y += 36;
-
-  // ── WATCH OUT FOR (amber) ──
-  y = divider(y, 'WATCH OUT FOR');
-  const blind = BLINDSPOT_CARDS[lvl];
-  fill([35, 18, 4]); stroke([110, 65, 10]); doc.setLineWidth(0.3);
-  doc.roundedRect(P, y, CW, 30, 2.5, 2.5, 'DF');
-  fill(AMB); doc.rect(P, y, 2.5, 30, 'F');
-  bold(7.5); color(AMB);
-  doc.text(blind.label.toUpperCase(), P + 7, y + 8);
-  reg(8); color(G300);
-  doc.text(doc.splitTextToSize(blind.text, CW - 10), P + 7, y + 15);
-  y += 36;
-
-  // ── GROWTH ROADMAP ──
-  y = divider(y, 'GROWTH ROADMAP');
-  const steps = GROWTH_ROADMAPS[lvl] || GROWTH_ROADMAPS[4];
-  steps.forEach((step, i) => {
-    // Numbered accent circle
-    fill(ac); doc.ellipse(P + 4, y + 3.5, 3.5, 3.5, 'F');
-    bold(7.5); color(BG); doc.text(`${i + 1}`, P + 4, y + 4, { align: 'center' });
-    // Step text
-    bold(8.5); color(WHT); doc.text(`Step ${i + 1}`, P + 12, y + 2.5);
-    reg(7.5); color(G300);
-    const lines = doc.splitTextToSize(step, CW - 16);
-    doc.text(lines, P + 12, y + 8);
-    y += 8 + lines.length * 4.2 + 4;
-  });
-
-  return doc.output('blob');
+    return doc.output('blob');
+  } finally {
+    document.body.removeChild(container);
+  }
 };
 
 const REPORT_SEND_API =
   'https://xgfy-czuw-092q.m2.xano.io/api:GzVKKOQ4/aireadiness/report/send';
 
-/**
- * Fire-and-forget WhatsApp PDF dispatcher (Xano multipart upload).
- * Mirrors LinkedIn share_image_post: FormData + File blob attachment.
- */
 export const dispatchPDFReportToWhatsApp = (phone, pdfBlob, leadData = {}) => {
   const endpoint = window.WHATSAPP_PDF_API_URL || REPORT_SEND_API;
   const lvl = Math.max(0, Math.min(5, parseInt(leadData.level, 10) || 0));

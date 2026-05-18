@@ -636,6 +636,33 @@ function LevelReveal({ assessmentContext }) {
     message: '',
     error: null
   });
+
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadReport = async () => {
+    setIsDownloading(true);
+    try {
+      const pdfBlob = await generateAIReportPDF({
+        ...(leadData || {}),
+        level,
+        relationshipStatus,
+        scores,
+        referralId
+      });
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `AI_Level_Report_${(leadData?.name || 'User').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to generate PDF:", err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   const [proveReserved, setProveReserved] = useState(false);
   const [improveReserved, setImproveReserved] = useState(false);
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
@@ -1782,6 +1809,34 @@ function LevelReveal({ assessmentContext }) {
                     </p>
                   </div>
                   {!improveReserved && <span className="text-emerald-400/60 text-xs flex-shrink-0">→</span>}
+                </button>
+              </div>
+
+              {/* Download Report Button */}
+              <div className="rounded-xl border border-gray-800/30 bg-gray-900/40 hover:border-gray-700/40 overflow-hidden mb-4 transition-all duration-300 text-left">
+                <button
+                  onClick={handleDownloadReport}
+                  disabled={isDownloading}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-500/10 flex-shrink-0">
+                    {isDownloading ? (
+                      <div className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-blue-400">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold mb-0.5 text-white">
+                      {isDownloading ? "Generating PDF..." : "Download Full PDF Report"}
+                    </p>
+                    <p className="text-gray-500 text-[11px] leading-snug">
+                      Get your detailed cognitive blueprint & roadmap
+                    </p>
+                  </div>
+                  {!isDownloading && <span className="text-blue-400/60 text-xs flex-shrink-0">→</span>}
                 </button>
               </div>
 
