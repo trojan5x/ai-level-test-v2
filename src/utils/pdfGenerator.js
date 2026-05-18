@@ -385,18 +385,42 @@ export const generateAIReportPDF = async (leadData) => {
   return doc.output('blob');
 };
 
+const REPORT_SEND_API =
+  'https://xgfy-czuw-092q.m2.xano.io/api:GzVKKOQ4/aireadiness/report/send';
+
 /**
- * Fire-and-forget WhatsApp PDF dispatcher.
+ * Fire-and-forget WhatsApp PDF dispatcher (Xano multipart upload).
+ * Mirrors LinkedIn share_image_post: FormData + File blob attachment.
  */
 export const dispatchPDFReportToWhatsApp = (phone, pdfBlob, leadData = {}) => {
-  const endpoint = window.WHATSAPP_PDF_API_URL || 'https://api.learntube.ai/v1/send-whatsapp-pdf';
-  const form = new FormData();
-  form.append('phone', phone);
-  form.append('pdf', new File([pdfBlob], `ai-report-${leadData.referralId || 'assessment'}.pdf`, { type: 'application/pdf' }));
-  form.append('name',  leadData.name  || '');
-  form.append('level', leadData.level ?? 0);
-  fetch(endpoint, { method: 'POST', body: form })
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(d => console.log('✅ WhatsApp dispatch OK', d))
-    .catch(e => console.warn('⚠️ WhatsApp dispatch skipped:', e));
+  const endpoint = window.WHATSAPP_PDF_API_URL || REPORT_SEND_API;
+  const lvl = Math.max(0, Math.min(5, parseInt(leadData.level, 10) || 0));
+  const levelTitle = LEVEL_METADATA[lvl]?.name || 'Unknown';
+  const relationshipStatus = leadData.relationshipStatus || 'casual';
+
+  const safeName = (leadData.name || 'candidate').replace(/[^\w\s-]/g, '').trim() || 'candidate';
+  const pdfFile = new File(
+    [pdfBlob],
+    `${safeName}.pdf`,
+    { type: 'application/pdf' }
+  );
+
+  const formData = new FormData();
+  formData.append('phone', phone);
+  formData.append('name', leadData.name || '');
+  formData.append('level', String(lvl));
+  formData.append('level_title', levelTitle);
+  formData.append('relationship_status', relationshipStatus);
+  formData.append('pdf_file', pdfFile);
+
+  fetch(endpoint, { method: 'POST', body: formData })
+    .then(async (r) => {
+      if (!r.ok) {
+        const errText = await r.text();
+        throw new Error(`${r.status} ${r.statusText} - ${errText}`);
+      }
+      return r.json();
+    })
+    .then((d) => console.log('✅ Report send OK', d))
+    .catch((e) => console.warn('⚠️ Report send skipped:', e));
 };
