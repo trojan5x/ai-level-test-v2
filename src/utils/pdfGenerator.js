@@ -70,6 +70,48 @@ const GROWTH_ROADMAPS = {
   ],
 };
 
+function generateInsights(scores, level, relationshipStatus) {
+  if (!scores) scores = {};
+  const edge = scores.item3Correct
+    ? "You saw through the Artifact Effect when most people don't. You judge output by substance, not polish."
+    : scores.item2Correct >= 3
+      ? "You know AI's boundary — where it shines and where it breaks. That's rarer than it sounds."
+      : "You're early in understanding what AI can and can't do. That's normal — and the fastest skill to build.";
+
+  const instinct = !scores.item3Correct
+    ? "You chose polish over substance. The Artifact Effect — trusting AI output because it looks professional — is the #1 thing keeping people at Level 2."
+    : (scores.item4Choice === "B" || scores.item4Choice === "A")
+      ? "When AI's output was 80% there, you focused on format instead of substance. The question isn't 'how does this look?' — it's 'is the reasoning right?'"
+      : (scores.restraintScore !== undefined && scores.restraintScore < 2)
+        ? "You're tempted to use AI everywhere. But knowing when NOT to use it is just as important as knowing when to."
+        : "No major gaps in the quick assessment. The detailed breakdown would reveal the subtler patterns.";
+
+  const bridges = {
+    0: "Start by trying AI for one writing task this week. Just one. See what happens.",
+    1: "Try giving ChatGPT more context — who you are, what you need, and what good looks like. That's the bridge.",
+    2: "When AI gives you something that looks good, ask: 'Is this actually saying something specific?' That question changes everything.",
+    3: "You have the judgment. Now build it into a system — workflows where AI handles the right steps and you handle the rest.",
+    4: "You're at the frontier. The next step is building systems that uplift others — and pushing the boundary of what's possible.",
+    5: "You build systems that make others better. The next step is advancing the practice itself.",
+    6: "You're at the frontier. The practice evolves because people like you refuse to accept the current ceiling.",
+  };
+
+  const relationshipTips = {
+    single: "Your first step isn't learning prompts — it's finding one real problem AI can solve for you. The relationship starts with a real need.",
+    casual: "You're treating AI like a search engine with extra steps. Try giving it a real problem and having a 5-turn conversation. See what happens when you push back on its first answer.",
+    committed: "You've built a real working relationship. The next step is knowing when AI's judgment should override yours in specific domains — and when yours should override it.",
+    merged: "Watch for cognitive dependency. Can you still do deep thinking without AI as a sounding board? The strongest position is 'merged by choice, independent by capability.'",
+    complicated: "You have the skills of a high-level user, but the habits of a casual one. Pick a lane — either master a specific workflow or accept that AI is just a tool for you."
+  };
+
+  return {
+    edge,
+    instinct,
+    bridge: bridges[Math.min(level, 6)],
+    relationshipTip: relationshipTips[relationshipStatus || "casual"] || relationshipTips.casual
+  };
+}
+
 const loadImgDataUrl = (src) =>
   new Promise((resolve) => {
     const img = new window.Image();
@@ -92,8 +134,10 @@ const loadImgDataUrl = (src) =>
 export const generateAIReportPDF = async (leadData) => {
   const { name, phone, email, level, relationshipStatus, scores, referralId } = leadData;
   const lvl  = Math.max(0, Math.min(5, parseInt(level) || 0));
+  const relationshipStatusStr = relationshipStatus || 'casual';
   const meta  = LEVEL_METADATA[lvl];
   const ac    = meta.color;
+  const insights = generateInsights(scores, lvl, relationshipStatusStr);
   
   const [ltLogo, googleLogo, imaginxtLogo] = await Promise.all([
     loadImgDataUrl('/learntube-logo.png'),
@@ -140,7 +184,7 @@ export const generateAIReportPDF = async (leadData) => {
       return `
       <div style="display: flex; gap: 20px; margin-bottom: ${isLast ? '0' : '24px'};">
         <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background-color: ${ac}25; color: ${ac}; text-align: center; line-height: 38px; font-weight: bold; font-size: 18px; border: 1px solid ${ac}40; box-sizing: border-box;">
-          ${i + 1}
+          <span style="position: relative; top: -10px; display: inline-block;">${i + 1}</span>
         </div>
         <div>
           <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700; color: #f3f4f6;">Step ${i + 1}</h4>
@@ -185,23 +229,23 @@ export const generateAIReportPDF = async (leadData) => {
       <div style="background-color: #111827; border: 1px solid #1f2937; border-top: 4px solid ${ac}; border-radius: 24px; padding: 40px; margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
         <!-- Left Side: Level & Info -->
         <div style="display: flex; align-items: center; gap: 32px;">
-          <div style="font-size: 100px; font-weight: 900; color: ${ac}; line-height: 1; padding-bottom: 8px;">${lvl >= 5 ? '5+' : lvl}</div>
+          <div style="font-size: 100px; font-weight: 900; color: ${ac}; line-height: 1; padding-bottom: 8px; margin-top: -56px;">${lvl >= 5 ? '5+' : lvl}</div>
           <div style="text-align: left;">
             <div style="font-size: 14px; font-weight: 800; color: #9ca3af; letter-spacing: 0.15em; margin-bottom: 8px; text-transform: uppercase;">Your AI Level</div>
             <div style="font-size: 26px; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 16px;">${meta.name}</div>
-            <div style="display: inline-block; background-color: #1f2937; border: 1px solid #374151; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #e5e7eb; letter-spacing: 0.05em;">
-              TOP ${meta.percentile}% OF USERS
+            <div style="display: inline-block; background-color: #1f2937; border: 1px solid #374151; padding: 6px 16px; border-radius: 9999px; font-size: 12px; font-weight: 700; color: #e5e7eb; letter-spacing: 0.05em;">
+              <span style="position: relative; top: -7px; display: inline-block;">TOP ${meta.percentile}% OF USERS</span>
             </div>
           </div>
         </div>
         
         <!-- Right Side: Badges -->
         <div style="display: flex; flex-direction: column; gap: 16px;">
-          <div style="background-color: ${ac}20; color: ${ac}; border: 1px solid ${ac}40; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; min-width: 140px;">
-            ${meta.tier}
+          <div style="background-color: ${ac}20; color: ${ac}; border: 1px solid ${ac}40; padding: 10px 20px; border-radius: 9999px; font-size: 12.6px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; min-width: 126px;">
+            <span style="position: relative; top: -8px; display: inline-block;">${meta.tier}</span>
           </div>
-          <div style="background-color: #1f2937; color: #d1d5db; border: 1px solid #374151; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 700; text-align: center; min-width: 140px;">
-            ${(relationshipStatus || 'casual').charAt(0).toUpperCase() + (relationshipStatus || 'casual').slice(1)}
+          <div style="background-color: #1f2937; color: #d1d5db; border: 1px solid #374151; padding: 10px 20px; border-radius: 9999px; font-size: 12.6px; font-weight: 700; text-align: center; min-width: 126px;">
+            <span style="position: relative; top: -5px; display: inline-block;">${(relationshipStatusStr || 'casual').charAt(0).toUpperCase() + (relationshipStatusStr || 'casual').slice(1)}</span>
           </div>
         </div>
       </div>
@@ -249,7 +293,7 @@ export const generateAIReportPDF = async (leadData) => {
       
       <div style="margin-top: auto; padding-top: 24px; display: flex; justify-content: space-between; font-size: 12px; color: #4b5563; font-weight: 600; letter-spacing: 0.05em; border-top: 1px solid #1f2937;">
         <span>AI COGNITIVE BLUEPRINT · CONFIDENTIAL</span>
-        <span>PAGE 1 / 2</span>
+        <span>PAGE 1 / 3</span>
       </div>
     </div>
 
@@ -300,7 +344,62 @@ export const generateAIReportPDF = async (leadData) => {
 
       <div style="margin-top: auto; padding-top: 24px; display: flex; justify-content: space-between; font-size: 12px; color: #4b5563; font-weight: 600; letter-spacing: 0.05em; border-top: 1px solid #1f2937;">
         <span>AI COGNITIVE BLUEPRINT · CONFIDENTIAL</span>
-        <span>PAGE 2 / 2</span>
+        <span>PAGE 2 / 3</span>
+      </div>
+    </div>
+
+    <!-- PAGE 3 -->
+    <div id="pdf-page-3" style="${pageStyle}">
+      <div style="position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px; border: 1px solid #1f2937; pointer-events: none; border-radius: 8px;"></div>
+      ${headerHTML}
+      
+      <!-- Full Breakdown -->
+      <div style="margin-bottom: 32px;">
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px;">
+          <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
+          <div style="font-size: 13px; font-weight: 800; color: #6b7280; letter-spacing: 0.15em; text-transform: uppercase;">Your Full Breakdown</div>
+          <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 24px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 800; color: #ffffff;">✨ Your Edge</h3>
+            <p style="margin: 0; font-size: 15px; color: #d1d5db; line-height: 1.6;">${insights.edge}</p>
+          </div>
+          
+          <div style="background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 24px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 800; color: #ffffff;">🎯 Your Evaluation Instinct</h3>
+            <p style="margin: 0; font-size: 15px; color: #d1d5db; line-height: 1.6;">${insights.instinct}</p>
+          </div>
+          
+          <div style="background: #111827; border: 1px solid #1f2937; border-top: 6px solid #10b981; border-radius: 16px; padding: 24px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 800; color: #ffffff;">🚀 How to Level Up</h3>
+            <p style="margin: 0 0 16px 0; font-size: 15px; color: #d1d5db; line-height: 1.6;">${insights.bridge}</p>
+            
+            <ul style="margin: 0 0 20px 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px;">
+              ${(GROWTH_ROADMAPS[lvl] || GROWTH_ROADMAPS[0]).map(tip => `
+                <li style="display: flex; align-items: flex-start; gap: 10px;">
+                  <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #10b981; flex-shrink: 0; margin-top: 8px;"></span>
+                  <span style="font-size: 14px; color: #9ca3af; line-height: 1.6;">${tip}</span>
+                </li>
+              `).join('')}
+            </ul>
+
+            <div style="border-top: 1px solid #1f2937; padding-top: 16px;">
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-size: 14px; margin-top: 2px;">🧬</span>
+                <p style="margin: 0; font-size: 12px; color: #6b7280; line-height: 1.6; font-style: italic;">
+                  ${insights.relationshipTip}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; padding-top: 24px; display: flex; justify-content: space-between; font-size: 12px; color: #4b5563; font-weight: 600; letter-spacing: 0.05em; border-top: 1px solid #1f2937;">
+        <span>AI COGNITIVE BLUEPRINT · CONFIDENTIAL</span>
+        <span>PAGE 3 / 3</span>
       </div>
     </div>
   `;
@@ -313,9 +412,11 @@ export const generateAIReportPDF = async (leadData) => {
   try {
     const page1Element = document.getElementById('pdf-page-1');
     const page2Element = document.getElementById('pdf-page-2');
+    const page3Element = document.getElementById('pdf-page-3');
 
     const canvas1 = await html2canvas(page1Element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#09090b' });
     const canvas2 = await html2canvas(page2Element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#09090b' });
+    const canvas3 = await html2canvas(page3Element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#09090b' });
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pdfW = 210;
@@ -324,6 +425,8 @@ export const generateAIReportPDF = async (leadData) => {
     doc.addImage(canvas1.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, pdfH);
     doc.addPage();
     doc.addImage(canvas2.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, pdfH);
+    doc.addPage();
+    doc.addImage(canvas3.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, pdfH);
 
     return doc.output('blob');
   } finally {
