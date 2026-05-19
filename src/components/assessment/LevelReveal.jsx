@@ -762,6 +762,24 @@ function LevelReveal({ assessmentContext }) {
     }
   }, []);
 
+  // Fix stuck modal on back navigation from LinkedIn (bfcache issue)
+  useEffect(() => {
+    const handlePageShow = (event) => {
+      if (event.persisted) {
+        setLinkedinState("idle");
+        setLinkedinModal({
+          isOpen: false,
+          status: 'idle',
+          message: '',
+          error: null
+        });
+      }
+    };
+    
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+
   const shareText = `I'm AI Level ${level >= 5 ? "5+" : level} — ${data.name} ${relData.emoji}\nMy AI Relationship Status: ${relData.status}\n\nTop ${percentile}% of test-takers.\nWhat's yours? → ${window.location.origin}?utm_source=user_share`;
 
   const handleShare = async () => {
@@ -1800,7 +1818,6 @@ function LevelReveal({ assessmentContext }) {
                     <div className="flex-1 min-w-0">
                       <p className="text-gray-300 text-[11px] font-semibold truncate">Certified AI Level {level} — {data.name}</p>
                       <p className="text-gray-600 text-[11px]">LearnTube · Verified Assessment · 2026</p>
-                      <p className="text-[11px] mt-0.5" style={{ color: data.color }}>This is how it looks on LinkedIn →</p>
                     </div>
                   </div>
 

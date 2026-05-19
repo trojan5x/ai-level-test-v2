@@ -9,7 +9,7 @@ function LinkedInCallbackRedirect() {
   useEffect(() => {
     // Redirect to assessment results with the same query parameters
     const currentParams = window.location.search;
-    window.location.href = `/assessment/results${currentParams}`;
+    window.location.replace(`/assessment/results${currentParams}`);
   }, []);
 
   return (

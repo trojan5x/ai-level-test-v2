@@ -3427,9 +3427,8 @@ function LevelReveal({ level, scores, insights, relationshipStatus, selfSelected
                     <span className="text-lg font-extrabold" style={{ color: data.color }}>L{level}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-gray-300 text-[11px] font-semibold truncate">Certified AI Level {level} — {data.name}</p>
-                    <p className="text-gray-600 text-[11px]">LearnTube · Verified Assessment · 2026</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: data.color }}>This is how it looks on LinkedIn →</p>
+                      <p className="text-gray-300 text-[11px] font-semibold truncate">Certified AI Level {level} — {data.name}</p>
+                      <p className="text-gray-600 text-[11px]">LearnTube · Verified Assessment · 2026</p>
                   </div>
                 </div>
 
