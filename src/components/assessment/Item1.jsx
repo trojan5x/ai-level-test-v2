@@ -16,10 +16,6 @@ function Item1({ assessmentContext }) {
 
   const handleAnswer = (choice) => {
     setSelectedAnswer(choice);
-    // Auto-advance after selection
-    setTimeout(() => {
-      assessmentContext.handlers.handleItem1(choice);
-    }, 600);
   };
 
   const handlePrevious = () => {
@@ -115,7 +111,7 @@ function Item1({ assessmentContext }) {
                   onClick={handlePrevious}
                   className="flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2 invisible"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="invisible w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                   Previous

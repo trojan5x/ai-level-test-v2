@@ -42,19 +42,31 @@ function BehavioralFrequency({ assessmentContext }) {
     const pair = pairs[current];
     const updated = { ...choices, [pair.id]: option };
     setChoices(updated);
+  };
 
-    // Auto-advance after brief delay
-    setAnimating(true);
-    setTimeout(() => {
-      if (current < pairs.length - 1) {
+  const handleNext = () => {
+    if (current < pairs.length - 1) {
+      setAnimating(true);
+      setTimeout(() => {
         setCurrent(current + 1);
         setAnimating(false);
-      } else {
-        // All done — submit with behavioral scoring
-        const behavFreqScore = calculateBehavioralScore(updated);
-        assessmentContext.handlers.handleBehavioralFrequency(updated, behavFreqScore);
-      }
-    }, 400);
+      }, 300);
+    } else {
+      const behavFreqScore = calculateBehavioralScore(choices);
+      assessmentContext.handlers.handleBehavioralFrequency(choices, behavFreqScore);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (current > 0) {
+      setAnimating(true);
+      setTimeout(() => {
+        setCurrent(current - 1);
+        setAnimating(false);
+      }, 300);
+    } else {
+      assessmentContext.updateUrl('context');
+    }
   };
 
   const calculateBehavioralScore = (responses) => {
@@ -75,7 +87,7 @@ function BehavioralFrequency({ assessmentContext }) {
         <Header />
         <div className="flex-1 flex flex-col px-6 py-8">
           <ProgressBar current={3} total={10} showStepNumbers={true} />
-          <div className="flex-1 flex flex-col items-center w-full max-w-2xl mx-auto pt-4">
+          <div className="flex-1 flex flex-col items-center w-full max-w-2xl mx-auto pt-4 relative">
           
           {/* Step dots */}
           <div className="flex items-center gap-2 mb-8">
@@ -139,6 +151,32 @@ function BehavioralFrequency({ assessmentContext }) {
               </p>
             </button>
           </div>
+          
+          {/* Navigation buttons */}
+          <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-800/40 w-full">
+            <button
+              onClick={handlePrevious}
+              className="invisible flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Previous
+            </button>
+
+            <button
+              onClick={handleNext}
+              disabled={!choices[pair.id]}
+              className={`px-8 py-3 rounded-2xl transition-all duration-300 font-semibold ${
+                choices[pair.id]
+                  ? 'bg-white text-gray-950 hover:scale-[1.03] active:scale-[0.97] shadow-lg'
+                  : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {current < pairs.length - 1 ? 'Next →' : 'Continue →'}
+            </button>
+          </div>
+          
           </div>
         </div>
       </div>

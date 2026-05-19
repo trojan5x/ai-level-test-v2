@@ -237,6 +237,8 @@ export const updateAssessmentWithContact = async (sessionId, contactData) => {
         user_name:  contactData.name,
         user_phone: contactData.phone,
         user_email: contactData.email || null,
+        referral_id: contactData.referralId || null,
+        referred_by: contactData.referredBy || null,
         updated_at: new Date().toISOString()
       })
       .eq('session_id', sessionId)

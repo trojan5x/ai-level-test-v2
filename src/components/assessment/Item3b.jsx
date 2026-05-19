@@ -27,11 +27,12 @@ function Item3b({ assessmentContext }) {
 
   const handleAnswer = (choice) => {
     setSelectedChoice(choice);
-    
-    // Auto-advance after selection (with small delay)
-    setTimeout(() => {
-      assessmentContext.handlers.handleItem3b(choice);
-    }, 800);
+  };
+
+  const handleNext = () => {
+    if (selectedChoice) {
+      assessmentContext.handlers.handleItem3b(selectedChoice);
+    }
   };
 
   return (
@@ -108,6 +109,32 @@ function Item3b({ assessmentContext }) {
               </div>
             </FadeIn>
           </div>
+          {/* Navigation buttons */}
+          <FadeIn delay={100} className="w-full">
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-800/40 w-full max-w-2xl mx-auto">
+              <button
+                onClick={() => assessmentContext.updateUrl('item3')}
+                className="invisible flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Previous
+              </button>
+
+              <button
+                onClick={handleNext}
+                disabled={!selectedChoice}
+                className={`px-8 py-3 rounded-2xl transition-all duration-300 font-semibold ${
+                  selectedChoice
+                    ? 'bg-white text-gray-950 hover:scale-[1.03] active:scale-[0.97] shadow-lg'
+                    : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                Continue →
+              </button>
+            </div>
+          </FadeIn>
         </div>
       </div>
     </ScreenTransition>

@@ -114,6 +114,12 @@ function Landing() {
     // Create session and capture UTM data immediately on landing
     getSessionId();
     utmTracker.initialize();
+    
+    // Track referral visit if referral ID is present
+    const referralId = utmTracker.getReferralId();
+    if (referralId) {
+      utmTracker.trackReferralVisit(referralId);
+    }
 
     // Track landing page view
     trackPageView('landing');

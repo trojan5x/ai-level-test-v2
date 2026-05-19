@@ -11,6 +11,7 @@ import { trackAnalyticsEvent } from '../../supabase.js';
 import { updateAssessmentWithContact, getSessionId } from '../../utils/stateManager.js';
 import { trackLeadFormCompleted, identifyUser } from '../../mixpanel.js';
 import { generateReferralId } from '../../utils/referralGenerator.js';
+import { utmTracker } from '../../utils/utmTracker.js';
 import { EnhancedScoring, mergeAssessmentScores, getAssessmentPrimaryTotal } from '../../utils/stateManager.js';
 import { generateAIReportPDF, dispatchPDFReportToWhatsApp } from '../../utils/pdfGenerator.js';
 
@@ -87,6 +88,8 @@ function LeadCapture({ assessmentContext }) {
     if (!canSubmit) return;
 
     const totalScore = getAssessmentPrimaryTotal(mergedScores);
+    const referredBy = utmTracker.getReferralId();
+    const newReferralId = generateReferralId(name.trim());
 
     const leadData = {
       name: name.trim(),
@@ -95,7 +98,8 @@ function LeadCapture({ assessmentContext }) {
       level,
       relationshipStatus,
       scores: mergedScores,
-      referralId: generateReferralId(name.trim()),
+      referralId: newReferralId,
+      referredBy: referredBy,
       timestamp: Date.now()
     };
 
@@ -122,7 +126,9 @@ function LeadCapture({ assessmentContext }) {
     const result = await updateAssessmentWithContact(sessionId, {
       name:  leadData.name,
       phone: leadData.phone,
-      email: leadData.email
+      email: leadData.email,
+      referralId: leadData.referralId,
+      referredBy: leadData.referredBy
     });
 
     if (result.success && result.data) {

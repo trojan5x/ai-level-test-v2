@@ -668,7 +668,7 @@ function LevelReveal({ assessmentContext }) {
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
   const [previewDataUrl, setPreviewDataUrl] = useState(null);
-  const [referralId, setReferralId] = useState(null);
+  const [referralId, setReferralId] = useState(leadData?.referralId || null);
   const [challengeSent, setChallengeSent] = useState(false);
   const [challengeLink, setChallengeLink] = useState(false);
   const canvasRef = useRef(null);
@@ -834,7 +834,7 @@ function LevelReveal({ assessmentContext }) {
       is_manager: isManager,
     });
 
-    const fullUrl = `${window.location.origin}?utm_source=challenge`;
+    const fullUrl = `${window.location.origin}?utm_source=challenge${referralId ? `&ref=${referralId}` : ''}`;
     const text = isManager
       ? (level >= 3
           ? `I just tested my AI skills — scored Level ${level} (${data.name}). How does our team compare? Take it: ${fullUrl}`
@@ -928,12 +928,12 @@ function LevelReveal({ assessmentContext }) {
         throw new Error('User information not available. Please complete the assessment first.');
       }
 
-      // Generate referral ID
-      const newReferralId = generateReferralId(userLead.name);
-      setReferralId(newReferralId);
+      // Use existing referral ID or generate a new one if somehow missing
+      const shareReferralId = referralId || generateReferralId(userLead.name);
+      if (!referralId) setReferralId(shareReferralId);
 
       trackShareAttempted({
-        referral_id: newReferralId,
+        referral_id: shareReferralId,
         assessment_score: totalScore,
         assessment_level: level,
         relationship_status: relationshipStatus,
@@ -941,21 +941,21 @@ function LevelReveal({ assessmentContext }) {
       });
 
       // Track referral link generation
-      trackReferralLinkGenerated(newReferralId, {
+      trackReferralLinkGenerated(shareReferralId, {
         level,
         score: totalScore,
         relationshipStatus
       });
 
       // Track LinkedIn share initiation
-      trackLinkedInShareInitiated(newReferralId, {
+      trackLinkedInShareInitiated(shareReferralId, {
         level,
         score: totalScore,
         relationshipStatus
       });
 
       // Create referral link
-      const referralLink = createReferralLink(newReferralId);
+      const referralLink = createReferralLink(shareReferralId);
 
       // Store sharing data in session for OAuth callback
       const sharingData = {
@@ -966,7 +966,7 @@ function LevelReveal({ assessmentContext }) {
         scores,
         coreScores: state.assessment.scores,
         selfSelectedLevel,
-        referralId: newReferralId,
+        referralId: shareReferralId,
         userName: userLead.name,
         userEmail: userLead.email || userLead.phone,
         referralLink,
@@ -984,10 +984,10 @@ function LevelReveal({ assessmentContext }) {
       });
 
       // Generate LinkedIn OAuth URL
-      const linkedInAuthUrl = generateLinkedInAuthUrl(newReferralId);
+      const linkedInAuthUrl = generateLinkedInAuthUrl(shareReferralId);
       
       // Track OAuth redirect
-      trackLinkedInOAuthStarted(newReferralId, linkedInAuthUrl);
+      trackLinkedInOAuthStarted(shareReferralId, linkedInAuthUrl);
 
       // Redirect to LinkedIn OAuth
       setTimeout(() => {
