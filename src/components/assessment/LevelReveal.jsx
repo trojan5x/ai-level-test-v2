@@ -1533,6 +1533,66 @@ function LevelReveal({ assessmentContext }) {
             <div className={`transition-all duration-700 w-full mb-8 ${stage >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
 
               {/* ═══════════════════════════════════════════════════
+                  YOUR FULL BREAKDOWN
+               ═══════════════════════════════════════════════════ */}
+              <div className={`transition-all duration-700 mt-8 text-left ${stage >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="flex-1 h-px bg-gray-800/40" />
+                  <span className="text-gray-500 text-xs tracking-[0.2em] uppercase font-medium text-center">Your Full Breakdown</span>
+                  <div className="flex-1 h-px bg-gray-800/40" />
+                </div>
+
+                {/* Card 1: Your Edge */}
+                <div className="rounded-2xl border border-gray-800/40 bg-gray-900/60 p-5 mb-3 shadow-sm backdrop-blur-sm">
+                  <h3 className="text-white text-sm font-bold mb-2">
+                    ✨ Your Edge
+                  </h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    {insights.edge}
+                  </p>
+                </div>
+
+                {/* Card 2: Your Evaluation Instinct */}
+                <div className="rounded-2xl border border-gray-800/40 bg-gray-900/60 p-5 mb-3 shadow-sm backdrop-blur-sm">
+                  <h3 className="text-white text-sm font-bold mb-2">
+                    🎯 Your Evaluation Instinct
+                  </h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    {insights.instinct}
+                  </p>
+                </div>
+
+                {/* Card 3: How to Level Up */}
+                <div className="rounded-2xl border border-gray-800/40 border-t-emerald-500/30 bg-gray-900/60 p-5 mb-3 shadow-sm backdrop-blur-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"></div>
+                  <h3 className="text-white text-sm font-bold mb-3">
+                    🚀 How to Level Up
+                  </h3>
+                  <p className="text-gray-300 text-sm leading-relaxed mb-4">
+                    {insights.bridge}
+                  </p>
+                  
+                  <ul className="space-y-3 mb-5">
+                    {suggestions.levelTips.map((tip, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5"></span>
+                        <span className="text-gray-400 text-sm leading-relaxed">{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="pt-4 border-t border-gray-800/40">
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-sm mt-0.5">🧬</span>
+                      <p className="text-gray-500 text-xs leading-relaxed italic">
+                        {suggestions.relationshipTip}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════
                   BEAT 3: THE CHALLENGE — SOCIAL COMPARISON & COMPETITION
                ═══════════════════════════════════════════════════ */}
               <div className={`transition-all duration-700 mt-8 text-left ${stage >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
