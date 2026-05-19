@@ -102,7 +102,7 @@ function Item6({ assessmentContext }) {
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="The obvious move is asking for more detail. The interesting move is challenging the analysis itself..."
+                placeholder="Type your follow-up question here..."
                 rows={2}
                 className="w-full bg-gray-900/50 border border-gray-800/60 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all placeholder-gray-700 resize-none"
                 disabled={isSubmitting}

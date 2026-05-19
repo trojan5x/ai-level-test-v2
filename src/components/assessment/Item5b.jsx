@@ -91,7 +91,7 @@ function Item5b({ assessmentContext }) {
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder={`e.g. "I'm a B2B SaaS account exec, 2 years in. My close rate dropped from 22% to 14% this quarter. Help me diagnose what's going wrong..."`}
+                placeholder="Type your rewritten prompt here..."
                 rows={3}
                 className="w-full bg-gray-900/50 border border-gray-800/60 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all placeholder-gray-700 resize-none"
                 disabled={isSubmitting}
