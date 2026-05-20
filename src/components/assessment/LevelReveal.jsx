@@ -8,7 +8,7 @@ import ScreenTransition from '../ScreenTransition.jsx';
 import FadeIn from '../FadeIn.jsx';
 import Header from '../Header.jsx';
 import { trackResultPageViewed, trackCTAClicked, identifyUser, trackLinkedInShareInitiated, trackLinkedInOAuthStarted, trackReferralLinkGenerated, trackLinkedInOAuthCompleted, trackLinkedInShareCompleted, trackLinkedInShareFailed, trackShareAttempted, trackShareCompleted, trackChallengeSent } from '../../mixpanel.js';
-import { trackAnalyticsEvent, captureIntentData } from '../../supabase.js';
+import { trackAnalyticsEvent, captureIntentData, classifyLeaderRole, classifyLeaderRoleFallback } from '../../supabase.js';
 import { MessageCircle, Mail, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
 
 const LinkedinIcon = () => (
@@ -17,6 +17,7 @@ const LinkedinIcon = () => (
 import { generateReferralId, createReferralLink } from '../../utils/referralGenerator.js';
 import { generateLinkedInAuthUrl, linkedInSession, parseOAuthCallback, validateOAuthCallback, createLinkedInPostContent, getLinkedInRedirectUri } from '../../utils/linkedinAuth.js';
 import { generateAIReportPDF } from '../../utils/pdfGenerator.js';
+import { preloadBadgeLogos, renderShareCard, generateShareBadgeBase64 } from '../../utils/shareBadgeRenderer.js';
 import { EnhancedScoring, mergeAssessmentScores, getAssessmentPrimaryTotal } from '../../utils/stateManager.js';
 
 // ─── Level Data (EXACT ORIGINAL) ────────────────────────────
@@ -239,267 +240,6 @@ function getGapDescription(level) {
   return gaps[Math.min(level, 6)];
 }
 
-// ─── Badge Tier Color System (Faceted Gem design) ───
-const BADGE_GEM_TIERS = {
-  0: { bg: ["#08090f","#0e1018"], gem: ["#5a657a","#7a869e","#95a0b8","#b0bcd0","#d0d8e8"], accent: "#95a0b8", sparkle: "#d0d8e8", name: "STEEL" },
-  1: { bg: ["#08090f","#0e1018"], gem: ["#5a657a","#7a869e","#95a0b8","#b0bcd0","#d0d8e8"], accent: "#95a0b8", sparkle: "#d0d8e8", name: "STEEL" },
-  2: { bg: ["#020e08","#041a0e"], gem: ["#047857","#059669","#10b981","#34d399","#6ee7b7"], accent: "#34d399", sparkle: "#a7f3d0", name: "EMERALD" },
-  3: { bg: ["#020818","#06122d"], gem: ["#1e40af","#2563eb","#3b82f6","#60a5fa","#93c5fd"], accent: "#60a5fa", sparkle: "#bfdbfe", name: "SAPPHIRE" },
-  4: { bg: ["#0a0318","#15082e"], gem: ["#6d28d9","#7c3aed","#8b5cf6","#a78bfa","#c4b5fd"], accent: "#a78bfa", sparkle: "#ddd6fe", name: "AMETHYST" },
-  5: { bg: ["#140a00","#241600"], gem: ["#a16207","#ca8a04","#eab308","#fbbf24","#fde68a"], accent: "#fbbf24", sparkle: "#fef3c7", name: "GOLD" },
-  6: { bg: ["#1a0000","#2d0505"], gem: ["#b91c1c","#dc2626","#ef4444","#f87171","#fca5a5"], accent: "#f87171", sparkle: "#fecaca", name: "RUBY" },
-};
-
-// ─── Share Card Rendering ─────────────────
-function renderShareCard(canvas, level, levelData, relationshipData, percentile, referralLink = null, selfSelectedLevel = null) {
-  const ctx = canvas.getContext("2d");
-  const S = 1080;
-  canvas.width = S;
-  canvas.height = S;
-
-  const t = BADGE_GEM_TIERS[Math.min(level, 6)] || BADGE_GEM_TIERS[0];
-  const cx = S / 2;
-  const levelDisplay = level >= 5 ? "5+" : String(level);
-
-  let _seed = level * 1000 + 42;
-  function rand() { _seed = (_seed * 16807) % 2147483647; return _seed / 2147483647; }
-
-  // Resolve relationship
-  const REL_WORDS = { "Merged": "MERGED", "Committed": "COMMITTED", "It's Complicated": "IT’S COMPLICATED", "Casual": "CASUAL" };
-  const relWord = relationshipData.status !== "Single" ? (REL_WORDS[relationshipData.status] || null) : null;
-
-  // Helpers
-  function hexToRgb(hex) { return { r: parseInt(hex.slice(1,3),16), g: parseInt(hex.slice(3,5),16), b: parseInt(hex.slice(5,7),16) }; }
-  const accentRgb = hexToRgb(t.accent);
-  const sparkleRgb = hexToRgb(t.sparkle);
-  function hexPts(hcx, hcy, r) {
-    const pts = [];
-    for (let i = 0; i < 6; i++) { const a = (Math.PI / 3) * i - Math.PI / 2; pts.push({ x: hcx + r * Math.cos(a), y: hcy + r * Math.sin(a) }); }
-    return pts;
-  }
-  function drawHex(pts) { ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.closePath(); }
-  function spacedText(text, x, y, sp) {
-    let tw = 0; for (const ch of text) tw += ctx.measureText(ch).width + sp;
-    let sx = x - tw / 2;
-    for (const ch of text) { ctx.fillText(ch, sx + ctx.measureText(ch).width / 2, y); sx += ctx.measureText(ch).width + sp; }
-  }
-
-  // ═══ 1. BACKGROUND — Luxe radial + streaks + grain ═══
-  const bgGrad = ctx.createRadialGradient(cx, 290, 50, cx, 290, 700);
-  bgGrad.addColorStop(0, t.bg[1]); bgGrad.addColorStop(0.4, t.bg[0]); bgGrad.addColorStop(1, "#000000");
-  ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, S, S);
-
-  for (let i = 0; i < 8; i++) {
-    const y = 80 + rand() * 500, alpha = 0.015 + rand() * 0.02;
-    const sg = ctx.createLinearGradient(0, y, S, y);
-    sg.addColorStop(0, "transparent");
-    sg.addColorStop(0.3, `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},${alpha})`);
-    sg.addColorStop(0.5, `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},${alpha * 1.5})`);
-    sg.addColorStop(0.7, `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},${alpha})`);
-    sg.addColorStop(1, "transparent");
-    ctx.fillStyle = sg; ctx.fillRect(0, y - 1, S, 2 + rand() * 3);
-  }
-  for (let i = 0; i < 10000; i++) { ctx.fillStyle = `rgba(255,255,255,${rand() * 0.04})`; ctx.fillRect(rand() * S, rand() * S, 1, 1); }
-
-  // ═══ 2. TOP BAR ═══
-  ctx.textBaseline = "middle"; ctx.textAlign = "left";
-  ctx.fillStyle = "rgba(255,255,255,0.5)";
-  ctx.font = "600 14px system-ui, -apple-system, sans-serif";
-  let ltx = 60;
-  for (const ch of "LEARNTUBE") { ctx.fillText(ch, ltx, 48); ltx += ctx.measureText(ch).width + 3; }
-
-  ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.font = "500 12px system-ui, -apple-system, sans-serif";
-  const rLabel = "AI PROFICIENCY SCORE";
-  let rlx = S - 60;
-  for (let i = rLabel.length - 1; i >= 0; i--) { const ch = rLabel[i], cw = ctx.measureText(ch).width; ctx.fillText(ch, rlx - cw / 2, 48); rlx -= cw + 2.5; }
-
-  ctx.strokeStyle = `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.1)`;
-  ctx.lineWidth = 0.5;
-  ctx.beginPath(); ctx.moveTo(60, 70); ctx.lineTo(S - 60, 70); ctx.stroke();
-
-  // ═══ 3. GEM ═══
-  const gemCy = 280, gemR = 200;
-
-  // Glow behind gem
-  const glowGrad = ctx.createRadialGradient(cx, gemCy + 20, 0, cx, gemCy + 20, gemR * 1.5);
-  glowGrad.addColorStop(0, `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.3)`);
-  glowGrad.addColorStop(0.3, `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.1)`);
-  glowGrad.addColorStop(0.7, `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.03)`);
-  glowGrad.addColorStop(1, "transparent");
-  ctx.fillStyle = glowGrad; ctx.fillRect(0, 0, S, S);
-
-  const outerPts = hexPts(cx, gemCy, gemR);
-  const center = { x: cx, y: gemCy };
-
-  // Gem body
-  drawHex(outerPts);
-  const gemBodyGrad = ctx.createLinearGradient(cx - gemR, gemCy - gemR, cx + gemR, gemCy + gemR);
-  gemBodyGrad.addColorStop(0, t.gem[0]); gemBodyGrad.addColorStop(0.5, t.gem[1]); gemBodyGrad.addColorStop(1, t.gem[0]);
-  ctx.fillStyle = gemBodyGrad; ctx.fill();
-
-  // Facets with lighting
-  for (let i = 0; i < 6; i++) {
-    const p1 = outerPts[i], p2 = outerPts[(i + 1) % 6];
-    ctx.beginPath(); ctx.moveTo(center.x, center.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.closePath();
-    const midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2;
-    const fg = ctx.createLinearGradient(center.x, center.y, midX, midY);
-    if (i === 0 || i === 5) { fg.addColorStop(0, t.gem[2]); fg.addColorStop(0.5, t.gem[3]); fg.addColorStop(1, t.gem[4]); ctx.globalAlpha = 0.85; }
-    else if (i === 1) { fg.addColorStop(0, t.gem[1]); fg.addColorStop(1, t.gem[3]); ctx.globalAlpha = 0.7; }
-    else if (i === 2 || i === 3) { fg.addColorStop(0, t.gem[0]); fg.addColorStop(1, t.gem[1]); ctx.globalAlpha = 0.6; }
-    else { fg.addColorStop(0, t.gem[1]); fg.addColorStop(1, t.gem[2]); ctx.globalAlpha = 0.65; }
-    ctx.fillStyle = fg; ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-
-  // Inner hex for depth
-  const innerPts = hexPts(cx, gemCy, gemR * 0.55);
-  drawHex(innerPts);
-  const innerGrad = ctx.createRadialGradient(cx - 40, gemCy - 40, 0, cx, gemCy, gemR * 0.55);
-  innerGrad.addColorStop(0, t.gem[3]); innerGrad.addColorStop(0.5, t.gem[2]); innerGrad.addColorStop(1, t.gem[1]);
-  ctx.fillStyle = innerGrad; ctx.globalAlpha = 0.5; ctx.fill(); ctx.globalAlpha = 1;
-
-  // Facet lines
-  ctx.strokeStyle = `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.2)`; ctx.lineWidth = 0.8;
-  for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(innerPts[i].x, innerPts[i].y); ctx.lineTo(outerPts[i].x, outerPts[i].y); ctx.stroke(); }
-  ctx.strokeStyle = `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.25)`; ctx.lineWidth = 1;
-  for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(center.x, center.y); ctx.lineTo(outerPts[i].x, outerPts[i].y); ctx.stroke(); }
-
-  // Rim light
-  ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.moveTo(outerPts[4].x, outerPts[4].y); ctx.lineTo(outerPts[5].x, outerPts[5].y); ctx.lineTo(outerPts[0].x, outerPts[0].y); ctx.stroke();
-  ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(outerPts[0].x, outerPts[0].y); ctx.lineTo(outerPts[1].x, outerPts[1].y); ctx.stroke();
-
-  // Outer border
-  drawHex(outerPts);
-  ctx.strokeStyle = `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.4)`; ctx.lineWidth = 1.5; ctx.stroke();
-
-  // Reflection line
-  const reflY = gemCy + gemR + 12;
-  const lineGr = ctx.createLinearGradient(cx - 200, 0, cx + 200, 0);
-  lineGr.addColorStop(0, "transparent"); lineGr.addColorStop(0.3, `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.12)`);
-  lineGr.addColorStop(0.5, `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.2)`); lineGr.addColorStop(0.7, `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.12)`);
-  lineGr.addColorStop(1, "transparent");
-  ctx.strokeStyle = lineGr; ctx.lineWidth = 0.7;
-  ctx.beginPath(); ctx.moveTo(cx - 260, reflY); ctx.lineTo(cx + 260, reflY); ctx.stroke();
-
-  // Sparkles
-  _seed = level * 1000 + 42;
-  const numSparkles = 3 + Math.floor(rand() * 3);
-  for (let i = 0; i < numSparkles; i++) {
-    const sa = -Math.PI * 0.8 + rand() * Math.PI * 1.2, sd = gemR * 0.5 + rand() * gemR * 0.7;
-    const sx = cx + Math.cos(sa) * sd, sy = gemCy + Math.sin(sa) * sd * 0.7, ssz = 8 + rand() * 14;
-    ctx.save(); ctx.globalAlpha = 0.7 + rand() * 0.3;
-    const spG = ctx.createRadialGradient(sx, sy, 0, sx, sy, ssz * 2);
-    spG.addColorStop(0, "rgba(255,255,255,0.6)"); spG.addColorStop(0.3, `rgba(${sparkleRgb.r},${sparkleRgb.g},${sparkleRgb.b},0.3)`); spG.addColorStop(1, "transparent");
-    ctx.fillStyle = spG; ctx.fillRect(sx - ssz * 2, sy - ssz * 2, ssz * 4, ssz * 4);
-    ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(sx, sy - ssz); ctx.lineTo(sx, sy + ssz); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(sx - ssz, sy); ctx.lineTo(sx + ssz, sy); ctx.stroke();
-    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
-
-  // ═══ 4. CONTENT ON GEM — number + /6 ═══
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillStyle = "#ffffff";
-  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 20; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 4;
-  ctx.font = "900 170px system-ui, -apple-system, sans-serif";
-  const levelMetrics = ctx.measureText(levelDisplay);
-  const levelX = cx - 12;
-  ctx.fillText(levelDisplay, levelX, gemCy + 20);
-
-  ctx.font = "400 60px system-ui, -apple-system, sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.textAlign = "left";
-  ctx.fillText("/ 6", levelX + levelMetrics.width / 2 + 10, gemCy + 18);
-
-  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
-
-  // ═══ 5. BELOW GEM: Level name → Relationship → Stats ═══
-  ctx.textAlign = "center";
-  const levelNames = ["Non-User","Experimenter","Functional User","Effective Practitioner","AI-Native Performer","AI-Native Builder","Frontier Contributor"];
-  const nameY = gemCy + gemR + 40;
-  ctx.fillStyle = "rgba(255,255,255,0.7)";
-  ctx.font = "500 20px system-ui, -apple-system, sans-serif";
-  spacedText((levelNames[level] || levelNames[0]).toUpperCase(), cx, nameY, 3);
-
-  // Relationship — bold identity hook
-  if (relWord) {
-    const relLabelY = nameY + 46;
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
-    ctx.font = "500 13px system-ui, -apple-system, sans-serif";
-    spacedText("MY AI RELATIONSHIP", cx, relLabelY, 4);
-
-    const relFontSize = relWord.length > 12 ? 56 : 64;
-    ctx.font = `900 ${relFontSize}px system-ui, -apple-system, sans-serif`;
-    ctx.fillStyle = t.accent;
-    const relWordY = relLabelY + 56;
-    ctx.fillText(relWord, cx, relWordY);
-
-    // Subtle glow behind word
-    ctx.save();
-    const tg = ctx.createRadialGradient(cx, relWordY, 0, cx, relWordY, 180);
-    tg.addColorStop(0, `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.06)`); tg.addColorStop(1, "transparent");
-    ctx.globalCompositeOperation = "destination-over";
-    ctx.fillStyle = tg; ctx.fillRect(cx - 180, relWordY - 50, 360, 100);
-    ctx.restore();
-  }
-
-  // Percentile / positioning line
-  const pctDisplay = percentile || [95, 65, 34, 12, 5, 1][level] || 50;
-  const pctY = relWord ? (nameY + 46 + 56 + 52) : (nameY + 60);
-  ctx.font = "700 20px system-ui, -apple-system, sans-serif";
-  ctx.fillStyle = "#ffffff";
-  if (level <= 1) {
-    ctx.fillText("Now I know where I stand — growth starts here", cx, pctY);
-  } else {
-    ctx.fillText(`Top ${pctDisplay}% of professionals assessed`, cx, pctY);
-  }
-
-  // Credibility zone
-  const divY = pctY + 26;
-  ctx.strokeStyle = "rgba(255,255,255,0.08)"; ctx.lineWidth = 0.5;
-  ctx.beginPath(); ctx.moveTo(cx - 220, divY); ctx.lineTo(cx + 220, divY); ctx.stroke();
-
-  const resY = divY + 24;
-  ctx.fillStyle = "rgba(255,255,255,0.4)";
-  ctx.font = "400 13px system-ui, -apple-system, sans-serif";
-  ctx.fillText("Assessment built on research from", cx, resY);
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.font = "700 17px system-ui, -apple-system, sans-serif";
-  ctx.fillText("BCG  ·  Anthropic  ·  MIT", cx, resY + 24);
-
-  const compY = resY + 56;
-  ctx.fillStyle = "rgba(255,255,255,0.4)";
-  ctx.font = "400 12px system-ui, -apple-system, sans-serif";
-  ctx.fillText("Professionals assessed from", cx, compY);
-  ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.font = "600 14px system-ui, -apple-system, sans-serif";
-  ctx.fillText("Meta  ·  Amazon  ·  TCS  ·  Deloitte  ·  Infosys  ·  and more", cx, compY + 20);
-
-  // ═══ 6. BOTTOM — curiosity nudge + URL ═══
-  ctx.textBaseline = "bottom";
-  ctx.fillStyle = "rgba(255,255,255,0.75)";
-  ctx.font = "700 22px system-ui, -apple-system, sans-serif";
-  ctx.fillText("What’s your AI Level?", cx, S - 82);
-
-  ctx.fillStyle = t.accent;
-  ctx.font = "800 19px system-ui, -apple-system, sans-serif";
-  
-  // Use referral link if provided, otherwise use current origin
-  const displayUrl = referralLink ? 
-    referralLink.replace(/https?:\/\//, '') : 
-    (typeof window !== 'undefined' ? window.location.host : "ai-level.learntube.ai");
-  ctx.fillText(`Visit: ${displayUrl}`, cx, S - 52);
-
-  ctx.fillStyle = "rgba(255,255,255,0.4)";
-  ctx.font = "500 14px system-ui, -apple-system, sans-serif";
-  ctx.fillText("Free  ·  Under 10 min  ·  4M+ assessed", cx, S - 26);
-}
-
 // ─── Animated Components (EXACT ORIGINAL) ──────────────────
 function AnimatedNumber({ target, color, duration = 1200 }) {
   const [current, setCurrent] = useState(0);
@@ -681,6 +421,12 @@ function LevelReveal({ assessmentContext }) {
   const [referralId, setReferralId] = useState(leadData?.referralId || null);
   const [challengeSent, setChallengeSent] = useState(false);
   const [challengeLink, setChallengeLink] = useState(false);
+  const [leaderProfile, setLeaderProfile] = useState(() =>
+    classifyLeaderRoleFallback(
+      state.assessment?.profile?.role || leadData?.role || '',
+      state.assessment?.profile?.persona || leadData?.persona || null
+    )
+  );
   const canvasRef = useRef(null);
   const previewRef = useRef(null);
   const data = LEVEL_DATA[level] || LEVEL_DATA[4];
@@ -688,10 +434,13 @@ function LevelReveal({ assessmentContext }) {
   const percentile = getPercentile(level);
   const suggestions = getImprovementSuggestions(level, relationshipStatus);
 
-  // Manager detection and context data
-  const role = leadData?.role || '';
-  const company = leadData?.company || '';
-  const isManager = role && /\b(lead|manager|manag|director|head|vp|chief|founder|ceo|cto)\b/i.test(role);
+  // Profile from context step (role, company, persona category)
+  const profile = state.assessment?.profile || {};
+  const persona = profile.persona || leadData?.persona || null;
+  const role = profile.role || leadData?.role || '';
+  const company = profile.company || leadData?.company || '';
+  const isManager = leaderProfile.is_leader ?? leaderProfile.prioritize_team_challenge;
+  const prioritizeTeamChallenge = leaderProfile.prioritize_team_challenge;
 
   // Temporary button handler to download generated PDF for testing
   const handleTestPDFDownload = async () => {
@@ -741,12 +490,28 @@ function LevelReveal({ assessmentContext }) {
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, []);
 
-  // Render share card when share section appears
+  useEffect(() => { preloadBadgeLogos(); }, []);
+
+  // Classify role + persona for managers/CXOs/founders (team challenge before LinkedIn share)
+  useEffect(() => {
+    if (!role.trim()) return;
+    let cancelled = false;
+    classifyLeaderRole({ role, persona, company }).then((result) => {
+      if (!cancelled) setLeaderProfile(result);
+    });
+    return () => { cancelled = true; };
+  }, [role, persona, company]);
+
+  // Render share card when share section appears (after logos load)
   useEffect(() => {
     if (stage >= 3 && previewRef.current) {
-      renderShareCard(previewRef.current, level, data, relData, percentile, null, selfSelectedLevel);
+      preloadBadgeLogos().then(() => {
+        if (previewRef.current) {
+          renderShareCard(previewRef.current, level, data, relData, percentile, null, selfSelectedLevel);
+        }
+      });
     }
-  }, [stage, level, data, relData, percentile]);
+  }, [stage, level, data, relData, percentile, selfSelectedLevel]);
 
   // Handle LinkedIn OAuth callback parameters
   useEffect(() => {
@@ -798,6 +563,7 @@ function LevelReveal({ assessmentContext }) {
 
     const canvas = canvasRef.current;
     if (!canvas) return;
+    await preloadBadgeLogos();
     renderShareCard(canvas, level, data, relData, percentile, null, selfSelectedLevel);
 
     if (navigator.share && navigator.canShare) {
@@ -1212,31 +978,16 @@ function LevelReveal({ assessmentContext }) {
     }
   };
 
-  // Generate badge with referral link (high-fidelity version using renderShareCard)
-  const generateBadgeWithReferral = async (sharingData, referralLink) => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const levelData = LEVEL_DATA[sharingData.level] || LEVEL_DATA[4];
-      const relationshipData = sharingData.relationshipData
-        || RELATIONSHIP_DATA[sharingData.relationshipStatus]
-        || RELATIONSHIP_DATA.casual;
-      const percentile = sharingData.percentile || getPercentile(sharingData.level);
-      const selfSelected = sharingData.selfSelectedLevel !== undefined ? sharingData.selfSelectedLevel : selfSelectedLevel;
-
-      // Render the high-fidelity badge using the new design!
-      renderShareCard(canvas, sharingData.level, levelData, relationshipData, percentile, referralLink, selfSelected);
-
-      // Convert to base64
-      canvas.toBlob((blob) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = reader.result.split(',')[1];
-          resolve(base64);
-        };
-        reader.readAsDataURL(blob);
-      }, 'image/png');
+  const generateBadgeWithReferral = (sharingData, referralLink) =>
+    generateShareBadgeBase64({
+      level: sharingData.level,
+      relationshipStatus: sharingData.relationshipStatus || relationshipStatus,
+      referralLink,
+      selfSelectedLevel:
+        sharingData.selfSelectedLevel !== undefined
+          ? sharingData.selfSelectedLevel
+          : selfSelectedLevel,
     });
-  };
 
   // Share to LinkedIn API
   const shareToLinkedIn = async (payload) => {
@@ -1316,6 +1067,165 @@ function LevelReveal({ assessmentContext }) {
 
   // Fix shareButtonText reference
   const shareButtonText = shareLabel;
+
+  const renderLinkedInShareSection = (minStage) => (
+    <div className={`transition-all duration-700 pt-4 pb-6 ${stage >= minStage ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+      <div className="flex items-start gap-4 bg-gray-900/40 border border-gray-800/60 rounded-2xl p-4 backdrop-blur-sm">
+        <button
+          onClick={async () => {
+            if (canvasRef.current) {
+              await preloadBadgeLogos();
+              renderShareCard(canvasRef.current, level, data, relData, percentile, null, selfSelectedLevel);
+              setPreviewDataUrl(canvasRef.current.toDataURL());
+            }
+            setIsPreviewExpanded(true);
+          }}
+          className="flex-shrink-0 relative rounded-xl overflow-hidden border border-gray-700/50 shadow-lg active:scale-95 transition-transform"
+          style={{ width: 80, height: 80 }}
+        >
+          <canvas
+            ref={previewRef}
+            className="rounded-xl"
+            style={{ width: 80, height: 80 }}
+          />
+          <div className="absolute bottom-1 right-1 bg-gray-950/80 backdrop-blur-sm rounded-md p-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+          </div>
+        </button>
+        <div className="flex-1 flex flex-col gap-3">
+          <p className="text-gray-400 text-[11px] leading-relaxed">
+            Share your <span className="text-white font-semibold">AI Level {level >= 5 ? "5+" : level}</span> card — a custom image with your score.
+          </p>
+          <button
+            onClick={handleLinkedInShare}
+            disabled={linkedinState === "generating" || linkedinState === "redirecting"}
+            className={`w-full font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors duration-200 ${
+              linkedinState === "shared" ?
+                "bg-emerald-500 text-white" :
+                linkedinState === "error" ?
+                  "bg-red-500 hover:bg-red-600 text-white" :
+                  "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+          >
+            {linkedinState === "shared" ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+            ) : linkedinState === "generating" || linkedinState === "redirecting" ? (
+              <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : linkedinState === "error" ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+            )}
+            {linkedinLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderChallengeSection = (minStage) => (
+    <div className={`transition-all duration-700 mt-8 text-left ${stage >= minStage ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
+      <div className="flex items-center gap-3 mb-5">
+        <div className="flex-1 h-px bg-gray-800/40" />
+        <span className="text-gray-500 text-xs tracking-[0.2em] uppercase font-medium">Challenge</span>
+        <div className="flex-1 h-px bg-gray-800/40" />
+      </div>
+      <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 px-5 pt-5 pb-4 mb-3">
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-1.5" style={{ backgroundColor: `${data.color}15`, border: `2px solid ${data.color}40` }}>
+              <span className="text-2xl font-extrabold" style={{ color: data.color }}>L{level}</span>
+            </div>
+            <p className="text-gray-400 text-[10px]">You</p>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-gray-600 text-lg font-bold">vs</span>
+          </div>
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-gray-600 flex items-center justify-center mb-1.5 bg-gray-900/40 animate-pulse">
+              <span className="text-gray-500 text-xl">?</span>
+            </div>
+            <p className="text-gray-500 text-[10px]">
+              {isManager ? "Your team" : "A friend"}
+            </p>
+          </div>
+        </div>
+        <p className="text-white text-sm font-bold text-center mb-1">
+          {isManager && company
+            ? `Where does ${company} stand?`
+            : isManager
+              ? "How AI-ready is your team?"
+            : level >= 4
+              ? `Only ${percentile}% score this high.`
+            : level >= 2
+              ? "How do you compare to your circle?"
+              : "Find out who's actually ahead."
+          }
+        </p>
+        <p className="text-gray-400 text-xs text-center mb-4 leading-relaxed">
+          {isManager
+            ? (level >= 4
+                ? "You're ahead of most. Find out if your team is keeping up."
+                : "Most teams overestimate their AI skills by 2 levels. Send the test and see the real data.")
+            : level >= 3
+              ? `You scored top ${percentile}%. Most people you know probably overestimate by 2 levels.`
+              : "Most people think they're better than they are. Send this and find out."}
+        </p>
+        <div className="grid grid-cols-3 gap-2 mb-2">
+          <button
+            onClick={() => handleChallenge("whatsapp")}
+            className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 active:scale-[0.97] transition-all"
+            aria-label="Challenge via WhatsApp"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span className="text-[10px] font-semibold">WhatsApp</span>
+          </button>
+          <button
+            onClick={() => handleChallenge("linkedin")}
+            className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 active:scale-[0.97] transition-all"
+            aria-label="Challenge via LinkedIn"
+          >
+            <LinkedinIcon className="w-4 h-4" />
+            <span className="text-[10px] font-semibold">LinkedIn</span>
+          </button>
+          <button
+            onClick={() => handleChallenge("email")}
+            className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 active:scale-[0.97] transition-all"
+            aria-label="Challenge via Email"
+          >
+            <Mail className="w-4 h-4" />
+            <span className="text-[10px] font-semibold">Email</span>
+          </button>
+        </div>
+        <button
+          onClick={() => handleChallenge("copy")}
+          aria-label="Copy challenge link to clipboard"
+          className={`w-full py-2.5 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 ${
+            challengeLink
+              ? "bg-emerald-500/20 text-emerald-400"
+              : "bg-gray-800/40 text-gray-400 hover:text-white hover:bg-gray-800/60"
+          }`}
+        >
+          {challengeLink ? (
+            <>
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Link copied!</span>
+            </>
+          ) : (
+            <>
+              <LinkIcon className="w-4 h-4" />
+              <span>Copy challenge link</span>
+            </>
+          )}
+        </button>
+        {challengeSent && (
+          <p className="text-emerald-400/70 text-[10px] text-center mt-2 animate-pulse">Challenge sent! See who beats you when they share back.</p>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <ScreenTransition>
@@ -1479,70 +1389,8 @@ function LevelReveal({ assessmentContext }) {
                 </div>
               )}
 
-              {/* ═══════════════════════════════════════════════════
-                 LINKEDIN SHARE SECTION
-               ═══════════════════════════════════════════════════ */}
-              <div className={`transition-all duration-700 pt-4 pb-6 ${stage >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-                {/* Card row: thumbnail left, action right */}
-                <div className="flex items-start gap-4 bg-gray-900/40 border border-gray-800/60 rounded-2xl p-4 backdrop-blur-sm">
-                  {/* Thumbnail — always shows expand icon badge */}
-                  <button
-                    onClick={() => {
-                      if (canvasRef.current) {
-                        // Render the full-res share card first, then capture
-                        renderShareCard(canvasRef.current, level, data, relData, percentile, null, selfSelectedLevel);
-                        setPreviewDataUrl(canvasRef.current.toDataURL());
-                      }
-                      setIsPreviewExpanded(true);
-                    }}
-                    className="flex-shrink-0 relative rounded-xl overflow-hidden border border-gray-700/50 shadow-lg active:scale-95 transition-transform"
-                    style={{ width: 80, height: 80 }}
-                  >
-                    <canvas
-                      ref={previewRef}
-                      className="rounded-xl"
-                      style={{ width: 80, height: 80 }}
-                    />
-                    {/* Always-visible expand badge */}
-                    <div className="absolute bottom-1 right-1 bg-gray-950/80 backdrop-blur-sm rounded-md p-1">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
-                    </div>
-                  </button>
-
-                  {/* Right: description + share button */}
-                  <div className="flex-1 flex flex-col gap-3">
-                    <p className="text-gray-400 text-[11px] leading-relaxed">
-                      Share your <span className="text-white font-semibold">AI Level {level >= 5 ? "5+" : level}</span> card — a custom image with your score.
-                    </p>
-
-                    {/* LinkedIn Share Button */}
-                    <button
-                      onClick={handleLinkedInShare}
-                      disabled={linkedinState === "generating" || linkedinState === "redirecting"}
-                      className={`w-full font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors duration-200 ${
-                        linkedinState === "shared" ? 
-                          "bg-emerald-500 text-white" : 
-                          linkedinState === "error" ?
-                            "bg-red-500 hover:bg-red-600 text-white" :
-                            "bg-blue-600 hover:bg-blue-700 text-white"
-                      }`}
-                    >
-                      {linkedinState === "shared" ? (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                      ) : linkedinState === "generating" || linkedinState === "redirecting" ? (
-                        <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin"></div>
-                      ) : linkedinState === "error" ? (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                      ) : (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                        </svg>
-                      )}
-                      {linkedinLabel}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              {/* Leaders: team challenge first. Others: LinkedIn share first. */}
+              {prioritizeTeamChallenge ? renderChallengeSection(3) : renderLinkedInShareSection(3)}
 
               {/* ═══════════════════════════════════════════════════
                   BEAT 2: THE MIRROR — STRENGTH, BLIND SPOT, GAP
@@ -1663,183 +1511,8 @@ function LevelReveal({ assessmentContext }) {
                 </div>
               </div>
 
-              {/* ═══════════════════════════════════════════════════
-                  BEAT 3: THE CHALLENGE — SOCIAL COMPARISON & COMPETITION
-               ═══════════════════════════════════════════════════ */}
-              <div className={`transition-all duration-700 mt-8 text-left ${stage >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="flex-1 h-px bg-gray-800/40" />
-                  <span className="text-gray-500 text-xs tracking-[0.2em] uppercase font-medium">Challenge</span>
-                  <div className="flex-1 h-px bg-gray-800/40" />
-                </div>
-
-                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 px-5 pt-5 pb-4 mb-3">
-                  {/* Challenge card visual */}
-                  <div className="flex items-center justify-center gap-4 mb-4">
-                    {/* Your score */}
-                    <div className="text-center">
-                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-1.5" style={{ backgroundColor: `${data.color}15`, border: `2px solid ${data.color}40` }}>
-                        <span className="text-2xl font-extrabold" style={{ color: data.color }}>L{level}</span>
-                      </div>
-                      <p className="text-gray-400 text-[10px]">You</p>
-                    </div>
-                    {/* VS */}
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-gray-600 text-lg font-bold">vs</span>
-                    </div>
-                    {/* Empty challenger slot */}
-                    <div className="text-center">
-                      <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-gray-600 flex items-center justify-center mb-1.5 bg-gray-900/40 animate-pulse">
-                        <span className="text-gray-500 text-xl">?</span>
-                      </div>
-                      <p className="text-gray-500 text-[10px]">
-                        {isManager ? "Your team" : "A friend"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Context-adaptive headline */}
-                  <p className="text-white text-sm font-bold text-center mb-1">
-                    {isManager && company
-                      ? `Where does ${company} stand?`
-                      : isManager
-                        ? "How AI-ready is your team?"
-                      : level >= 4
-                        ? `Only ${percentile}% score this high.`
-                      : level >= 2
-                        ? "How do you compare to your circle?"
-                        : "Find out who's actually ahead."
-                    }
-                  </p>
-                  <p className="text-gray-400 text-xs text-center mb-4 leading-relaxed">
-                    {isManager
-                      ? (level >= 4
-                          ? "You're ahead of most. Find out if your team is keeping up."
-                          : "Most teams overestimate their AI skills by 2 levels. Send the test and see the real data.")
-                      : level >= 3
-                        ? `You scored top ${percentile}%. Most people you know probably overestimate by 2 levels.`
-                        : "Most people think they're better than they are. Send this and find out."}
-                  </p>
-
-                  {/* Share methods — horizontal buttons */}
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    <button
-                      onClick={() => handleChallenge("whatsapp")}
-                      className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 active:scale-[0.97] transition-all"
-                      aria-label="Challenge via WhatsApp"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      <span className="text-[10px] font-semibold">WhatsApp</span>
-                    </button>
-                    <button
-                      onClick={() => handleChallenge("linkedin")}
-                      className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 active:scale-[0.97] transition-all"
-                      aria-label="Challenge via LinkedIn"
-                    >
-                      <LinkedinIcon className="w-4 h-4" />
-                      <span className="text-[10px] font-semibold">LinkedIn</span>
-                    </button>
-                    <button
-                      onClick={() => handleChallenge("email")}
-                      className="flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 active:scale-[0.97] transition-all"
-                      aria-label="Challenge via Email"
-                    >
-                      <Mail className="w-4 h-4" />
-                      <span className="text-[10px] font-semibold">Email</span>
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => handleChallenge("copy")}
-                    aria-label="Copy challenge link to clipboard"
-                    className={`w-full py-2.5 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 ${
-                      challengeLink
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-gray-800/40 text-gray-400 hover:text-white hover:bg-gray-800/60"
-                    }`}
-                  >
-                    {challengeLink ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Link copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <LinkIcon className="w-4 h-4" />
-                        <span>Copy challenge link</span>
-                      </>
-                    )}
-                  </button>
-                  {challengeSent && (
-                    <p className="text-emerald-400/70 text-[10px] text-center mt-2 animate-pulse">Challenge sent! See who beats you when they share back.</p>
-                  )}
-                </div>
-
-                {/* Manager-specific team report preview */}
-                {isManager && (
-                  <div className="rounded-2xl border border-blue-500/15 bg-blue-500/[0.03] overflow-hidden mb-3 mt-3">
-                    {/* Locked team report preview */}
-                    <div className="px-4 pt-4 pb-3">
-                      <p className="text-[10px] uppercase tracking-widest text-blue-400/70 font-semibold mb-3 text-center">Team AI Report — Preview</p>
-                      {/* Blurred/locked report mockup */}
-                      <div className="relative rounded-xl border border-gray-800/30 bg-gray-900/60 p-3 overflow-hidden">
-                        <div className="absolute inset-0 backdrop-blur-[2px] bg-gray-950/30 z-10 flex items-center justify-center">
-                          <div className="text-center">
-                            <span className="text-lg">🔒</span>
-                            <p className="text-white text-[11px] font-semibold mt-1">Unlocks when 3+ team members complete</p>
-                          </div>
-                        </div>
-                        {/* Fake report content (visible but blurred behind) */}
-                        <div className="opacity-50">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-gray-500 text-[10px]">Team avg: L—</span>
-                            <span className="text-gray-500 text-[10px]">You: L{level}</span>
-                          </div>
-                          <div className="flex gap-1 mb-2">
-                            {[1,2,3,4,5].map(i => (
-                              <div key={i} className="flex-1 h-6 rounded bg-gray-800/60" />
-                            ))}
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-gray-600 text-[10px]">Perception gaps</span>
-                            <span className="text-gray-600 text-[10px]">Skill distribution</span>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-gray-400 text-[11px] text-center mt-3 leading-relaxed">
-                        {level >= 4
-                          ? "See who's keeping up with you — and who needs support."
-                          : "See how your team compares to you — and to each other."}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleChallenge("copy")}
-                      className="w-full py-3 text-xs font-bold text-blue-400 bg-blue-500/10 hover:bg-blue-500/15 transition-all active:scale-[0.98]"
-                    >
-                      Send your team the assessment →
-                    </button>
-
-                    {/* Enterprise consulting — gated booking */}
-                    <div className="border-t border-gray-800/20 px-4 py-3">
-                      <p className="text-gray-500 text-[11px] text-center leading-relaxed">
-                        Want a full org-wide AI readiness program?{" "}
-                        <button
-                          onClick={() => {
-                            const teamSize = prompt("How many people on your team?");
-                            if (!teamSize) return;
-                            const goal = prompt("What would you use a team AI report for? (e.g., training budget, hiring, upskilling)");
-                            if (!goal) return;
-                            const bookingUrl = `https://calendly.com/shronit/ai-readiness?name=${encodeURIComponent(leadData?.name || "")}&email=${encodeURIComponent(leadData?.email || "")}&a1=${encodeURIComponent(company || "")}&a2=${encodeURIComponent(teamSize)}&a3=${encodeURIComponent(goal)}`;
-                            window.open(bookingUrl, "_blank");
-                          }}
-                          className="text-blue-400 font-semibold underline underline-offset-2"
-                        >
-                          Book a strategy slot →
-                        </button>
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
+              {/* Swapped slot: leaders see LinkedIn share here; others see challenge */}
+              {prioritizeTeamChallenge ? renderLinkedInShareSection(4) : renderChallengeSection(4)}
 
               {/* ═══════════════════════════════════════════════════
                   BEAT 4: THE PATH FORWARD — CERTIFICATION & LEARNING

@@ -130,7 +130,8 @@ function getErrorMessage(error) {
 /**
  * Default hashtags included in the generated LinkedIn post copy
  */
-export const LINKEDIN_POST_HASHTAGS = '#LearnTubeAI #AIReadiness #ImagiNxt2026 #AIReport2026';
+export const LINKEDIN_POST_HASHTAGS = `#LearnTubeAI #ImagiNxt2026
+#MumbaiAIReadinessReport`;
 
 /**
  * Create LinkedIn post content from user data
@@ -140,12 +141,13 @@ export const LINKEDIN_POST_HASHTAGS = '#LearnTubeAI #AIReadiness #ImagiNxt2026 #
  */
 export function createLinkedInPostContent(userData, referralLink) {
   const { level, levelData, relationshipData } = userData;
+  const levelDisplay = level >= 5 ? '5+' : level;
 
-  return `🚀 I thought I was AI-ready, but just got a reality check!
+  return `I thought I was AI-ready, but just got a reality check!
 
-Took the AI-Readiness Test by LearnTube.ai and ImagiNxt
+Took the AI-Readiness Test, by LearnTube.ai, India's only AI-powered skilling platform, and ImagiNxt, India's Festival of Technology and Innovation.
 
-Scored at Level ${level >= 5 ? '5+' : level} — ${levelData.name} ${relationshipData.emoji}
+Scored at Level ${levelDisplay} — ${levelData.name} 🤝
 My AI Relationship Status: ${relationshipData.status}
 
 What's your score? Take the assessment ⬇️

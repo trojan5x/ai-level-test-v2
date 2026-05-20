@@ -10,7 +10,8 @@ import Header from '../Header.jsx';
 import { trackAnalyticsEvent } from '../../supabase.js';
 import { updateAssessmentWithContact, getSessionId } from '../../utils/stateManager.js';
 import { trackLeadFormCompleted, identifyUser } from '../../mixpanel.js';
-import { generateReferralId } from '../../utils/referralGenerator.js';
+import { generateReferralId, createReferralLink } from '../../utils/referralGenerator.js';
+import { generateShareBadgeBlob } from '../../utils/shareBadgeRenderer.js';
 import { utmTracker } from '../../utils/utmTracker.js';
 import { EnhancedScoring, mergeAssessmentScores, getAssessmentPrimaryTotal } from '../../utils/stateManager.js';
 import { generateAIReportPDF, dispatchPDFReportToWhatsApp } from '../../utils/pdfGenerator.js';
@@ -95,6 +96,7 @@ function LeadCapture({ assessmentContext }) {
     const referredBy = utmTracker.getReferralId();
     const newReferralId = generateReferralId(name.trim());
 
+    const profile = state.assessment?.profile || {};
     const leadData = {
       name: name.trim(),
       phone: `${countryCode}${phone.trim()}`,
@@ -104,7 +106,10 @@ function LeadCapture({ assessmentContext }) {
       scores: mergedScores,
       referralId: newReferralId,
       referredBy: referredBy,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      persona: profile.persona || null,
+      role: profile.role || null,
+      company: profile.company || null,
     };
 
     // Track Mixpanel lead form completion (VALUE MOMENT)
@@ -139,11 +144,25 @@ function LeadCapture({ assessmentContext }) {
       leadData.id = result.data.id;
     }
 
-    // Generate full detailed report PDF on the frontend & dispatch via fire-and-forget API
+    // Generate PDF + share badge in parallel, then dispatch via fire-and-forget API
     try {
-      console.log("📄 Generating premium PDF Report on frontend...");
-      const pdfBlob = await generateAIReportPDF(leadData);
-      dispatchPDFReportToWhatsApp(leadData.phone, pdfBlob, leadData);
+      console.log("📄 Generating premium PDF report and share badge...");
+      const referralLink = createReferralLink(leadData.referralId);
+      const selfSelectedLevel = state.assessment?.calibration?.selfSelectedLevel ?? null;
+
+      const pdfPromise = generateAIReportPDF(leadData);
+      const badgePromise = generateShareBadgeBlob({
+        level: leadData.level,
+        relationshipStatus: leadData.relationshipStatus,
+        referralLink,
+        selfSelectedLevel,
+      }).catch((badgeError) => {
+        console.warn("⚠️ Badge generation failed, sending PDF only:", badgeError);
+        return null;
+      });
+
+      const [pdfBlob, badgeBlob] = await Promise.all([pdfPromise, badgePromise]);
+      dispatchPDFReportToWhatsApp(leadData.phone, pdfBlob, leadData, badgeBlob);
     } catch (pdfError) {
       console.error("⚠️ Failed to generate or dispatch PDF report:", pdfError);
     }

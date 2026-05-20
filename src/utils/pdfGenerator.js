@@ -140,7 +140,7 @@ export const generateAIReportPDF = async (leadData) => {
   const insights = generateInsights(scores, lvl, relationshipStatusStr);
   
   const [ltLogo, googleLogo, imaginxtLogo] = await Promise.all([
-    loadImgDataUrl('/learntube-logo.png'),
+    loadImgDataUrl('/learntube-report-logo.png'),
     loadImgDataUrl('/backed-by-google.png'),
     loadImgDataUrl('/imaginxt-logo.avif'),
   ]);
@@ -207,14 +207,14 @@ export const generateAIReportPDF = async (leadData) => {
   const headerHTML = `
     <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid #1f2937; margin-bottom: 32px;">
       <div style="display: flex; align-items: center; gap: 16px;">
-        ${ltImg ? `<img src="${ltImg}" style="height: 24px;" />` : '<div style="font-weight: 900; font-size: 18px; color: #ffffff;">LEARNTUBE.AI</div>'}
+        ${ltImg ? `<img src="${ltImg}" style="height: 48px;" />` : '<div style="font-weight: 900; font-size: 36px; color: #ffffff;">LEARNTUBE.AI</div>'}
       </div>
       <div style="display: flex; align-items: center; gap: 20px;">
-        ${googleImg ? `<img src="${googleImg}" style="height: 18px;" />` : ''}
-        <div style="width: 1px; height: 20px; background-color: #374151;"></div>
+        ${googleImg ? `<img src="${googleImg}" style="height: 36px;" />` : ''}
+        <div style="width: 1px; height: 40px; background-color: #374151;"></div>
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 10px; font-weight: 600; color: #9ca3af; letter-spacing: 0.05em;">IN PARTNERSHIP WITH</span>
-          ${ixImg ? `<img src="${ixImg}" style="height: 18px;" />` : '<div style="font-weight: 800; font-size: 13px; color: #ffffff;">IMAGINEXT</div>'}
+          ${ixImg ? `<img src="${ixImg}" style="height: 36px;" />` : '<div style="font-weight: 800; font-size: 26px; color: #ffffff;">IMAGINEXT</div>'}
         </div>
       </div>
     </div>
@@ -437,7 +437,7 @@ export const generateAIReportPDF = async (leadData) => {
 const REPORT_SEND_API =
   'https://xgfy-czuw-092q.m2.xano.io/api:GzVKKOQ4/aireadiness/report/send';
 
-export const dispatchPDFReportToWhatsApp = (phone, pdfBlob, leadData = {}) => {
+export const dispatchPDFReportToWhatsApp = (phone, pdfBlob, leadData = {}, badgeBlob = null) => {
   const endpoint = window.WHATSAPP_PDF_API_URL || REPORT_SEND_API;
   const lvl = Math.max(0, Math.min(5, parseInt(leadData.level, 10) || 0));
   const levelTitle = LEVEL_METADATA[lvl]?.name || 'Unknown';
@@ -457,6 +457,15 @@ export const dispatchPDFReportToWhatsApp = (phone, pdfBlob, leadData = {}) => {
   formData.append('level_title', levelTitle);
   formData.append('relationship_status', relationshipStatus);
   formData.append('pdf_file', pdfFile);
+
+  if (badgeBlob) {
+    const badgeFile = new File(
+      [badgeBlob],
+      `${safeName}-badge.png`,
+      { type: 'image/png' }
+    );
+    formData.append('badge_file', badgeFile);
+  }
 
   fetch(endpoint, { method: 'POST', body: formData })
     .then(async (r) => {

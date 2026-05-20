@@ -21,6 +21,60 @@ const getSessionId = () => {
   return sessionId;
 };
 
+const LEADER_ROLE_KEYWORDS = /\b(lead|manager|manag|director|head|vp|svp|evp|avp|chief|founder|co-?founder|ceo|cto|coo|cfo|cmo|cpo|cro|cxo|president|owner|partner|principal|gm|general manager|managing director|entrepreneur|business owner)\b/i;
+
+/** Client-side fallback when edge function is unavailable */
+export const classifyLeaderRoleFallback = (role = '', persona = null) => {
+  if (persona === 'founder') {
+    return { prioritize_team_challenge: true, is_leader: true, classification: 'founder', method: 'persona' };
+  }
+  if (persona === 'student') {
+    return { prioritize_team_challenge: false, is_leader: false, classification: 'student', method: 'persona' };
+  }
+  const isLeader = LEADER_ROLE_KEYWORDS.test(role);
+  return {
+    prioritize_team_challenge: isLeader,
+    is_leader: isLeader,
+    classification: isLeader ? 'leader' : 'individual',
+    method: 'keyword',
+  };
+};
+
+/** Classify job role + persona to decide team-challenge-first results layout */
+export const classifyLeaderRole = async ({ role, persona, company }) => {
+  const normalizedRole = (role || '').trim();
+  if (!normalizedRole) {
+    return classifyLeaderRoleFallback(normalizedRole, persona);
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const { data, error } = await supabase.functions.invoke('classify-leader-role', {
+      body: { role: normalizedRole, persona: persona || null, company: company || null },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (error || !data || typeof data.prioritize_team_challenge !== 'boolean') {
+      console.log('🔄 Leader classification fallback:', error?.message || 'invalid response');
+      return classifyLeaderRoleFallback(normalizedRole, persona);
+    }
+
+    console.log(`👔 Leader classified: ${data.classification} (team-first: ${data.prioritize_team_challenge})`);
+    return data;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      console.log('⏱️ Leader classification timeout, using keyword fallback');
+    } else {
+      console.error('❌ Leader classification exception:', err);
+    }
+    return classifyLeaderRoleFallback(normalizedRole, persona);
+  }
+};
+
 // LLM scoring with fallback to keyword scoring
 export const scoreLLMResponse = async (item, text) => {
   try {
