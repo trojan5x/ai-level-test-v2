@@ -15,7 +15,9 @@ function Item3Reveal({ assessmentContext }) {
   const correct = response?.choice === "B";
 
   const handleContinue = () => {
-    assessmentContext.handlers.handleRevealContinue('item4');
+    const path = state.navigation?.assessmentPath || 'B';
+    const nextScreen = path === 'A' ? 'item4' : 'item3b';
+    assessmentContext.handlers.handleRevealContinue(nextScreen);
   };
 
   return (

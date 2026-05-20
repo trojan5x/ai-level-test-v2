@@ -7,6 +7,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { canAccessScreen, saveAssessmentState } from '../utils/stateManager.js';
+import { shouldTrackAnalytics } from '../utils/analyticsEnvironment.js';
 
 const AssessmentRoute = React.memo(({ screen, context, children }) => {
   const navigate = useNavigate();
@@ -157,8 +158,7 @@ const AssessmentRoute = React.memo(({ screen, context, children }) => {
    * Track screen access for analytics - optimized to prevent loops
    */
   const trackScreenAccess = (screenName) => {
-    // Track in existing analytics
-    if (window.mixpanel && typeof window.mixpanel.track === 'function') {
+    if (shouldTrackAnalytics() && window.mixpanel && typeof window.mixpanel.track === 'function') {
       window.mixpanel.track('assessment_screen_accessed', {
         screen: screenName,
         url: location.pathname,

@@ -5,6 +5,7 @@
 
 import { supabase } from '../supabase.js';
 import { utmTracker } from './utmTracker.js';
+import { shouldTrackAnalytics } from './analyticsEnvironment.js';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -176,6 +177,13 @@ export const saveAssessmentState = (state) => {
  * @returns {Promise<Object>} Database result
  */
 export const saveAssessmentToDatabase = async (state) => {
+  if (!shouldTrackAnalytics()) {
+    if (import.meta.env.DEV) {
+      console.log('🔇 Assessment DB save skipped (local dev)');
+    }
+    return { success: true, skipped: true };
+  }
+
   try {
     const sessionId = getSessionId();
     console.log('🔄 Saving assessment to database for session:', sessionId);
@@ -230,6 +238,13 @@ export const saveAssessmentToDatabase = async (state) => {
  * @returns {Promise<Object>} Result
  */
 export const updateAssessmentWithContact = async (sessionId, contactData) => {
+  if (!shouldTrackAnalytics()) {
+    if (import.meta.env.DEV) {
+      console.log('🔇 Assessment contact update skipped (local dev)');
+    }
+    return { success: true, skipped: true };
+  }
+
   try {
     const { data, error } = await supabase
       .from('ai_level_assessments')
@@ -543,6 +558,17 @@ export const canAccessScreen = (screen, state) => {
   // Item3b only accessible on Path B and C
   if (screen === 'item3b') {
     return ['B', 'C'].includes(path) && state.navigation.completedScreens.includes('item3_reveal');
+  }
+
+  // Item4: Path A skips item3b; Path B/C require item3b first
+  if (screen === 'item4') {
+    if (path === 'A') {
+      return state.navigation.completedScreens.includes('item3');
+    }
+    if (['B', 'C'].includes(path)) {
+      return state.navigation.completedScreens.includes('item3b_reveal')
+        || state.navigation.completedScreens.includes('item3b');
+    }
   }
   
   // WorkflowDesign: Path C only, comes BEFORE item6 (after item5b_reveal)

@@ -1,7 +1,19 @@
 import mixpanel from 'mixpanel-browser';
+import { shouldTrackAnalytics } from './utils/analyticsEnvironment.js';
 
 // Mixpanel configuration
 const MIXPANEL_TOKEN = '9d9097ced8abd777d1517ac47f4c1129';
+
+function trackMixpanel(eventName, properties = {}) {
+  if (!shouldTrackAnalytics()) {
+    if (import.meta.env.DEV) {
+      console.log(`🔇 Mixpanel skipped (local dev): ${eventName}`, properties);
+    }
+    return;
+  }
+
+  mixpanel.track(eventName, properties);
+}
 
 // Initialize Mixpanel
 mixpanel.init(MIXPANEL_TOKEN, {
@@ -28,6 +40,8 @@ mixpanel.register({
 
 // Start session replay explicitly (called when user starts assessment)
 export const startSessionRecording = () => {
+  if (!shouldTrackAnalytics()) return;
+
   mixpanel.start_session_recording();
   
   if (import.meta.env.DEV) {
@@ -75,7 +89,7 @@ export const trackPageView = (pageName, properties = {}) => {
     }
   });
 
-  mixpanel.track('landing_page_viewed', pageViewProperties);
+  trackMixpanel('landing_page_viewed', pageViewProperties);
   
   if (import.meta.env.DEV) {
     console.log('🔍 Mixpanel: landing_page_viewed', pageViewProperties);
@@ -92,7 +106,7 @@ export const trackAssessmentStarted = (properties = {}) => {
   // Start session recording when user begins assessment
   startSessionRecording();
 
-  mixpanel.track('assessment_started', eventProperties);
+  trackMixpanel('assessment_started', eventProperties);
   
   if (import.meta.env.DEV) {
     console.log('🔍 Mixpanel: assessment_started', eventProperties);
@@ -109,10 +123,10 @@ export const trackAssessmentCompleted = (score, level, rating, properties = {}) 
     ...properties
   };
 
-  mixpanel.track('assessment_completed', eventProperties);
+  trackMixpanel('assessment_completed', eventProperties);
   
   // Add session replay annotation for assessment completion
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'milestone',
     event: 'assessment_completed',
     user_level: level,
@@ -135,10 +149,10 @@ export const trackLeadFormCompleted = (userData, assessmentData, properties = {}
     ...properties
   };
 
-  mixpanel.track('lead_form_completed', eventProperties);
+  trackMixpanel('lead_form_completed', eventProperties);
   
   // Add session replay annotation for this key conversion event
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'conversion',
     event: 'lead_form_completed',
     user_level: assessmentData.level,
@@ -160,7 +174,7 @@ export const trackResultPageViewed = (assessmentData, properties = {}) => {
     ...properties
   };
 
-  mixpanel.track('result_page_viewed', eventProperties);
+  trackMixpanel('result_page_viewed', eventProperties);
   
   if (import.meta.env.DEV) {
     console.log('🔍 Mixpanel: result_page_viewed', eventProperties);
@@ -187,10 +201,10 @@ export const trackCTAClicked = (ctaType, ctaText, ctaPosition = 'primary', asses
     ...properties
   };
 
-  mixpanel.track('cta_clicked', eventProperties);
+  trackMixpanel('cta_clicked', eventProperties);
   
   // Add session replay annotation for CTA interactions
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'interaction',
     event: 'cta_clicked',
     cta_type: ctaType,
@@ -249,7 +263,7 @@ export const trackShareAttempted = (properties = {}) => {
     ...properties
   };
 
-  mixpanel.track('share_attempted', eventProperties);
+  trackMixpanel('share_attempted', eventProperties);
 
   if (import.meta.env.DEV) {
     console.log('🔍 Mixpanel: share_attempted', eventProperties);
@@ -270,7 +284,7 @@ export const trackShareCompleted = (referralId, shareData = {}) => {
   if (shareData.post_id) eventProperties.post_id = shareData.post_id;
   if (shareData.post_url) eventProperties.post_url = shareData.post_url;
 
-  mixpanel.track('share_completed', eventProperties);
+  trackMixpanel('share_completed', eventProperties);
 
   if (import.meta.env.DEV) {
     console.log('🔍 Mixpanel: share_completed', eventProperties);
@@ -283,9 +297,9 @@ export const trackChallengeSent = (properties = {}) => {
     ...properties
   };
 
-  mixpanel.track('challenge_sent', eventProperties);
+  trackMixpanel('challenge_sent', eventProperties);
 
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'interaction',
     event: 'challenge_sent',
     challenge_channel: properties.challenge_channel,
@@ -299,7 +313,7 @@ export const trackChallengeSent = (properties = {}) => {
 
 // Generic event tracking (fallback)
 export const trackEvent = (eventName, properties = {}) => {
-  mixpanel.track(eventName, properties);
+  trackMixpanel(eventName, properties);
   
   if (import.meta.env.DEV) {
     console.log(`🔍 Mixpanel: ${eventName}`, properties);
@@ -319,10 +333,10 @@ export const trackLinkedInShareInitiated = (referralId, userContext = {}) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('linkedin_share_initiated', eventProperties);
+  trackMixpanel('linkedin_share_initiated', eventProperties);
   
   // Annotate session replay
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'interaction',
     event: 'linkedin_share_initiated',
     referral_id: referralId,
@@ -344,7 +358,7 @@ export const trackLinkedInOAuthStarted = (referralId, redirectUri) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('linkedin_oauth_started', eventProperties);
+  trackMixpanel('linkedin_oauth_started', eventProperties);
   
   if (import.meta.env.DEV) {
     console.log('🔍 Mixpanel: linkedin_oauth_started', eventProperties);
@@ -360,10 +374,10 @@ export const trackLinkedInOAuthCompleted = (referralId, authData = {}) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('linkedin_oauth_completed', eventProperties);
+  trackMixpanel('linkedin_oauth_completed', eventProperties);
   
   // Annotate session replay
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'milestone',
     event: 'linkedin_oauth_completed',
     referral_id: referralId
@@ -388,10 +402,10 @@ export const trackLinkedInShareCompleted = (referralId, shareData = {}) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('linkedin_share_completed', eventProperties);
+  trackMixpanel('linkedin_share_completed', eventProperties);
   
   // Annotate session replay with conversion
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'conversion',
     event: 'linkedin_share_completed',
     referral_id: referralId,
@@ -417,10 +431,10 @@ export const trackLinkedInShareFailed = (referralId, errorData = {}) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('linkedin_share_failed', eventProperties);
+  trackMixpanel('linkedin_share_failed', eventProperties);
   
   // Annotate session replay with error
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'error',
     event: 'linkedin_share_failed',
     referral_id: referralId,
@@ -447,7 +461,7 @@ export const trackReferralLinkGenerated = (referralId, userContext = {}) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('referral_link_generated', eventProperties);
+  trackMixpanel('referral_link_generated', eventProperties);
   
   if (import.meta.env.DEV) {
     console.log('🔍 Mixpanel: referral_link_generated', eventProperties);
@@ -466,13 +480,13 @@ export const trackReferralVisitTracked = (referralId, visitorData = {}) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('referral_visit_tracked', eventProperties);
+  trackMixpanel('referral_visit_tracked', eventProperties);
   
   // Start session recording for referred users
   startSessionRecording();
   
   // Annotate session replay
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'interaction',
     event: 'referral_visit',
     referral_id: referralId,
@@ -508,10 +522,10 @@ export const trackAssessmentResumed = (resumeData) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('assessment_resumed', eventProperties);
+  trackMixpanel('assessment_resumed', eventProperties);
   
   // Annotate session replay
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'milestone',
     event: 'assessment_resumed',
     screen: resumeData.toScreen,
@@ -536,7 +550,7 @@ export const trackAssessmentUrlAccessed = (urlData) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('assessment_url_accessed', eventProperties);
+  trackMixpanel('assessment_url_accessed', eventProperties);
   
   if (import.meta.env.DEV) {
     console.log('🔍 Mixpanel: assessment_url_accessed', eventProperties);
@@ -556,10 +570,10 @@ export const trackAssessmentSavedToDb = (saveData) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('assessment_saved_to_db', eventProperties);
+  trackMixpanel('assessment_saved_to_db', eventProperties);
   
   // Annotate session replay
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'milestone',
     event: 'assessment_saved_to_db',
     level: saveData.level,
@@ -584,10 +598,10 @@ export const trackAssessmentLinkedToUser = (linkData) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('assessment_linked_to_user', eventProperties);
+  trackMixpanel('assessment_linked_to_user', eventProperties);
   
   // Annotate session replay
-  mixpanel.track('session_replay_annotation', {
+  trackMixpanel('session_replay_annotation', {
     annotation_type: 'conversion',
     event: 'assessment_linked_to_user',
     lead_id: linkData.leadId,
@@ -613,7 +627,7 @@ export const trackBrowserNavigation = (navData) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('browser_navigation', eventProperties);
+  trackMixpanel('browser_navigation', eventProperties);
   
   if (import.meta.env.DEV) {
     console.log('🔍 Mixpanel: browser_navigation', eventProperties);
@@ -631,11 +645,11 @@ export const trackStateRecovery = (recoveryData) => {
     ...getTimestampProperties()
   };
   
-  mixpanel.track('assessment_state_recovery', eventProperties);
+  trackMixpanel('assessment_state_recovery', eventProperties);
   
   // Annotate session replay for critical errors
   if (recoveryData.dataLoss) {
-    mixpanel.track('session_replay_annotation', {
+    trackMixpanel('session_replay_annotation', {
       annotation_type: 'error',
       event: 'state_recovery_data_loss',
       reason: recoveryData.reason

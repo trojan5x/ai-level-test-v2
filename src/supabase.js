@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { utmTracker } from './utils/utmTracker.js';
+import { shouldTrackAnalytics } from './utils/analyticsEnvironment.js';
 
 // Supabase configuration
 const SUPABASE_CONFIG = {
@@ -59,6 +60,11 @@ export const scoreLLMResponse = async (item, text) => {
 // Lead capture with Supabase integration and UTM tracking
 export const captureLeadData = async (leadData) => {
   console.log('💾 Capturing lead data:', leadData);
+
+  if (!shouldTrackAnalytics()) {
+    console.log('🔇 Lead capture skipped (local dev)');
+    return { success: true, skipped: true, data: leadData };
+  }
   
   // Keep window global for backward compatibility during transition
   window.__aiLevelLead = leadData;
@@ -124,6 +130,11 @@ export const captureLeadData = async (leadData) => {
 export const captureIntentData = async (intentData) => {
   console.log('💾 Capturing intent data:', intentData);
 
+  if (!shouldTrackAnalytics()) {
+    console.log('🔇 Intent capture skipped (local dev)');
+    return { success: true, skipped: true };
+  }
+
   // Keep window global for backward compatibility
   window.__aiLevelIntent = { ...(window.__aiLevelIntent || {}), ...intentData };
 
@@ -169,6 +180,13 @@ export const captureIntentData = async (intentData) => {
 
 // Analytics event tracking
 export const trackAnalyticsEvent = async (eventType, eventData = {}) => {
+  if (!shouldTrackAnalytics()) {
+    if (import.meta.env.DEV) {
+      console.log(`🔇 Analytics skipped (local dev): ${eventType}`, eventData);
+    }
+    return { success: true, skipped: true };
+  }
+
   const sessionId = getSessionId();
   
   try {

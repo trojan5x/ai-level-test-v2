@@ -128,37 +128,30 @@ function getErrorMessage(error) {
 }
 
 /**
+ * Default hashtags included in the generated LinkedIn post copy
+ */
+export const LINKEDIN_POST_HASHTAGS = '#AIAssessment #ArtificialIntelligence #TechSkills #LearnTubeAI #PersonalDevelopment #AILevel';
+
+/**
  * Create LinkedIn post content from user data
  * @param {Object} userData - User assessment data
  * @param {string} referralLink - Personalized referral link
  * @returns {string} Formatted LinkedIn post text
  */
 export function createLinkedInPostContent(userData, referralLink) {
-  const { level, levelData, relationshipData, percentile } = userData;
+  const { level, levelData, relationshipData } = userData;
 
-  // Generate insights summary (shortened for LinkedIn)
-  let insightsSummary = '';
-  if (levelData.insights && levelData.insights.length > 0) {
-    insightsSummary = levelData.insights[0]; // Use the first insight
-    // Limit to 100 characters for readability
-    if (insightsSummary.length > 100) {
-      insightsSummary = insightsSummary.substring(0, 97) + '...';
-    }
-  }
+  return `🚀 I thought I was AI-ready, but just got a reality check!
 
-  const postContent = `🚀 Just discovered my AI relationship level!
+Took the AI-Readiness Test by LearnTube.ai and ImagiNxt
 
-I'm AI Level ${level >= 5 ? '5+' : level} — ${levelData.name} ${relationshipData.emoji}
+Scored at Level ${level >= 5 ? '5+' : level} — ${levelData.name} ${relationshipData.emoji}
 My AI Relationship Status: ${relationshipData.status}
 
-${insightsSummary ? insightsSummary + '\n\n' : ''}Top ${percentile}% of test-takers! 🎯
-
-Want to find out yours? Take the assessment ⬇️
+What's your score? Take the assessment ⬇️
 ${referralLink}
 
-#AIAssessment #ArtificialIntelligence #TechSkills #LearnTubeAI #PersonalDevelopment #AILevel`;
-
-  return postContent;
+${LINKEDIN_POST_HASHTAGS}`;
 }
 
 /**
@@ -250,6 +243,7 @@ export default {
   parseOAuthCallback,
   validateOAuthCallback,
   createLinkedInPostContent,
+  LINKEDIN_POST_HASHTAGS,
   prepareLinkedInApiPayload,
   linkedInSession
 };

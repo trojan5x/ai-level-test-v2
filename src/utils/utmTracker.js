@@ -1,6 +1,7 @@
 // UTM Parameter and Attribution Tracking Utility
 import { supabase } from '../supabase.js';
 import { isValidReferralId } from './referralGenerator.js';
+import { shouldTrackAnalytics } from './analyticsEnvironment.js';
 
 const UTM_STORAGE_KEY = 'ai-level-utm-data';
 const UTM_EXPIRY_DAYS = 30; // UTM attribution window
@@ -44,6 +45,13 @@ export const utmTracker = {
 
   // Log visit to database immediately (with robust deduplication)
   async logVisit(utmData) {
+    if (!shouldTrackAnalytics()) {
+      if (import.meta.env.DEV) {
+        console.log('🔇 Visit logging skipped (local dev)');
+      }
+      return null;
+    }
+
     try {
       const sessionId = this.getSessionId();
       console.log('🎯 Attempting to log visit for session:', sessionId);
@@ -389,6 +397,13 @@ export const utmTracker = {
    * @param {string} referralId - The referral ID from the link
    */
   async trackReferralVisit(referralId) {
+    if (!shouldTrackAnalytics()) {
+      if (import.meta.env.DEV) {
+        console.log('🔇 Referral visit tracking skipped (local dev)');
+      }
+      return null;
+    }
+
     if (!referralId || !isValidReferralId(referralId)) {
       console.warn('Invalid referral ID provided:', referralId);
       return null;
@@ -442,6 +457,10 @@ export const utmTracker = {
    * @param {Object} leadData - The completed lead data
    */
   async creditReferralConversion(referralId, leadData) {
+    if (!shouldTrackAnalytics()) {
+      return null;
+    }
+
     if (!referralId || !isValidReferralId(referralId)) {
       return null;
     }

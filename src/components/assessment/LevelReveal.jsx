@@ -631,12 +631,21 @@ function LevelReveal({ assessmentContext }) {
   const [stage, setStage] = useState(0);
   const [shareState, setShareState] = useState("idle"); // idle | sharing | shared | fallback
   const [linkedinState, setLinkedinState] = useState("idle"); // idle | generating | redirecting | shared | error
-  const [linkedinModal, setLinkedinModal] = useState({
+  const LINKEDIN_MODAL_INITIAL = {
     isOpen: false,
-    status: 'idle', // 'processing', 'success', 'error'
+    status: 'idle', // 'preview', 'processing', 'success', 'error'
     message: '',
-    error: null
-  });
+    error: null,
+    postText: '',
+    badgePreviewUrl: null,
+    badgeImageBase64: null,
+    shareReferralId: null,
+  };
+  const [linkedinModal, setLinkedinModal] = useState(LINKEDIN_MODAL_INITIAL);
+
+  const closeLinkedInModal = () => {
+    setLinkedinModal(LINKEDIN_MODAL_INITIAL);
+  };
 
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -749,10 +758,10 @@ function LevelReveal({ assessmentContext }) {
     if (code || error) {
       // We have LinkedIn OAuth callback parameters
       setLinkedinModal({
+        ...LINKEDIN_MODAL_INITIAL,
         isOpen: true,
         status: 'processing',
         message: 'Processing LinkedIn authorization...',
-        error: null
       });
 
       handleLinkedInCallback(code, state, error);
@@ -768,12 +777,7 @@ function LevelReveal({ assessmentContext }) {
     const handlePageShow = (event) => {
       if (event.persisted) {
         setLinkedinState("idle");
-        setLinkedinModal({
-          isOpen: false,
-          status: 'idle',
-          message: '',
-          error: null
-        });
+        closeLinkedInModal();
       }
     };
     
@@ -932,22 +936,20 @@ function LevelReveal({ assessmentContext }) {
   // LinkedIn sharing functionality
   const handleLinkedInShare = async () => {
     setLinkedinState("generating");
-    
-    // Open modal immediately
+
     setLinkedinModal({
+      ...LINKEDIN_MODAL_INITIAL,
       isOpen: true,
       status: 'processing',
-      message: 'Preparing LinkedIn sharing...',
-      error: null
+      message: 'Preparing your post...',
     });
-    
+
     try {
       const userLead = leadData;
       if (!userLead || !userLead.name) {
         throw new Error('User information not available. Please complete the assessment first.');
       }
 
-      // Use existing referral ID or generate a new one if somehow missing
       const shareReferralId = referralId || generateReferralId(userLead.name);
       if (!referralId) setReferralId(shareReferralId);
 
@@ -959,28 +961,31 @@ function LevelReveal({ assessmentContext }) {
         is_manager: isManager,
       });
 
-      // Track referral link generation
       trackReferralLinkGenerated(shareReferralId, {
         level,
         score: totalScore,
         relationshipStatus
       });
 
-      // Track LinkedIn share initiation
       trackLinkedInShareInitiated(shareReferralId, {
         level,
         score: totalScore,
         relationshipStatus
       });
 
-      // Create referral link
       const referralLink = createReferralLink(shareReferralId);
+      const postText = createLinkedInPostContent({
+        level,
+        levelData: data,
+        relationshipData: relData,
+        percentile
+      }, referralLink);
 
-      // Store sharing data in session for OAuth callback
       const sharingData = {
         level,
         levelData: data,
         relationshipData: relData,
+        relationshipStatus,
         percentile,
         scores,
         coreScores: state.assessment.scores,
@@ -992,23 +997,74 @@ function LevelReveal({ assessmentContext }) {
         timestamp: Date.now()
       };
 
-      linkedInSession.store(sharingData);
+      const badgeImageBase64 = await generateBadgeWithReferral(sharingData, referralLink);
 
-      setLinkedinState("redirecting");
+      setLinkedinState("idle");
       setLinkedinModal({
+        ...LINKEDIN_MODAL_INITIAL,
         isOpen: true,
-        status: 'processing',
-        message: 'Redirecting to LinkedIn...',
-        error: null
+        status: 'preview',
+        message: 'Review your post before sharing',
+        postText,
+        badgePreviewUrl: `data:image/png;base64,${badgeImageBase64}`,
+        badgeImageBase64,
+        shareReferralId,
       });
 
-      // Generate LinkedIn OAuth URL
+    } catch (error) {
+      console.error('LinkedIn sharing error:', error);
+      setLinkedinState("error");
+      setLinkedinModal({
+        ...LINKEDIN_MODAL_INITIAL,
+        isOpen: true,
+        status: 'error',
+        message: 'Failed to prepare LinkedIn sharing',
+        error: error.message
+      });
+    }
+  };
+
+  const handleLinkedInConfirmPost = async () => {
+    const { postText, badgeImageBase64, shareReferralId } = linkedinModal;
+    if (!postText?.trim()) return;
+
+    setLinkedinState("redirecting");
+    setLinkedinModal(prev => ({
+      ...prev,
+      status: 'processing',
+      message: 'Redirecting to LinkedIn...',
+    }));
+
+    try {
+      const userLead = leadData;
+      if (!userLead || !shareReferralId) {
+        throw new Error('Sharing session not ready. Please try again.');
+      }
+
+      const referralLink = createReferralLink(shareReferralId);
+      const sharingData = {
+        level,
+        levelData: data,
+        relationshipData: relData,
+        relationshipStatus,
+        percentile,
+        scores,
+        coreScores: state.assessment.scores,
+        selfSelectedLevel,
+        referralId: shareReferralId,
+        userName: userLead.name,
+        userEmail: userLead.email || userLead.phone,
+        referralLink,
+        postText: postText.trim(),
+        badgeImageBase64,
+        timestamp: Date.now()
+      };
+
+      linkedInSession.store(sharingData);
+
       const linkedInAuthUrl = generateLinkedInAuthUrl(shareReferralId);
-      
-      // Track OAuth redirect
       trackLinkedInOAuthStarted(shareReferralId, linkedInAuthUrl);
 
-      // Redirect to LinkedIn OAuth
       setTimeout(() => {
         window.location.href = linkedInAuthUrl;
       }, 500);
@@ -1017,6 +1073,7 @@ function LevelReveal({ assessmentContext }) {
       console.error('LinkedIn sharing error:', error);
       setLinkedinState("error");
       setLinkedinModal({
+        ...LINKEDIN_MODAL_INITIAL,
         isOpen: true,
         status: 'error',
         message: 'Failed to start LinkedIn sharing',
@@ -1059,31 +1116,29 @@ function LevelReveal({ assessmentContext }) {
       trackLinkedInOAuthCompleted(sharingData.referralId);
 
       setLinkedinModal({
+        ...LINKEDIN_MODAL_INITIAL,
         isOpen: true,
         status: 'processing',
         message: 'Generating your personalized badge...',
-        error: null
       });
 
-      // Step 5: Generate referral link
       const referralLink = createReferralLink(sharingData.referralId);
-      
-      // Step 6: Create LinkedIn post content
-      const postContent = createLinkedInPostContent({
+
+      const postContent = sharingData.postText || createLinkedInPostContent({
         level: sharingData.level,
         levelData: sharingData.levelData,
         relationshipData: sharingData.relationshipData,
         percentile: sharingData.percentile
       }, referralLink);
 
-      // Step 7: Generate badge with referral link
-      const badgeImageBase64 = await generateBadgeWithReferral(sharingData, referralLink);
+      const badgeImageBase64 = sharingData.badgeImageBase64
+        || await generateBadgeWithReferral(sharingData, referralLink);
 
       setLinkedinModal({
+        ...LINKEDIN_MODAL_INITIAL,
         isOpen: true,
         status: 'processing',
         message: 'Sharing to LinkedIn...',
-        error: null
       });
 
       // Step 8: Prepare and send API request
@@ -1105,10 +1160,10 @@ function LevelReveal({ assessmentContext }) {
       
       if (result.success) {
         setLinkedinModal({
+          ...LINKEDIN_MODAL_INITIAL,
           isOpen: true,
           status: 'success',
           message: 'Successfully shared to LinkedIn!',
-          error: null
         });
         
         // Track successful sharing
@@ -1126,13 +1181,7 @@ function LevelReveal({ assessmentContext }) {
         
         // Auto-close success modal after 3 seconds
         setTimeout(() => {
-          setLinkedinModal({
-            isOpen: false,
-            status: 'idle',
-            message: '',
-            error: null
-          });
-          // Update LinkedIn state to show shared status
+          closeLinkedInModal();
           setLinkedinState("shared");
         }, 3000);
       } else {
@@ -1142,6 +1191,7 @@ function LevelReveal({ assessmentContext }) {
     } catch (err) {
       console.error('❌ LinkedIn sharing error:', err);
       setLinkedinModal({
+        ...LINKEDIN_MODAL_INITIAL,
         isOpen: true,
         status: 'error',
         message: 'Failed to share to LinkedIn',
@@ -1167,7 +1217,9 @@ function LevelReveal({ assessmentContext }) {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
       const levelData = LEVEL_DATA[sharingData.level] || LEVEL_DATA[4];
-      const relationshipData = RELATIONSHIP_DATA[sharingData.relationshipStatus] || RELATIONSHIP_DATA.casual;
+      const relationshipData = sharingData.relationshipData
+        || RELATIONSHIP_DATA[sharingData.relationshipStatus]
+        || RELATIONSHIP_DATA.casual;
       const percentile = sharingData.percentile || getPercentile(sharingData.level);
       const selfSelected = sharingData.selfSelectedLevel !== undefined ? sharingData.selfSelectedLevel : selfSelectedLevel;
 
@@ -1256,7 +1308,7 @@ function LevelReveal({ assessmentContext }) {
 
   const linkedinLabel = {
     idle: "Share to LinkedIn",
-    generating: "Generating link...",
+    generating: "Preparing...",
     redirecting: "Redirecting to LinkedIn...",
     shared: "Shared to LinkedIn!",
     error: "Try again"
@@ -2003,7 +2055,88 @@ function LevelReveal({ assessmentContext }) {
       )}
 
       {/* LinkedIn Sharing Modal */}
-      {linkedinModal.isOpen && (
+      {linkedinModal.isOpen && linkedinModal.status === 'preview' && (
+        <div className="fixed inset-0 z-[100] flex flex-col md:items-center md:justify-center md:p-6 bg-gray-950 md:bg-gray-950/90 md:backdrop-blur-md animate-[fadeIn_0.25s_ease-out]">
+          <div className="flex flex-col w-full h-full md:h-auto md:max-h-[min(640px,90vh)] md:max-w-4xl md:rounded-2xl md:border md:border-gray-800 md:shadow-2xl bg-gray-950 overflow-hidden">
+            {/* Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 md:px-6 pt-4 pb-3 border-b border-gray-800/60">
+              <div>
+                <h2 className="text-white text-base font-bold tracking-wide">Share to LinkedIn</h2>
+                <p className="text-gray-500 text-[11px] mt-0.5">Edit your post before sharing</p>
+              </div>
+              <button
+                onClick={() => {
+                  closeLinkedInModal();
+                  setLinkedinState("idle");
+                }}
+                className="text-gray-500 hover:text-white transition-colors p-2 -mr-2"
+                aria-label="Close"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 flex flex-col min-h-0 md:flex-row md:gap-6 px-4 md:px-6 pt-4 pb-4 md:overflow-hidden">
+              {linkedinModal.badgePreviewUrl && (
+                <div className="flex-shrink-0 md:w-[252px] md:flex-shrink-0 mb-4 md:mb-0">
+                  <div className="mx-auto w-full max-w-[220px] md:max-w-none rounded-lg overflow-hidden border border-gray-700/50 shadow-lg">
+                    <img
+                      src={linkedinModal.badgePreviewUrl}
+                      alt="Your AI Level badge preview"
+                      className="w-full h-auto"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex-1 flex flex-col min-h-0 md:min-h-0">
+                <div className="flex-shrink-0 mb-2">
+                  <label className="text-gray-400 text-[11px] font-semibold uppercase tracking-wider block">
+                    Post copy
+                  </label>
+                  <p className="text-gray-500 text-[11px] mt-1">
+                    Tap below to edit your message.
+                  </p>
+                </div>
+                <div className="flex-1 min-h-0 md:flex-none md:h-[280px] rounded-xl border border-gray-700/60 bg-gray-900/60 overflow-hidden focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/30">
+                  <textarea
+                    value={linkedinModal.postText}
+                    onChange={(e) => setLinkedinModal(prev => ({ ...prev, postText: e.target.value }))}
+                    className="block w-full h-full bg-transparent border-0 px-3 py-3 text-gray-200 text-xs leading-relaxed resize-none focus:outline-none focus:ring-0"
+                    placeholder="Write your LinkedIn post..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Sticky bottom bar */}
+            <div
+              className="flex-shrink-0 border-t border-gray-800 bg-gray-950/95 backdrop-blur-md px-4 md:px-6 pt-3"
+              style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+            >
+              <button
+                onClick={handleLinkedInConfirmPost}
+                disabled={!linkedinModal.postText?.trim() || linkedinState === "redirecting"}
+                className="w-full md:max-w-xs md:ml-auto bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-blue-600/15 text-sm flex items-center justify-center gap-2"
+              >
+                {linkedinState === "redirecting" ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  </svg>
+                )}
+                Post to LinkedIn
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {linkedinModal.isOpen && linkedinModal.status !== 'preview' && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gray-950/90 backdrop-blur-md animate-[fadeIn_0.25s_ease-out] p-4">
           <style dangerouslySetInnerHTML={{__html: `
             @keyframes rotate-orbital {
@@ -2064,7 +2197,6 @@ function LevelReveal({ assessmentContext }) {
               'bg-red-500'
             }`} />
 
-            {/* Content Body */}
             <div className="flex flex-col items-center text-center relative z-10">
               
               {/* Graphic Loading/Success/Error States */}
@@ -2153,7 +2285,7 @@ function LevelReveal({ assessmentContext }) {
                 {linkedinModal.status === 'error' && (
                   <button
                     onClick={() => {
-                      setLinkedinModal({ isOpen: false, status: 'idle', message: '', error: null });
+                      closeLinkedInModal();
                       handleLinkedInShare();
                     }}
                     className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-blue-600/15 text-sm"
@@ -2164,7 +2296,10 @@ function LevelReveal({ assessmentContext }) {
                 
                 {linkedinModal.status === 'error' && (
                   <button
-                    onClick={() => setLinkedinModal({ isOpen: false, status: 'idle', message: '', error: null })}
+                    onClick={() => {
+                      closeLinkedInModal();
+                      setLinkedinState("idle");
+                    }}
                     className="w-full bg-gray-950/40 border border-gray-800 hover:bg-gray-800/40 text-gray-400 hover:text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 cursor-pointer text-sm"
                   >
                     Dismiss

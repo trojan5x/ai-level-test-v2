@@ -1,17 +1,43 @@
 import { supabase } from '../../supabase.js';
+import { isDevLandingPage } from '../../utils/analyticsEnvironment.js';
 
 // Analytics queries for admin dashboard
 export const adminQueries = {
+
+  isDevRecord(record) {
+    return isDevLandingPage(record?.landing_page) || isDevLandingPage(record?.referrer);
+  },
+
+  filterDevRecords(records = []) {
+    return records.filter(record => !this.isDevRecord(record));
+  },
+
+  filterDevAnalyticsEvents(events = [], devSessionIds = new Set()) {
+    if (devSessionIds.size === 0) return events;
+    return events.filter(event => !devSessionIds.has(String(event.session_id)));
+  },
+
+  async getDevSessionIds() {
+    const { data, error } = await supabase
+      .from('ai_level_visits')
+      .select('session_id, landing_page')
+      .or('landing_page.ilike.%localhost%,landing_page.ilike.%127.0.0.1%');
+
+    if (error) return new Set();
+    return new Set((data || []).map(visit => visit.session_id));
+  },
   
   // Get conversion funnel metrics
   async getFunnelMetrics(timeRange = '7d') {
     const startDate = this.getStartDate(timeRange);
     
     try {
+      const devSessionIds = await this.getDevSessionIds();
+
       // Get all analytics events within time range
       const { data: events, error } = await supabase
         .from('ai_level_analytics')
-        .select('event_type, created_at, event_data')
+        .select('event_type, created_at, event_data, session_id')
         .gte('created_at', startDate)
         .order('created_at', { ascending: false });
 
@@ -33,10 +59,12 @@ export const adminQueries = {
 
       if (error) throw error;
 
+      const filteredEvents = this.filterDevAnalyticsEvents(events, devSessionIds);
+
       // Get leads and intents for conversion calculation
       const { data: leads, error: leadsError } = await supabase
         .from('ai_level_leads')
-        .select('id, created_at, level, relationship_status')
+        .select('id, created_at, level, relationship_status, landing_page, referrer')
         .gte('created_at', startDate);
 
       // Handle case where table doesn't exist or has no data  
@@ -45,6 +73,8 @@ export const adminQueries = {
       } else if (leadsError) {
         throw leadsError;
       }
+
+      const filteredLeads = this.filterDevRecords(leads);
 
       const { data: intents, error: intentsError } = await supabase
         .from('ai_level_intents')
@@ -58,15 +88,18 @@ export const adminQueries = {
         throw intentsError;
       }
 
+      const filteredLeadIds = new Set((filteredLeads || []).map(lead => lead.id));
+      const filteredIntents = (intents || []).filter(intent => filteredLeadIds.has(intent.lead_id));
+
       // Calculate funnel metrics with safe fallbacks
-      const testStarts = events?.filter(e => e.event_type === 'test_started').length || 0;
-      const completions = leads?.length || 0;
-      const productInterests = intents?.length || 0;
-      const shareInitiations = events?.filter(e => e.event_type === 'share_initiated').length || 0;
+      const testStarts = filteredEvents?.filter(e => e.event_type === 'test_started').length || 0;
+      const completions = filteredLeads?.length || 0;
+      const productInterests = filteredIntents?.length || 0;
+      const shareInitiations = filteredEvents?.filter(e => e.event_type === 'share_initiated').length || 0;
 
       // Calculate product interest breakdown
-      const proveInterests = intents?.filter(i => i.prove_interest).length || 0;
-      const improveInterests = intents?.filter(i => i.improve_interest).length || 0;
+      const proveInterests = filteredIntents?.filter(i => i.prove_interest).length || 0;
+      const improveInterests = filteredIntents?.filter(i => i.improve_interest).length || 0;
 
       return {
         testStarts,
@@ -101,7 +134,7 @@ export const adminQueries = {
     try {
       const { data: leads, error } = await supabase
         .from('ai_level_leads')
-        .select('level, relationship_status, created_at, phone')
+        .select('level, relationship_status, created_at, phone, landing_page, referrer')
         .order('created_at', { ascending: false });
 
       // Handle case where table doesn't exist or has no data
@@ -117,7 +150,9 @@ export const adminQueries = {
 
       if (error) throw error;
 
-      if (!leads || leads.length === 0) {
+      const filteredLeads = this.filterDevRecords(leads);
+
+      if (!filteredLeads || filteredLeads.length === 0) {
         return {
           levelDistribution: {},
           relationshipDistribution: {},
@@ -127,21 +162,21 @@ export const adminQueries = {
       }
 
       // Calculate level distribution
-      const levelDistribution = leads.reduce((acc, lead) => {
+      const levelDistribution = filteredLeads.reduce((acc, lead) => {
         const level = lead.level >= 4 ? '4+' : String(lead.level);
         acc[level] = (acc[level] || 0) + 1;
         return acc;
       }, {});
 
       // Calculate relationship status distribution
-      const relationshipDistribution = leads.reduce((acc, lead) => {
+      const relationshipDistribution = filteredLeads.reduce((acc, lead) => {
         const status = lead.relationship_status || 'unknown';
         acc[status] = (acc[status] || 0) + 1;
         return acc;
       }, {});
 
       // Geographic insights based on phone numbers
-      const geographicData = leads.reduce((acc, lead) => {
+      const geographicData = filteredLeads.reduce((acc, lead) => {
         if (lead.phone && lead.phone.startsWith('+91')) {
           acc['India'] = (acc['India'] || 0) + 1;
         } else {
@@ -153,7 +188,7 @@ export const adminQueries = {
       return {
         levelDistribution,
         relationshipDistribution,
-        totalUsers: leads.length,
+        totalUsers: filteredLeads.length,
         geographicData
       };
     } catch (error) {
@@ -175,7 +210,7 @@ export const adminQueries = {
     try {
       const { data: leads, error } = await supabase
         .from('ai_level_leads')
-        .select('utm_source, utm_medium, utm_campaign, referrer, source, created_at')
+        .select('utm_source, utm_medium, utm_campaign, referrer, source, created_at, landing_page')
         .gte('created_at', startDate)
         .order('created_at', { ascending: false });
 
@@ -191,7 +226,9 @@ export const adminQueries = {
 
       if (error) throw error;
 
-      if (!leads || leads.length === 0) {
+      const filteredLeads = this.filterDevRecords(leads);
+
+      if (!filteredLeads || filteredLeads.length === 0) {
         return {
           sources: {},
           campaigns: {},
@@ -202,14 +239,14 @@ export const adminQueries = {
       }
 
       // Analyze UTM sources
-      const sources = leads.reduce((acc, lead) => {
+      const sources = filteredLeads.reduce((acc, lead) => {
         const source = lead.utm_source || lead.source || 'direct';
         acc[source] = (acc[source] || 0) + 1;
         return acc;
       }, {});
 
       // Analyze campaigns
-      const campaigns = leads.reduce((acc, lead) => {
+      const campaigns = filteredLeads.reduce((acc, lead) => {
         if (lead.utm_campaign) {
           acc[lead.utm_campaign] = (acc[lead.utm_campaign] || 0) + 1;
         }
@@ -217,7 +254,7 @@ export const adminQueries = {
       }, {});
 
       // Analyze mediums
-      const mediums = leads.reduce((acc, lead) => {
+      const mediums = filteredLeads.reduce((acc, lead) => {
         if (lead.utm_medium) {
           acc[lead.utm_medium] = (acc[lead.utm_medium] || 0) + 1;
         }
@@ -225,7 +262,7 @@ export const adminQueries = {
       }, {});
 
       // Analyze referrers
-      const referrers = leads.reduce((acc, lead) => {
+      const referrers = filteredLeads.reduce((acc, lead) => {
         if (lead.referrer) {
           try {
             const domain = new URL(lead.referrer).hostname;
@@ -242,7 +279,7 @@ export const adminQueries = {
         campaigns,
         mediums,
         referrers,
-        totalTracked: leads.length
+        totalTracked: filteredLeads.length
       };
     } catch (error) {
       console.error('Error fetching UTM analytics:', error);
@@ -281,16 +318,19 @@ export const adminQueries = {
 
       if (visitsError) throw visitsError;
 
+      const filteredVisits = this.filterDevRecords(visits);
+
       // Get leads for conversion calculation
       const { data: leads, error: leadsError } = await supabase
         .from('ai_level_leads')
-        .select('id, created_at')
+        .select('id, created_at, landing_page, referrer')
         .gte('created_at', startDate);
 
-      const leadCount = leads?.length || 0;
-      const visitCount = visits?.length || 0;
+      const filteredLeads = this.filterDevRecords(leads);
+      const leadCount = filteredLeads?.length || 0;
+      const visitCount = filteredVisits?.length || 0;
 
-      if (!visits || visits.length === 0) {
+      if (!filteredVisits || filteredVisits.length === 0) {
         return {
           totalVisits: 0,
           utmSources: {},
@@ -302,14 +342,14 @@ export const adminQueries = {
       }
 
       // Analyze UTM sources
-      const utmSources = visits.reduce((acc, visit) => {
+      const utmSources = filteredVisits.reduce((acc, visit) => {
         const source = visit.utm_source || 'direct';
         acc[source] = (acc[source] || 0) + 1;
         return acc;
       }, {});
 
       // Analyze campaigns
-      const utmCampaigns = visits.reduce((acc, visit) => {
+      const utmCampaigns = filteredVisits.reduce((acc, visit) => {
         if (visit.utm_campaign) {
           acc[visit.utm_campaign] = (acc[visit.utm_campaign] || 0) + 1;
         }
@@ -317,7 +357,7 @@ export const adminQueries = {
       }, {});
 
       // Analyze referrers
-      const referrers = visits.reduce((acc, visit) => {
+      const referrers = filteredVisits.reduce((acc, visit) => {
         if (visit.referrer) {
           try {
             const domain = new URL(visit.referrer).hostname;
@@ -330,7 +370,7 @@ export const adminQueries = {
       }, {});
 
       // Analyze device types
-      const deviceTypes = visits.reduce((acc, visit) => {
+      const deviceTypes = filteredVisits.reduce((acc, visit) => {
         const device = visit.device_type || 'unknown';
         acc[device] = (acc[device] || 0) + 1;
         return acc;
@@ -365,31 +405,34 @@ export const adminQueries = {
       // Get visits grouped by UTM source
       const { data: visits, error: visitsError } = await supabase
         .from('ai_level_visits')
-        .select('utm_source, session_id')
+        .select('utm_source, session_id, landing_page')
         .gte('visited_at', startDate);
 
       // Get leads with UTM data
       const { data: leads, error: leadsError } = await supabase
         .from('ai_level_leads')
-        .select('utm_source, created_at')
+        .select('utm_source, created_at, landing_page, referrer')
         .gte('created_at', startDate);
 
       if (visitsError || leadsError) {
         return {};
       }
 
+      const filteredVisits = this.filterDevRecords(visits);
+      const filteredLeads = this.filterDevRecords(leads);
+
       // Calculate conversion rates by UTM source
       const conversionFunnel = {};
 
       // Group visits by UTM source
-      const visitsBySource = (visits || []).reduce((acc, visit) => {
+      const visitsBySource = (filteredVisits || []).reduce((acc, visit) => {
         const source = visit.utm_source || 'direct';
         acc[source] = (acc[source] || 0) + 1;
         return acc;
       }, {});
 
       // Group leads by UTM source  
-      const leadsBySource = (leads || []).reduce((acc, lead) => {
+      const leadsBySource = (filteredLeads || []).reduce((acc, lead) => {
         const source = lead.utm_source || 'direct';
         acc[source] = (acc[source] || 0) + 1;
         return acc;
@@ -435,6 +478,9 @@ export const adminQueries = {
 
       if (leadsError) throw leadsError;
 
+      const devSessionIds = await this.getDevSessionIds();
+      const filteredLeads = this.filterDevRecords(leads);
+
       const { data: intents, error: intentsError } = await supabase
         .from('ai_level_intents')
         .select('*');
@@ -445,6 +491,9 @@ export const adminQueries = {
       } else if (intentsError) {
         throw intentsError;
       }
+
+      const filteredLeadIds = new Set((filteredLeads || []).map(lead => lead.id));
+      const filteredIntents = (intents || []).filter(intent => filteredLeadIds.has(intent.lead_id));
 
       const { data: analytics, error: analyticsError } = await supabase
         .from('ai_level_analytics')
@@ -458,21 +507,23 @@ export const adminQueries = {
         throw analyticsError;
       }
 
+      const filteredAnalytics = this.filterDevAnalyticsEvents(analytics, devSessionIds);
+
       // Lead quality scoring
-      const leadQuality = this.calculateLeadQuality(leads || [], intents || []);
+      const leadQuality = this.calculateLeadQuality(filteredLeads || [], filteredIntents || []);
 
       // Revenue potential (rough estimates based on level and intent)
-      const revenueEstimates = this.calculateRevenueEstimates(leads || [], intents || []);
+      const revenueEstimates = this.calculateRevenueEstimates(filteredLeads || [], filteredIntents || []);
 
       // Viral coefficient calculation
-      const viralCoefficient = this.calculateViralCoefficient(analytics || []);
+      const viralCoefficient = this.calculateViralCoefficient(filteredAnalytics || []);
 
       // Recent activity (last 24 hours)
       const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const recentActivity = {
-        newLeads: leads?.filter(l => l.created_at > last24Hours).length || 0,
-        newIntents: intents?.filter(i => i.created_at > last24Hours).length || 0,
-        testStarts: analytics?.filter(a => a.event_type === 'test_started' && a.created_at > last24Hours).length || 0
+        newLeads: filteredLeads?.filter(l => l.created_at > last24Hours).length || 0,
+        newIntents: filteredIntents?.filter(i => i.created_at > last24Hours).length || 0,
+        testStarts: filteredAnalytics?.filter(a => a.event_type === 'test_started' && a.created_at > last24Hours).length || 0
       };
 
       return {
@@ -480,8 +531,8 @@ export const adminQueries = {
         revenueEstimates,
         viralCoefficient,
         recentActivity,
-        totalLeads: leads?.length || 0,
-        totalIntents: intents?.length || 0
+        totalLeads: filteredLeads?.length || 0,
+        totalIntents: filteredIntents?.length || 0
       };
     } catch (error) {
       console.error('Error fetching business intelligence:', error);
@@ -502,9 +553,11 @@ export const adminQueries = {
     const startDate = this.getStartDate(timeRange);
     
     try {
+      const devSessionIds = await this.getDevSessionIds();
+
       const { data: analytics, error } = await supabase
         .from('ai_level_analytics')
-        .select('event_type, created_at')
+        .select('event_type, created_at, session_id')
         .gte('created_at', startDate)
         .order('created_at', { ascending: true });
 
@@ -512,14 +565,20 @@ export const adminQueries = {
 
       const { data: leads, error: leadsError } = await supabase
         .from('ai_level_leads')
-        .select('created_at')
+        .select('created_at, landing_page, referrer')
         .gte('created_at', startDate)
         .order('created_at', { ascending: true });
 
       if (leadsError) throw leadsError;
 
+      const filteredAnalytics = this.filterDevAnalyticsEvents(analytics, devSessionIds);
+      const filteredLeads = this.filterDevRecords(leads);
+
       // Group data by day
-      const dailyData = this.groupByDay([...(analytics || []), ...(leads || []).map(l => ({ event_type: 'lead_captured', created_at: l.created_at }))]);
+      const dailyData = this.groupByDay([
+        ...(filteredAnalytics || []),
+        ...(filteredLeads || []).map(l => ({ event_type: 'lead_captured', created_at: l.created_at }))
+      ]);
       
       return dailyData;
     } catch (error) {
@@ -531,20 +590,23 @@ export const adminQueries = {
   // Get real-time stats for live dashboard
   async getRealTimeStats() {
     try {
+      const devSessionIds = await this.getDevSessionIds();
       const now = new Date();
       const last5Minutes = new Date(now.getTime() - 5 * 60 * 1000).toISOString();
 
       const { data: recentEvents, error } = await supabase
         .from('ai_level_analytics')
-        .select('event_type, created_at')
+        .select('event_type, created_at, session_id')
         .gte('created_at', last5Minutes)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
+      const filteredEvents = this.filterDevAnalyticsEvents(recentEvents, devSessionIds);
+
       return {
-        activeUsers: recentEvents?.filter(e => e.event_type === 'test_started').length || 0,
-        recentEvents: recentEvents?.slice(0, 10) || []
+        activeUsers: filteredEvents?.filter(e => e.event_type === 'test_started').length || 0,
+        recentEvents: filteredEvents?.slice(0, 10) || []
       };
     } catch (error) {
       console.error('Error fetching real-time stats:', error);
