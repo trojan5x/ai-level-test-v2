@@ -454,6 +454,92 @@ const AssessmentRouter = () => {
     updateUrl('loading');
   };
 
+  const handleItem5bSkip = () => {
+    const path = assessmentState.navigation?.assessmentPath || 'B';
+    const nextScreen = path === 'C' ? 'workflowDesign' : 'item6';
+
+    const updatedState = {
+      ...assessmentState,
+      assessment: {
+        ...assessmentState.assessment,
+        responses: {
+          ...assessmentState.assessment.responses,
+          item5b: null
+        },
+        scores: {
+          ...assessmentState.assessment.scores,
+          a2: 1,
+          promptLevel: 1
+        }
+      },
+      navigation: {
+        ...assessmentState.navigation,
+        skipReasons: {
+          ...assessmentState.navigation.skipReasons,
+          item5b: 'user_skipped'
+        },
+        completedScreens: [...new Set([
+          ...assessmentState.navigation.completedScreens,
+          'item5b',
+          'item5b_reveal'
+        ])]
+      }
+    };
+
+    setAssessmentState(updatedState);
+    saveAssessmentState(updatedState);
+    trackAnalyticsEvent('subjective_question_skipped', {
+      item: '5b',
+      platform: 'web',
+      wait_time_ms: 5000,
+      assessment_path: path,
+      promptLevel: 1
+    });
+    updateUrl(nextScreen);
+  };
+
+  const handleItem6Skip = () => {
+    const path = assessmentState.navigation?.assessmentPath || 'B';
+
+    const updatedState = {
+      ...assessmentState,
+      assessment: {
+        ...assessmentState.assessment,
+        responses: {
+          ...assessmentState.assessment.responses,
+          item6: null
+        },
+        scores: {
+          ...assessmentState.assessment.scores,
+          a5: 1,
+          item6Level: 1
+        }
+      },
+      navigation: {
+        ...assessmentState.navigation,
+        skipReasons: {
+          ...assessmentState.navigation.skipReasons,
+          item6: 'user_skipped'
+        },
+        completedScreens: [...new Set([
+          ...assessmentState.navigation.completedScreens,
+          'item6'
+        ])]
+      }
+    };
+
+    setAssessmentState(updatedState);
+    saveAssessmentState(updatedState);
+    trackAnalyticsEvent('subjective_question_skipped', {
+      item: '6',
+      platform: 'web',
+      wait_time_ms: 5000,
+      assessment_path: path,
+      followUpLevel: 1
+    });
+    updateUrl('loading');
+  };
+
   // Continue handlers for reveal screens
   const handleRevealContinue = (nextScreen) => {
     // Mark current reveal screen as completed
@@ -699,7 +785,9 @@ const AssessmentRouter = () => {
       handleItem4,
       handleItem5a,
       handleItem5b,
+      handleItem5bSkip,
       handleItem6,
+      handleItem6Skip,
       handleRevealContinue,
       
       // Enhanced assessment handlers

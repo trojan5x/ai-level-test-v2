@@ -207,12 +207,34 @@ function LeadCapture({ assessmentContext }) {
           />
 
           <div className="max-w-sm w-full relative z-10">
-          {/* Level number */}
+          {/* Level number — blurred until form submit */}
           <div className="text-center mb-3 sm:mb-4">
-            <p className="text-gray-500 text-[10px] font-semibold tracking-[0.25em] uppercase mb-1">Your AI Level</p>
-            <div className="text-4xl sm:text-5xl font-extrabold leading-none" style={{ color: data.color }}>
-              {level >= 5 ? "5+" : level}
+            <p className="text-gray-500 text-[10px] font-semibold tracking-[0.25em] uppercase mb-1">Your level is ready</p>
+            <div className="relative inline-flex items-center justify-center min-w-[4rem] min-h-[3rem]">
+              <div
+                className="text-4xl sm:text-5xl font-extrabold leading-none blur-md select-none pointer-events-none opacity-70"
+                style={{ color: data.color }}
+                aria-hidden="true"
+              >
+                {level >= 5 ? "5+" : level}
+              </div>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="absolute text-gray-500"
+                aria-hidden="true"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
             </div>
+            <p className="text-gray-600 text-[10px] mt-1">Unlock below to reveal</p>
           </div>
 
           {/* Locked preview cards */}

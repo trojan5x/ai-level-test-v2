@@ -8,6 +8,7 @@ import ScreenTransition from '../ScreenTransition.jsx';
 import Header from '../Header.jsx';
 import ProgressBar from '../ProgressBar.jsx';
 import FadeIn from '../FadeIn.jsx';
+import { useDelayedSkip } from '../../hooks/useDelayedSkip.js';
 
 // Scoring function for follow-up quality  
 function scoreFollowUp(text) {
@@ -27,6 +28,7 @@ function Item6({ assessmentContext }) {
   const previousText = assessmentContext.state?.assessment?.responses?.item6 || "";
   const [text, setText] = useState(previousText);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const skipVisible = useDelayedSkip(5000);
 
   // Get current path and calculate correct progress
   const path = assessmentContext.state?.navigation?.assessmentPath || "B";
@@ -53,10 +55,8 @@ function Item6({ assessmentContext }) {
     }
   };
 
-  const handlePrevious = () => {
-    const path = assessmentContext.state?.navigation?.assessmentPath;
-    const prev = path === 'C' ? 'systemBuilder' : 'item5b';
-    assessmentContext.updateUrl(prev);
+  const handleSkip = () => {
+    assessmentContext.handlers.handleItem6Skip();
   };
 
   const handleNext = async () => {
@@ -113,16 +113,17 @@ function Item6({ assessmentContext }) {
           {/* Navigation buttons */}
           <FadeIn delay={300} className="w-full">
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-800/40 w-full">
-              <button
-                onClick={handlePrevious}
-                disabled={isSubmitting}
-                className="flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2 disabled:opacity-40 disabled:cursor-not-allowed invisible"
-              >
-                <svg className="invisible w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Previous
-              </button>
+              {skipVisible ? (
+                <button
+                  onClick={handleSkip}
+                  disabled={isSubmitting}
+                  className="text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Skip this one →
+                </button>
+              ) : (
+                <span className="invisible text-sm px-2 py-2">Previous</span>
+              )}
 
               <button
                 onClick={handleNext}

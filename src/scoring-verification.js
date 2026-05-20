@@ -137,6 +137,45 @@ const testScenarios = [
     },
     expectedLevel: 2,
     expectedRelationship: "committed"
+  },
+  {
+    name: "Skip Item 6 penalty — strong MC but capped below L4",
+    description: "total=16 with penalty a5=1, item6Level=1 (skipped)",
+    scores: {
+      a1: 4, a2: 3, a3: 4, a4: 4, a5: 1,
+      item3Correct: true,
+      item4Choice: "C",
+      item6Level: 1,
+      restraintScore: 2,
+    },
+    expectedLevel: 3,
+    expectedRelationship: "merged"
+  },
+  {
+    name: "Skip Item 5b penalty — a2=1 reduces total",
+    description: "total=14 with penalty a2=1, would be 16 with a2=3",
+    scores: {
+      a1: 3, a2: 1, a3: 4, a4: 4, a5: 2,
+      item3Correct: true,
+      item4Choice: "C",
+      item6Level: 2,
+      restraintScore: 2,
+    },
+    expectedLevel: 3,
+    expectedRelationship: "merged"
+  },
+  {
+    name: "Both subjective skipped — worst-case penalty scores",
+    description: "a2=1, a5=1, item6Level=1",
+    scores: {
+      a1: 4, a2: 1, a3: 4, a4: 4, a5: 1,
+      item3Correct: true,
+      item4Choice: "D",
+      item6Level: 1,
+      restraintScore: 2,
+    },
+    expectedLevel: 3,
+    expectedRelationship: "merged"
   }
 ];
 

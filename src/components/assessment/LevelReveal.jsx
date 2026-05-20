@@ -215,12 +215,13 @@ function getStrengthInsight(scores, level) {
   return { icon: "✦", label: "You showed up", text: "Taking this assessment puts you ahead of 95% of people who talk about AI but never measure it." };
 }
 
-function getBlindSpotInsight(scores, level) {
+function getBlindSpotInsight(scores, level, skipReasons = {}) {
   if (!scores.item3Correct && scores.item4Choice === "A") return { icon: "⚠", label: "The polish-and-accept trap", text: "AI fooled you with polish (Artifact Effect), and when its output was 80% there, you accepted it as-is. The fix: before using any AI output, ask 'is this actually saying something specific?'" };
   if (!scores.item3Correct) return { icon: "⚠", label: "The Artifact Effect got you", text: "You picked the polished response over the useful one. AI's formatting tricks your brain into trusting it. This is the #1 skill gap between L2 and L3." };
   if (scores.item3bCorrect === false && scores.item3Correct) return { icon: "⚠", label: "The yes-man slipped past", text: "You caught the Artifact Effect but missed the Agreement Trap. When AI agrees with you too easily, that's exactly when you should push hardest." };
   if (scores.item4Choice === "A" || scores.item4Choice === "B") return { icon: "⚠", label: "Format over substance", text: "When AI gave you an 80% draft, you polished the container instead of challenging the reasoning. The question isn't 'how does this look?' — it's 'is the logic right?'" };
   if (scores.restraintScore < 2) return { icon: "⚠", label: "No restraint boundary", text: "You'd use AI for an apology and for allergy recipes. Some tasks need your real voice. Others need verified safety. Knowing when to say 'not this one' is an underrated skill." };
+  if (skipReasons.item6 === 'user_skipped') return { icon: "⚠", label: "Follow-up skipped", text: "You skipped the follow-up question — the one that separates surface-level AI use from strategic iteration. Next time, try challenging the analysis itself instead of asking for more detail." };
   if (scores.item6Level <= 2) return { icon: "⚠", label: "Surface-level follow-up", text: "When AI gave you a generic analysis, your follow-up stayed surface-level. The high-value move: challenge the analysis itself, not just ask for more detail." };
   return { icon: "💡", label: "Room to explore", text: "Your assessment didn't flag major blind spots — but the quick test only covers 5 of 8 abilities. The full certification reveals the subtler patterns." };
 }
@@ -624,7 +625,7 @@ function LevelReveal({ assessmentContext }) {
   
   // Advanced insights for Beat 2: The Mirror
   const strength = getStrengthInsight(scores, level);
-  const blindSpot = getBlindSpotInsight(scores, level);
+  const blindSpot = getBlindSpotInsight(scores, level, state.navigation?.skipReasons || {});
   const gapData = getGapDescription(level);
   
   const [stage, setStage] = useState(0);

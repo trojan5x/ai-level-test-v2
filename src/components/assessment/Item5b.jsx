@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import ScreenTransition from '../ScreenTransition.jsx';
 import Header from '../Header.jsx';
 import FadeIn from '../FadeIn.jsx';
+import { useDelayedSkip } from '../../hooks/useDelayedSkip.js';
 
 // Scoring function for prompt quality
 function scorePromptFix(text) {
@@ -25,6 +26,7 @@ function Item5b({ assessmentContext }) {
   const previousText = assessmentContext.state?.assessment?.responses?.item5b || "";
   const [text, setText] = useState(previousText);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const skipVisible = useDelayedSkip(5000);
 
   const handleSubmit = async () => {
     if (text.length <= 10) return;
@@ -39,8 +41,8 @@ function Item5b({ assessmentContext }) {
     }
   };
 
-  const handlePrevious = () => {
-    assessmentContext.updateUrl('item5a');
+  const handleSkip = () => {
+    assessmentContext.handlers.handleItem5bSkip();
   };
 
   const handleNext = async () => {
@@ -105,16 +107,17 @@ function Item5b({ assessmentContext }) {
           {/* Navigation buttons */}
           <FadeIn delay={300} className="w-full">
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-800/40 w-full">
-              <button
-                onClick={handlePrevious}
-                disabled={isSubmitting}
-                className="flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2 disabled:opacity-40 disabled:cursor-not-allowed invisible"
-              >
-                <svg className="invisible w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Previous
-              </button>
+              {skipVisible ? (
+                <button
+                  onClick={handleSkip}
+                  disabled={isSubmitting}
+                  className="text-gray-400 hover:text-gray-300 transition-colors text-sm px-2 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Skip this one →
+                </button>
+              ) : (
+                <span className="invisible text-sm px-2 py-2">Previous</span>
+              )}
 
               <button
                 onClick={handleNext}

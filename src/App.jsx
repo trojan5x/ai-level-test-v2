@@ -216,8 +216,8 @@ function Landing() {
 
             <FadeIn delay={1200} direction="up">
               <p className="text-gray-400 text-lg sm:text-xl mb-8 leading-normal">
-                7 levels. Under 10 minutes.<br />
-                Most people overestimate by 2 levels.
+                How far ahead or behind are you really?<br />
+                Takes under 10 minutes.
               </p>
             </FadeIn>
           </div>
@@ -331,7 +331,7 @@ function Landing() {
               </span>
             </button>
             <p className="text-gray-500 text-xs text-center mt-3 opacity-0 animate-[fadeIn_0.6s_ease-out_2.5s_forwards]">
-              Complimentary until 31st May. Instant results.
+              Get instant personalised report. Free until 31st May.
             </p>
           </div>
         </div>
