@@ -81,8 +81,12 @@ function LeadCapture({ assessmentContext }) {
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
-  // Validation: Allow >= 7 digits for international numbers (e.g. SG, HK, QA use 8-digit numbers)
-  const canSubmit = name.trim().length >= 2 && phone.trim().length >= 7;
+  const isIndianNumber = countryCode === "+91";
+  const phoneDigits = phone.trim();
+  const isPhoneValid = isIndianNumber
+    ? phoneDigits.length === 10
+    : phoneDigits.length >= 7;
+  const canSubmit = name.trim().length >= 2 && isPhoneValid;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -285,7 +289,13 @@ function LeadCapture({ assessmentContext }) {
                       <div className="relative flex items-center">
                         <select
                           value={countryCode}
-                          onChange={(e) => setCountryCode(e.target.value)}
+                          onChange={(e) => {
+                            const newCode = e.target.value;
+                            setCountryCode(newCode);
+                            if (newCode === "+91") {
+                              setPhone((prev) => prev.slice(0, 10));
+                            }
+                          }}
                           className="bg-transparent text-gray-300 text-sm pl-4 pr-7 py-2.5 focus:outline-none appearance-none cursor-pointer mp-sensitive border-r border-gray-700/50"
                           style={{ minWidth: "85px" }}
                         >
@@ -300,7 +310,10 @@ function LeadCapture({ assessmentContext }) {
                       <input
                         type="tel"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 15))}
+                        onChange={(e) => {
+                          const maxLen = countryCode === "+91" ? 10 : 15;
+                          setPhone(e.target.value.replace(/\D/g, "").slice(0, maxLen));
+                        }}
                         placeholder="WhatsApp number"
                         className="flex-1 bg-transparent py-2.5 px-4 text-white text-sm focus:outline-none placeholder-gray-500 mp-sensitive"
                       />

@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { loadAssessmentState, saveAssessmentState, PathLogic, EnhancedScoring } from '../utils/stateManager.js';
+import { isItem3Correct, isItem3bCorrect, scoreBehavioralFrequency } from '../utils/questionOptions.js';
 import { trackAnalyticsEvent, scoreLLMResponse } from '../supabase.js';
 import useAssessmentNavigation from '../hooks/useAssessmentNavigation.js';
 
@@ -250,7 +251,7 @@ const AssessmentRouter = () => {
   };
 
   const handleItem3 = (choice, confidence) => {
-    const correct = choice === "B";
+    const correct = isItem3Correct(choice);
     let a3Add = 0;
     let b1Add = 0;
     if (correct && confidence === "Very sure") { a3Add = 4; b1Add = 2; }
@@ -618,7 +619,8 @@ const AssessmentRouter = () => {
   };
 
   // BehavioralFrequency Handler - AI adoption patterns
-  const handleBehavioralFrequency = (responses, behavFreqScore) => {
+  const handleBehavioralFrequency = (responses, _behavFreqScore) => {
+    const behavFreqScore = scoreBehavioralFrequency(responses);
     const updatedState = {
       ...assessmentState,
       assessment: {
@@ -687,7 +689,7 @@ const AssessmentRouter = () => {
 
   // Item3b Handler - Agreement trap test
   const handleItem3b = (choice) => {
-    const correct = choice === "B"; // Option B catches the agreement trap
+    const correct = isItem3bCorrect(choice);
     const updatedState = {
       ...assessmentState,
       assessment: {
@@ -695,6 +697,10 @@ const AssessmentRouter = () => {
         responses: {
           ...assessmentState.assessment.responses,
           item3b: choice
+        },
+        scores: {
+          ...assessmentState.assessment.scores,
+          item3bCorrect: correct
         },
         enhancedScores: {
           ...assessmentState.assessment.enhancedScores,

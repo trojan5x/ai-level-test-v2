@@ -6,12 +6,13 @@
 import { supabase } from '../supabase.js';
 import { utmTracker } from './utmTracker.js';
 import { shouldTrackAnalytics } from './analyticsEnvironment.js';
+import { isItem3Correct, isItem3bCorrect } from './questionOptions.js';
 
 // Storage keys
 const STORAGE_KEYS = {
   ASSESSMENT_STATE: 'ai-level-assessment-state',
   SESSION_ID: 'ai-level-session-id',
-  VERSION: '1.0'
+  VERSION: '1.1'
 };
 
 // Default state structure - Enhanced for adaptive assessment
@@ -34,11 +35,12 @@ const DEFAULT_STATE = {
     startTime: null,
     completedAt: null,
     responses: {},
-    
+    optionOrder: {},
+
     // Original 6-component scoring system (maintained for compatibility)
     scores: {
       a1: 0, a2: 0, a3: 0, a4: 0, a5: 0, b1: 0,
-      item3Correct: false, item4Choice: null, item6Level: 1,
+      item3Correct: false, item3bCorrect: false, item4Choice: null, item6Level: 1,
       item2Correct: 0, restraintScore: 0,
       apologyAnswer: null, allergyAnswer: null, promptLevel: 1,
     },
@@ -472,9 +474,10 @@ export const validateStateIntegrity = (state) => {
     if (!Array.isArray(state.navigation.completedScreens)) return false;
     if (!state.analytics.sessionId) return false;
     
-    // Check version compatibility
+    // Reject stale state — in-progress sessions reset on version bump
     if (state.version && state.version !== STORAGE_KEYS.VERSION) {
-      console.warn('⚠️ State version mismatch, may need migration');
+      console.warn('⚠️ State version mismatch, discarding stale session');
+      return false;
     }
     
     // Check timestamp freshness (warn if older than 7 days)
@@ -758,6 +761,7 @@ export function mergeAssessmentScores(assessment) {
   const legacyKeys = [
     'item2Correct',
     'item3Correct',
+    'item3bCorrect',
     'item4Choice',
     'restraintScore',
     'apologyAnswer',
@@ -790,7 +794,9 @@ export const EnhancedScoring = {
     } = scores;
     const total = a1 + a2 + a3 + a4 + a5;
     
-    const item3Correct = scores.item3Correct !== undefined ? scores.item3Correct : (responses.item3?.choice === "B");
+    const item3Correct = scores.item3Correct !== undefined
+      ? scores.item3Correct
+      : isItem3Correct(responses.item3?.choice);
     const item4Choice = scores.item4Choice || responses.item4?.choice;
     
     const item6Level = scores.item6Level || 0;
@@ -821,8 +827,12 @@ export const EnhancedScoring = {
   },
 
   computeRelationshipStatus(scores, level, responses = {}) {
-    const item3Correct = scores.item3Correct !== undefined ? scores.item3Correct : (responses.item3?.choice === "B");
-    const item3bCorrect = scores.item3bCorrect !== undefined ? scores.item3bCorrect : (responses.item3b === "B");
+    const item3Correct = scores.item3Correct !== undefined
+      ? scores.item3Correct
+      : isItem3Correct(responses.item3?.choice);
+    const item3bCorrect = scores.item3bCorrect !== undefined
+      ? scores.item3bCorrect
+      : isItem3bCorrect(responses.item3b);
     const item4Choice = scores.item4Choice || responses.item4?.choice;
     const restraintScore = scores.restraintScore !== undefined ? scores.restraintScore : 0;
     

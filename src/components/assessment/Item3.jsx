@@ -1,6 +1,6 @@
 /**
  * Item3 Component - Artifact Effect question
- * Extracted from App.jsx for new navigation system
+ * Options shuffled per session; correctness keyed by semantic ID.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -8,19 +8,46 @@ import ScreenTransition from '../ScreenTransition.jsx';
 import Header from '../Header.jsx';
 import ProgressBar from '../ProgressBar.jsx';
 import FadeIn from '../FadeIn.jsx';
+import useQuestionOptions from '../../hooks/useQuestionOptions.js';
+import { ITEM3_OPTIONS } from '../../utils/questionOptions.js';
+
+function renderItem3OptionText(option) {
+  if (option.id === 'polished_trap') {
+    return (
+      <>
+        To boost team productivity, focus on three core pillars.{' '}
+        <strong className="text-gray-200">First, optimize your workflow processes</strong>
+        {' '}— streamline communication and reduce meeting overhead.{' '}
+        <strong className="text-gray-200">Second, invest in the right tools</strong>
+        {' '}— the tech stack matters more than most realize.{' '}
+        <strong className="text-gray-200">Third, foster accountability.</strong>
+        {' '}These levers create a multiplicative effect. Start by conducting a productivity audit.
+      </>
+    );
+  }
+  return option.text;
+}
 
 function Item3({ assessmentContext }) {
-  // Load previous answers if they exist
   const previousAnswer = assessmentContext.state?.assessment?.responses?.item3;
-  const [selected, setSelected] = useState(previousAnswer?.choice || null);
+  const {
+    orderedOptions,
+    selectedId,
+    setSelectedId,
+    displayLabel,
+  } = useQuestionOptions({
+    assessmentContext,
+    questionKey: 'item3',
+    optionDefs: ITEM3_OPTIONS,
+    previousChoice: previousAnswer?.choice || null,
+  });
 
-  // Get current path and calculate correct progress
   const path = assessmentContext.state?.navigation?.assessmentPath || "B";
   const getProgressInfo = () => {
     switch(path) {
-      case "A": return { current: 7, total: 8 };    // No Item3b
-      case "B": return { current: 7, total: 10 };   // Includes Item3b
-      case "C": return { current: 7, total: 12 };   // Includes Item3b + advanced questions
+      case "A": return { current: 7, total: 8 };
+      case "B": return { current: 7, total: 10 };
+      case "C": return { current: 7, total: 12 };
       default: return { current: 7, total: 10 };
     }
   };
@@ -29,19 +56,17 @@ function Item3({ assessmentContext }) {
   const confidenceRef = useRef(null);
   const continueButtonRef = useRef(null);
 
-  // Auto-scroll when user selects an option (A or B)
   useEffect(() => {
-    if (selected && confidenceRef.current) {
+    if (selectedId && confidenceRef.current) {
       setTimeout(() => {
         confidenceRef.current.scrollIntoView({
           behavior: 'smooth',
           block: 'center'
         });
-      }, 200); // Wait for FadeIn animation
+      }, 200);
     }
-  }, [selected]);
+  }, [selectedId]);
 
-  // Auto-scroll when user selects confidence level
   useEffect(() => {
     if (confidence && continueButtonRef.current) {
       setTimeout(() => {
@@ -49,20 +74,16 @@ function Item3({ assessmentContext }) {
           behavior: 'smooth',
           block: 'center'
         });
-      }, 100); // Short delay since continue button appears immediately
+      }, 100);
     }
   }, [confidence]);
-
-  const handleAnswer = (choice) => {
-    setSelected(choice);
-  };
 
   const handlePrevious = () => {
     assessmentContext.updateUrl('item2');
   };
 
   const handleNext = () => {
-    const choiceToSubmit = selected || previousAnswer?.choice;
+    const choiceToSubmit = selectedId || previousAnswer?.choice;
     const confidenceToSubmit = confidence || previousAnswer?.confidence;
     if (choiceToSubmit && confidenceToSubmit) {
       assessmentContext.handlers.handleItem3(choiceToSubmit, confidenceToSubmit);
@@ -83,55 +104,39 @@ function Item3({ assessmentContext }) {
             </div>
           </FadeIn>
           <div className="max-w-2xl w-full grid md:grid-cols-2 gap-4 mb-6">
-            <FadeIn delay={200}>
-              <button
-                onClick={() => setSelected("A")}
-                className={`text-left p-5 rounded-2xl border transition-all duration-300 w-full ${
-                  selected === "A" 
-                    ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20" 
-                    : "border-gray-800/60 bg-gray-900/50 hover:border-gray-700"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="text-blue-400/60 text-xs font-semibold tracking-widest">A</div>
-                  {selected === "A" && (
-                    <div className="text-blue-400 text-sm ml-auto">✓ Selected</div>
-                  )}
-                  {selected !== "A" && (
-                    <div className="flex gap-0.5 ml-auto">
-                      <div className="w-1 h-3 bg-gray-700 rounded-full" />
-                      <div className="w-1 h-3 bg-gray-700 rounded-full" />
-                      <div className="w-1 h-3 bg-gray-700 rounded-full" />
+            {orderedOptions.map((option, index) => (
+              <FadeIn key={option.id} delay={200 + index * 150}>
+                <button
+                  onClick={() => setSelectedId(option.id)}
+                  className={`text-left p-5 rounded-2xl border transition-all duration-300 w-full ${
+                    selectedId === option.id
+                      ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20"
+                      : "border-gray-800/60 bg-gray-900/50 hover:border-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="text-blue-400/60 text-xs font-semibold tracking-widest">
+                      {displayLabel(index)}
                     </div>
-                  )}
-                </div>
-                <p className="text-gray-300 text-xs leading-relaxed">
-                  To boost team productivity, focus on three core pillars. <strong className="text-gray-200">First, optimize your workflow processes</strong> — streamline communication and reduce meeting overhead. <strong className="text-gray-200">Second, invest in the right tools</strong> — the tech stack matters more than most realize. <strong className="text-gray-200">Third, foster accountability.</strong> These levers create a multiplicative effect. Start by conducting a productivity audit.
-                </p>
-              </button>
-            </FadeIn>
-            <FadeIn delay={350}>
-              <button
-                onClick={() => setSelected("B")}
-                className={`text-left p-5 rounded-2xl border transition-all duration-300 w-full ${
-                  selected === "B" 
-                    ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20" 
-                    : "border-gray-800/60 bg-gray-900/50 hover:border-gray-700"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="text-blue-400/60 text-xs font-semibold tracking-widest">B</div>
-                  {selected === "B" && (
-                    <div className="text-blue-400 text-sm ml-auto">✓ Selected</div>
-                  )}
-                </div>
-                <p className="text-gray-300 text-xs leading-relaxed">
-                  Before you change anything, find where time actually goes. Most teams assume meetings kill productivity, but they'll cut meetings and nothing changes. The real leak is usually async work — Slack threads that should be decisions, emails that should be syncs. Watch what your best performer does differently. Most productivity gains come from stopping something, not adding to your stack.
-                </p>
-              </button>
-            </FadeIn>
+                    {selectedId === option.id && (
+                      <div className="text-blue-400 text-sm ml-auto">✓ Selected</div>
+                    )}
+                    {selectedId !== option.id && option.id === 'polished_trap' && (
+                      <div className="flex gap-0.5 ml-auto">
+                        <div className="w-1 h-3 bg-gray-700 rounded-full" />
+                        <div className="w-1 h-3 bg-gray-700 rounded-full" />
+                        <div className="w-1 h-3 bg-gray-700 rounded-full" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-gray-300 text-xs leading-relaxed">
+                    {renderItem3OptionText(option)}
+                  </p>
+                </button>
+              </FadeIn>
+            ))}
           </div>
-          {selected && (
+          {selectedId && (
             <FadeIn delay={100}>
               <div ref={confidenceRef} className="max-w-md text-center">
                 <p className="text-gray-600 text-xs mb-3">How confident are you?</p>
@@ -153,7 +158,6 @@ function Item3({ assessmentContext }) {
             </FadeIn>
           )}
 
-          {/* Navigation buttons */}
           <FadeIn delay={500} className="w-full">
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-800/40 w-full">
               <button
@@ -169,9 +173,9 @@ function Item3({ assessmentContext }) {
               <button
                 ref={continueButtonRef}
                 onClick={handleNext}
-                disabled={(!selected && !previousAnswer?.choice) || (!confidence && !previousAnswer?.confidence)}
+                disabled={(!selectedId && !previousAnswer?.choice) || (!confidence && !previousAnswer?.confidence)}
                 className={`px-8 py-3 rounded-2xl transition-all duration-300 font-semibold ${
-                  (selected || previousAnswer?.choice) && (confidence || previousAnswer?.confidence)
+                  (selectedId || previousAnswer?.choice) && (confidence || previousAnswer?.confidence)
                     ? 'bg-white text-gray-950 hover:scale-[1.03] active:scale-[0.97] shadow-lg'
                     : 'bg-gray-800 text-gray-500 cursor-not-allowed'
                 }`}

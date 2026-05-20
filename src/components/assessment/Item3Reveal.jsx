@@ -1,6 +1,5 @@
 /**
  * Item3Reveal Component - Reveal screen for Artifact Effect question
- * Extracted from App.jsx for new navigation system
  */
 
 import React from 'react';
@@ -8,11 +7,12 @@ import ScreenTransition from '../ScreenTransition.jsx';
 import FadeIn from '../FadeIn.jsx';
 import ResultBadge from '../ResultBadge.jsx';
 import TimedAdvance from '../TimedAdvance.jsx';
+import { mergeAssessmentScores } from '../../utils/stateManager.js';
 
 function Item3Reveal({ assessmentContext }) {
   const { state } = assessmentContext;
-  const response = state.assessment.responses.item3;
-  const correct = response?.choice === "B";
+  const scores = mergeAssessmentScores(state.assessment);
+  const correct = scores.item3Correct === true;
 
   const handleContinue = () => {
     const path = state.navigation?.assessmentPath || 'B';
@@ -28,8 +28,8 @@ function Item3Reveal({ assessmentContext }) {
             <ResultBadge correct={correct} label={correct ? "You see through polish" : "The Artifact Effect got you"} />
             <p className="text-gray-300 text-lg leading-relaxed mb-3">
               {correct
-                ? "Response A has structure. Bold headers. Professional tone. But it says nothing specific. Response B has a real diagnosis. You caught that."
-                : "Response A looks like expertise — bold headers, structured pillars, clear recommendations. But strip the formatting and it says nothing specific. Response B actually diagnoses the problem."}
+                ? "The polished response has structure. Bold headers. Professional tone. But it says nothing specific. The useful response has a real diagnosis. You caught that."
+                : "The polished response looks like expertise — bold headers, structured pillars, clear recommendations. But strip the formatting and it says nothing specific. The useful response actually diagnoses the problem."}
             </p>
             <div className={`rounded-xl p-4 border mb-8 text-left ${correct ? "bg-emerald-500/5 border-emerald-500/15" : "bg-amber-500/5 border-amber-500/15"
               }`}>
@@ -42,7 +42,7 @@ function Item3Reveal({ assessmentContext }) {
                   : "The Artifact Effect: when AI output looks professional, your brain shortcuts past 'is this actually saying something?' That shortcut is what keeps most people at Level 2."}
               </p>
             </div>
-            <TimedAdvance 
+            <TimedAdvance
               onAdvance={handleContinue}
               duration={4000}
               label="Next →"

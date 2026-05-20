@@ -1,58 +1,81 @@
 /**
  * BehavioralFrequency Component - Behavioral Assessment (Based on Modified Flow)
- * 4 A/B choice pairs presented one at a time with auto-advance
+ * 4 choice pairs presented one at a time; options shuffled per pair.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ScreenTransition from '../ScreenTransition.jsx';
 import Header from '../Header.jsx';
 import ProgressBar from '../ProgressBar.jsx';
 import FadeIn from '../FadeIn.jsx';
+import {
+  BEHAVIORAL_PAIRS,
+  getBehavioralOptionOrderKey,
+  scoreBehavioralFrequency,
+} from '../../utils/questionOptions.js';
+import {
+  applyOptionOrderToState,
+  getOrCreateOptionOrder,
+} from '../../utils/optionOrder.js';
+import { getSessionId, saveAssessmentState } from '../../utils/stateManager.js';
 
 function BehavioralFrequency({ assessmentContext }) {
-  const [choices, setChoices] = useState({});
+  const previousResponses =
+    assessmentContext.state?.assessment?.responses?.behavioralFreq || {};
+  const [choices, setChoices] = useState(previousResponses);
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
 
-  const pairs = [
-    {
-      id: "iterate",
-      a: "I accept AI's first output if it looks reasonable",
-      b: "I push back on AI's first output even when it looks good",
-    },
-    {
-      id: "tools",
-      a: "I use one AI tool for most things",
-      b: "I switch between tools depending on the task",
-    },
-    {
-      id: "start",
-      a: "I start working on tasks directly",
-      b: "I first consider whether AI could handle part of it",
-    },
-    {
-      id: "evaluate",
-      a: "I judge AI output by whether it looks right",
-      b: "I check AI output against what I know, even when it looks polished",
-    },
-  ];
+  const sessionId = getSessionId();
+  const state = assessmentContext.state;
 
-  const handleSelect = (option) => {
+  const pairOrders = useMemo(() => {
+    const orders = {};
+    for (const pair of BEHAVIORAL_PAIRS) {
+      const key = getBehavioralOptionOrderKey(pair.id);
+      const optionIds = pair.options.map((o) => o.id);
+      orders[pair.id] = getOrCreateOptionOrder(state, key, optionIds, sessionId);
+    }
+    return orders;
+  }, [state, sessionId]);
+
+  useEffect(() => {
+    if (!assessmentContext?.setState) return;
+    let updated = state;
+    let changed = false;
+    for (const pair of BEHAVIORAL_PAIRS) {
+      const { order, isNew } = pairOrders[pair.id];
+      if (isNew) {
+        updated = applyOptionOrderToState(updated, getBehavioralOptionOrderKey(pair.id), order);
+        changed = true;
+      }
+    }
+    if (changed) {
+      assessmentContext.setState(updated);
+      saveAssessmentState(updated);
+    }
+  }, [pairOrders, state, assessmentContext]);
+
+  const pair = BEHAVIORAL_PAIRS[current];
+  const { order } = pairOrders[pair.id] || { order: pair.options.map((o) => o.id) };
+  const orderedOptions = order
+    .map((id) => pair.options.find((o) => o.id === id))
+    .filter(Boolean);
+
+  const handleSelect = (optionId) => {
     if (animating) return;
-    const pair = pairs[current];
-    const updated = { ...choices, [pair.id]: option };
-    setChoices(updated);
+    setChoices((prev) => ({ ...prev, [pair.id]: optionId }));
   };
 
   const handleNext = () => {
-    if (current < pairs.length - 1) {
+    if (current < BEHAVIORAL_PAIRS.length - 1) {
       setAnimating(true);
       setTimeout(() => {
         setCurrent(current + 1);
         setAnimating(false);
       }, 300);
     } else {
-      const behavFreqScore = calculateBehavioralScore(choices);
+      const behavFreqScore = scoreBehavioralFrequency(choices);
       assessmentContext.handlers.handleBehavioralFrequency(choices, behavFreqScore);
     }
   };
@@ -69,18 +92,6 @@ function BehavioralFrequency({ assessmentContext }) {
     }
   };
 
-  const calculateBehavioralScore = (responses) => {
-    let score = 0;
-    // Score based on mature AI usage patterns
-    if (responses.iterate === "b") score++; // Push back shows critical thinking
-    if (responses.tools === "b") score++; // Tool switching shows sophistication  
-    if (responses.start === "b") score++; // AI-first thinking
-    if (responses.evaluate === "b") score++; // Substance over polish
-    return score; // 0-4 scale
-  };
-
-  const pair = pairs[current];
-
   return (
     <ScreenTransition>
       <div className="min-h-screen bg-gray-950 text-white flex flex-col">
@@ -88,10 +99,9 @@ function BehavioralFrequency({ assessmentContext }) {
         <div className="flex-1 flex flex-col px-6 py-8">
           <ProgressBar current={3} total={10} showStepNumbers={true} />
           <div className="flex-1 flex flex-col items-center w-full max-w-2xl mx-auto pt-4 relative">
-          
-          {/* Step dots */}
+
           <div className="flex items-center gap-2 mb-8">
-            {pairs.map((_, i) => (
+            {BEHAVIORAL_PAIRS.map((_, i) => (
               <div
                 key={i}
                 className={`rounded-full transition-all duration-300 ${
@@ -110,49 +120,37 @@ function BehavioralFrequency({ assessmentContext }) {
             </div>
           </FadeIn>
 
-          {/* Single pair — two big tappable cards */}
-          <div 
-            key={pair.id} 
+          <div
+            key={pair.id}
             className={`max-w-sm w-full space-y-3 transition-all duration-300 ${
               animating ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"
             }`}
           >
-            <button
-              onClick={() => handleSelect("a")}
-              className={`w-full text-left p-5 rounded-2xl border-2 transition-all duration-200 ${
-                choices[pair.id] === "a"
-                  ? "border-blue-500 bg-blue-500/10 scale-[1.02]"
-                  : "border-gray-800/60 bg-gray-900/40 hover:border-gray-700 hover:bg-gray-900/60 active:scale-[0.98]"
-              }`}
-            >
-              <p className={`text-sm leading-relaxed ${
-                choices[pair.id] === "a" ? "text-white font-medium" : "text-gray-300"
-              }`}>
-                {pair.a}
-              </p>
-            </button>
-
-            <div className="flex items-center justify-center">
-              <span className="text-gray-700 text-[10px] font-medium tracking-widest">OR</span>
-            </div>
-
-            <button
-              onClick={() => handleSelect("b")}
-              className={`w-full text-left p-5 rounded-2xl border-2 transition-all duration-200 ${
-                choices[pair.id] === "b"
-                  ? "border-blue-500 bg-blue-500/10 scale-[1.02]"
-                  : "border-gray-800/60 bg-gray-900/40 hover:border-gray-700 hover:bg-gray-900/60 active:scale-[0.98]"
-              }`}
-            >
-              <p className={`text-sm leading-relaxed ${
-                choices[pair.id] === "b" ? "text-white font-medium" : "text-gray-300"
-              }`}>
-                {pair.b}
-              </p>
-            </button>
+            {orderedOptions.map((option, index) => (
+              <React.Fragment key={option.id}>
+                {index === 1 && (
+                  <div className="flex items-center justify-center">
+                    <span className="text-gray-700 text-[10px] font-medium tracking-widest">OR</span>
+                  </div>
+                )}
+                <button
+                  onClick={() => handleSelect(option.id)}
+                  className={`w-full text-left p-5 rounded-2xl border-2 transition-all duration-200 ${
+                    choices[pair.id] === option.id
+                      ? "border-blue-500 bg-blue-500/10 scale-[1.02]"
+                      : "border-gray-800/60 bg-gray-900/40 hover:border-gray-700 hover:bg-gray-900/60 active:scale-[0.98]"
+                  }`}
+                >
+                  <p className={`text-sm leading-relaxed ${
+                    choices[pair.id] === option.id ? "text-white font-medium" : "text-gray-300"
+                  }`}>
+                    {option.text}
+                  </p>
+                </button>
+              </React.Fragment>
+            ))}
           </div>
-          
-          {/* Navigation buttons */}
+
           <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-800/40 w-full">
             <button
               onClick={handlePrevious}
@@ -173,10 +171,10 @@ function BehavioralFrequency({ assessmentContext }) {
                   : 'bg-gray-800 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {current < pairs.length - 1 ? 'Next →' : 'Continue →'}
+              {current < BEHAVIORAL_PAIRS.length - 1 ? 'Next →' : 'Continue →'}
             </button>
           </div>
-          
+
           </div>
         </div>
       </div>
