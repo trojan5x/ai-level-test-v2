@@ -130,7 +130,7 @@ function getErrorMessage(error) {
 /**
  * Default hashtags included in the generated LinkedIn post copy
  */
-export const LINKEDIN_POST_HASHTAGS = '#AIAssessment #ArtificialIntelligence #TechSkills #LearnTubeAI #PersonalDevelopment #AILevel';
+export const LINKEDIN_POST_HASHTAGS = '#LearnTubeAI #AIReadiness #ImagiNxt2026 #AIReport2026';
 
 /**
  * Create LinkedIn post content from user data
