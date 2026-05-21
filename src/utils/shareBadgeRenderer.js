@@ -52,7 +52,7 @@ export function preloadBadgeLogos() {
   if (!badgeLogosPromise) {
     badgeLogosPromise = Promise.all([
       loadBadgeLogo('/learntube-report-logo.png'),
-      loadBadgeLogo('/imaginxt-logo.avif'),
+      loadBadgeLogo('/imaginxt-2026-logo.png'),
     ]).then(([lt, ix]) => {
       BADGE_LOGOS.lt = lt;
       BADGE_LOGOS.ix = ix;

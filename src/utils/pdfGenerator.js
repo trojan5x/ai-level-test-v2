@@ -142,7 +142,7 @@ export const generateAIReportPDF = async (leadData) => {
   const [ltLogo, googleLogo, imaginxtLogo] = await Promise.all([
     loadImgDataUrl('/learntube-report-logo.png'),
     loadImgDataUrl('/backed-by-google.png'),
-    loadImgDataUrl('/imaginxt-logo.avif'),
+    loadImgDataUrl('/imaginxt-2026-logo.png'),
   ]);
 
   const ltImg = ltLogo ? ltLogo.dataUrl : "";

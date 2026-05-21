@@ -188,7 +188,7 @@ function Landing() {
               {/* In partnership with ImagiNxt — centered on mobile (row 2), right on desktop */}
               <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end sm:ml-auto">
                 <span className="text-gray-500 text-[10px] font-medium tracking-widest uppercase">In partnership with</span>
-                <img src="/imaginxt-logo.avif" alt="ImagiNxt" className="h-7 opacity-85" />
+                <img src="/imaginxt-2026-logo.png" alt="ImagiNxt" className="h-7 opacity-85" />
               </div>
             </div>
           </div>
