@@ -217,7 +217,7 @@ function Landing() {
             <FadeIn delay={1200} direction="up">
               <p className="text-gray-400 text-lg sm:text-xl mb-8 leading-normal">
                 How far ahead or behind are you really?<br />
-                Takes under 10 minutes.
+                Takes under 5 minutes.
               </p>
             </FadeIn>
           </div>

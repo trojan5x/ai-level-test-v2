@@ -9,6 +9,21 @@ const corsHeaders = {
 
 const REFERRAL_ID_PATTERN = /^[A-Z]{3}\d{5}$/;
 
+const LEVEL_TITLES: Record<number, string> = {
+  0: "Non-User",
+  1: "Experimenter",
+  2: "Functional User",
+  3: "Effective Practitioner",
+  4: "AI-Native Performer",
+  5: "AI-Native Builder",
+  6: "Frontier Contributor",
+};
+
+function getLevelTitle(level: number | null | undefined): string | null {
+  if (level == null || !Number.isInteger(level)) return null;
+  return LEVEL_TITLES[level] ?? null;
+}
+
 /** Build normalized phone variants for lookup (stored as +91XXXXXXXXXX). */
 function phoneLookupVariants(raw: string): string[] {
   const trimmed = raw.trim();
@@ -97,7 +112,7 @@ serve(async (req) => {
 
     const { data, error } = await supabase
       .from("ai_level_assessments")
-      .select("referral_id, user_phone, user_name, updated_at")
+      .select("referral_id, user_phone, user_name, level, updated_at")
       .in("user_phone", variants)
       .not("referral_id", "is", null)
       .order("updated_at", { ascending: false })
@@ -135,6 +150,8 @@ serve(async (req) => {
         referral_id: data.referral_id,
         phone: data.user_phone,
         name: data.user_name ?? null,
+        level_number: data.level ?? null,
+        level_title: getLevelTitle(data.level),
       }),
       {
         status: 200,
