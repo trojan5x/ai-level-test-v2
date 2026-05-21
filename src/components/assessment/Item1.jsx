@@ -72,12 +72,6 @@ function Item1({ assessmentContext }) {
                   <p className="text-gray-300 leading-relaxed text-sm group-hover:text-white transition-colors duration-300">
                     Working from home kills focus. Set up in one spot, close every tab except what you need, and use a timer. Real work happens in blocks of uninterrupted time. Don't pretend you're being productive while scrolling. You're not.
                   </p>
-                  {selectedAnswer === "A" && (
-                    <div className="text-blue-400 text-sm mt-2 flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                      Selected
-                    </div>
-                  )}
                 </button>
               </FadeIn>
 
@@ -94,12 +88,6 @@ function Item1({ assessmentContext }) {
                   <p className="text-gray-300 leading-relaxed text-sm group-hover:text-white transition-colors duration-300">
                     To maximize productivity while working from home, establish a dedicated workspace and implement time-blocking techniques. Minimize digital distractions by organizing your digital environment and utilizing focus tools. Consistent routines enhance concentration and output quality.
                   </p>
-                  {selectedAnswer === "B" && (
-                    <div className="text-blue-400 text-sm mt-2 flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                      Selected
-                    </div>
-                  )}
                 </button>
               </FadeIn>
             </div>

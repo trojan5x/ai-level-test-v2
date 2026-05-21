@@ -46,12 +46,11 @@ const TOOL_FEATURES = {
     { id: "cursor_composer", label: "Composer", advanced: true },
     { id: "cursor_agent", label: "Agent Mode", advanced: true },
     { id: "cursor_background", label: "Background Agents", advanced: true },
-    { id: "cursor_chat", label: "Chat", advanced: false },
+    { id: "ide_chat", label: "Chat", advanced: false },
     // Windsurf features
     { id: "windsurf_cascade", label: "Cascade (Agent)", advanced: true },
     { id: "windsurf_flows", label: "Flows", advanced: true },
     { id: "windsurf_parallel", label: "Parallel Agents", advanced: true },
-    { id: "windsurf_chat", label: "Chat", advanced: false },
   ],
   "Perplexity": [
     { id: "perplexity_pro", label: "Pro Search", advanced: false },

@@ -19,6 +19,8 @@ import { generateLinkedInAuthUrl, linkedInSession, parseOAuthCallback, validateO
 import { generateAIReportPDF } from '../../utils/pdfGenerator.js';
 import { preloadBadgeLogos, renderShareCard, generateShareBadgeBase64 } from '../../utils/shareBadgeRenderer.js';
 import { EnhancedScoring, mergeAssessmentScores, getAssessmentPrimaryTotal } from '../../utils/stateManager.js';
+import TeamInviteBlock, { getTeamInviteMessages } from './TeamInviteBlock.jsx';
+import EnterpriseCalendlyModal from './EnterpriseCalendlyModal.jsx';
 
 // ─── Level Data (EXACT ORIGINAL) ────────────────────────────
 const LEVEL_DATA = {
@@ -421,6 +423,7 @@ function LevelReveal({ assessmentContext }) {
   const [referralId, setReferralId] = useState(leadData?.referralId || null);
   const [challengeSent, setChallengeSent] = useState(false);
   const [challengeLink, setChallengeLink] = useState(false);
+  const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false);
   const [leaderProfile, setLeaderProfile] = useState(() =>
     classifyLeaderRoleFallback(
       state.assessment?.profile?.role || leadData?.role || '',
@@ -613,6 +616,91 @@ function LevelReveal({ assessmentContext }) {
     setTimeout(() => setShareState("idle"), 4000);
   };
 
+  const buildChallengeShareUrl = () => {
+    const ref = referralId || (leadData?.name ? generateReferralId(leadData.name) : null);
+    if (ref && !referralId) setReferralId(ref);
+    return `${window.location.origin}?utm_source=challenge${ref ? `&ref=${ref}` : ''}`;
+  };
+
+  const handleTeamInviteShare = (method) => {
+    trackChallengeSent({
+      challenge_channel: method,
+      assessment_score: totalScore,
+      assessment_level: level,
+      relationship_status: relationshipStatus,
+      is_manager: true,
+    });
+
+    const shareUrl = buildChallengeShareUrl();
+    const msgs = getTeamInviteMessages(level, data.name, shareUrl);
+
+    if (method === 'whatsapp') {
+      window.open(`https://wa.me/?text=${encodeURIComponent(msgs.whatsapp)}`, '_blank');
+    } else if (method === 'linkedin') {
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank');
+    } else if (method === 'email') {
+      window.open(`mailto:?subject=${encodeURIComponent(msgs.email.subject)}&body=${encodeURIComponent(msgs.email.body)}`, '_blank');
+    } else if (method === 'copy') {
+      try {
+        if (navigator.clipboard) navigator.clipboard.writeText(msgs.copy);
+      } catch (_) {}
+    }
+  };
+
+  const handleRequestCustomOffering = async () => {
+    const lead = leadData || window.__aiLevelLead || {};
+    const result = await captureIntentData({
+      customOffering: true,
+      lead,
+      level,
+      company,
+      phone: lead.phone || null,
+      timestamp: Date.now(),
+    });
+    trackAnalyticsEvent('custom_offering_requested', { level, company, phone: lead.phone || null });
+    if (!result.success && !result.skipped) {
+      console.error('❌ Custom offering intent not saved:', result.error);
+    }
+    return result;
+  };
+
+  const handleEnterpriseCalendly = () => {
+    setEnterpriseModalOpen(true);
+  };
+
+  const handleEnterpriseCalendlySubmit = async ({ teamSize, goal }) => {
+    const lead = leadData || window.__aiLevelLead || {};
+    const phone = lead.phone || '';
+
+    await captureIntentData({
+      enterprise: true,
+      lead,
+      level,
+      teamSize,
+      goal,
+      company,
+      phone: phone || null,
+      timestamp: Date.now(),
+    });
+
+    trackAnalyticsEvent('enterprise_calendly_clicked', { level, company, teamSize, goal, phone: phone || null });
+    setEnterpriseModalOpen(false);
+
+    const calendlyParams = new URLSearchParams({
+      name: lead.name || '',
+      email: lead.email || '',
+      a1: company || '',
+      a2: teamSize,
+      a3: goal,
+    });
+    if (phone) calendlyParams.set('a4', phone);
+
+    window.open(
+      `https://calendly.com/shronit/ai-readiness?${calendlyParams.toString()}`,
+      '_blank'
+    );
+  };
+
   // Challenge functionality for Beat 3
   const handleChallenge = (method) => {
     trackChallengeSent({
@@ -623,7 +711,7 @@ function LevelReveal({ assessmentContext }) {
       is_manager: isManager,
     });
 
-    const fullUrl = `${window.location.origin}?utm_source=challenge${referralId ? `&ref=${referralId}` : ''}`;
+    const fullUrl = buildChallengeShareUrl();
     const text = isManager
       ? (level >= 3
           ? `I just tested my AI skills — scored Level ${level} (${data.name}). How does our team compare? Take it: ${fullUrl}`
@@ -1125,7 +1213,35 @@ function LevelReveal({ assessmentContext }) {
     </div>
   );
 
-  const renderChallengeSection = (minStage) => (
+  const renderChallengeSection = (minStage) => {
+    if (prioritizeTeamChallenge) {
+      return (
+        <div className={`transition-all duration-700 mt-8 text-left ${stage >= minStage ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+          <TeamInviteBlock
+            level={level}
+            data={data}
+            scores={scores}
+            company={company}
+            shareUrl={buildChallengeShareUrl()}
+            onShare={handleTeamInviteShare}
+            onRequestOffering={handleRequestCustomOffering}
+          />
+          <div className="mt-3 rounded-2xl border border-gray-800/20 bg-gray-900/40 px-4 py-3">
+            <p className="text-gray-500 text-[11px] text-center leading-relaxed">
+              Want a full org-wide AI readiness program?{' '}
+              <button
+                onClick={handleEnterpriseCalendly}
+                className="text-blue-400 font-semibold underline underline-offset-2"
+              >
+                Book a strategy slot →
+              </button>
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
     <div className={`transition-all duration-700 mt-8 text-left ${stage >= minStage ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
       <div className="flex items-center gap-3 mb-5">
         <div className="flex-1 h-px bg-gray-800/40" />
@@ -1225,7 +1341,8 @@ function LevelReveal({ assessmentContext }) {
         )}
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <ScreenTransition>
@@ -2000,6 +2117,14 @@ function LevelReveal({ assessmentContext }) {
           </div>
         </div>
       )}
+
+      <EnterpriseCalendlyModal
+        isOpen={enterpriseModalOpen}
+        onClose={() => setEnterpriseModalOpen(false)}
+        onSubmit={handleEnterpriseCalendlySubmit}
+        company={company}
+        phone={leadData?.phone || ''}
+      />
 
       </div>
     </ScreenTransition>

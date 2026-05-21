@@ -89,13 +89,6 @@ function WorkflowDesign({ assessmentContext }) {
                     <p className="text-gray-300 leading-relaxed text-sm group-hover:text-gray-200 transition-colors duration-300">
                       {approach.text}
                     </p>
-                    
-                    {selectedChoice === approach.id && (
-                      <div className="mt-4 text-purple-400 text-sm flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-                        Selected
-                      </div>
-                    )}
                   </button>
                 </FadeIn>
               ))}

@@ -118,9 +118,6 @@ function Item3({ assessmentContext }) {
                     <div className="text-blue-400/60 text-xs font-semibold tracking-widest">
                       {displayLabel(index)}
                     </div>
-                    {selectedId === option.id && (
-                      <div className="text-blue-400 text-sm ml-auto">✓ Selected</div>
-                    )}
                     {selectedId !== option.id && option.id === 'polished_trap' && (
                       <div className="flex gap-0.5 ml-auto">
                         <div className="w-1 h-3 bg-gray-700 rounded-full" />

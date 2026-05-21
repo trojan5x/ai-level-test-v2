@@ -131,7 +131,7 @@ function LeadCapture({ assessmentContext }) {
     trackAnalyticsEvent('lead_captured', { level, name: name.trim() });
 
     // Update the session's assessment record with contact details
-    const sessionId = getSessionId();
+    const sessionId = state.analytics?.sessionId || getSessionId();
     const result = await updateAssessmentWithContact(sessionId, {
       name:  leadData.name,
       phone: leadData.phone,

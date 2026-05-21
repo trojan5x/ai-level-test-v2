@@ -24,7 +24,7 @@ function LinkedInCallbackRedirect() {
 
 import { captureLeadData, captureIntentData, trackAnalyticsEvent, scoreLLMResponse } from "./supabase.js";
 import { utmTracker } from './utils/utmTracker.js';
-import { getSessionId } from './utils/stateManager.js';
+import { startNewSession } from './utils/stateManager.js';
 import { generateReferralId, createReferralLink } from './utils/referralGenerator.js';
 import { generateLinkedInAuthUrl, linkedInSession, createLinkedInPostContent } from './utils/linkedinAuth.js';
 import { 
@@ -111,8 +111,8 @@ function Landing() {
   const [supportsGradient, setSupportsGradient] = useState(true);
 
   useEffect(() => {
-    // Create session and capture UTM data immediately on landing
-    getSessionId();
+    // Start fresh session and capture UTM data immediately on landing
+    startNewSession();
     utmTracker.initialize();
     
     // Track referral visit if referral ID is present

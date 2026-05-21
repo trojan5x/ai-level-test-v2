@@ -80,12 +80,6 @@ function Item3b({ assessmentContext }) {
                     <p className="text-gray-300 text-sm leading-relaxed group-hover:text-white transition-colors duration-300">
                       {option.text}
                     </p>
-                    {selectedId === option.id && (
-                      <div className="mt-3 text-blue-400 text-sm flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                        Selected
-                      </div>
-                    )}
                   </button>
                 </FadeIn>
               ))}

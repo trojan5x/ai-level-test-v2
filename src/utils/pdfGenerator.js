@@ -374,18 +374,9 @@ export const generateAIReportPDF = async (leadData) => {
           
           <div style="background: #111827; border: 1px solid #1f2937; border-top: 6px solid #10b981; border-radius: 16px; padding: 24px;">
             <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 800; color: #ffffff;">🚀 How to Level Up</h3>
-            <p style="margin: 0 0 16px 0; font-size: 15px; color: #d1d5db; line-height: 1.6;">${insights.bridge}</p>
-            
-            <ul style="margin: 0 0 20px 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px;">
-              ${(GROWTH_ROADMAPS[lvl] || GROWTH_ROADMAPS[0]).map(tip => `
-                <li style="display: flex; align-items: flex-start; gap: 10px;">
-                  <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #10b981; flex-shrink: 0; margin-top: 8px;"></span>
-                  <span style="font-size: 14px; color: #9ca3af; line-height: 1.6;">${tip}</span>
-                </li>
-              `).join('')}
-            </ul>
+            <p style="margin: 0; font-size: 15px; color: #d1d5db; line-height: 1.6;">${insights.bridge}</p>
 
-            <div style="border-top: 1px solid #1f2937; padding-top: 16px;">
+            <div style="border-top: 1px solid #1f2937; padding-top: 16px; margin-top: 16px;">
               <div style="display: flex; align-items: flex-start; gap: 10px;">
                 <span style="font-size: 14px; margin-top: 2px;">🧬</span>
                 <p style="margin: 0; font-size: 12px; color: #6b7280; line-height: 1.6; font-style: italic;">

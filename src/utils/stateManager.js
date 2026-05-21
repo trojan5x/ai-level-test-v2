@@ -3,7 +3,7 @@
  * Handles localStorage, sessionStorage, and database state synchronization
  */
 
-import { supabase } from '../supabase.js';
+import { supabase, persistAssessmentDbId } from '../supabase.js';
 import { utmTracker } from './utmTracker.js';
 import { shouldTrackAnalytics } from './analyticsEnvironment.js';
 import { isItem3Correct, isItem3bCorrect } from './questionOptions.js';
@@ -187,7 +187,10 @@ export const saveAssessmentToDatabase = async (state) => {
   }
 
   try {
-    const sessionId = getSessionId();
+    const sessionId = state.analytics?.sessionId || getSessionId();
+    if (state.analytics?.sessionId) {
+      sessionStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+    }
     console.log('🔄 Saving assessment to database for session:', sessionId);
     
     // Get UTM data for attribution
@@ -225,6 +228,7 @@ export const saveAssessmentToDatabase = async (state) => {
     }
 
     console.log('✅ Assessment saved to database:', data.id);
+    persistAssessmentDbId(data.id);
     return { success: true, data };
   } catch (error) {
     console.error('❌ Exception saving assessment to database:', error);
@@ -268,6 +272,7 @@ export const updateAssessmentWithContact = async (sessionId, contactData) => {
     }
 
     console.log('✅ Assessment updated with contact details:', data.id);
+    persistAssessmentDbId(data.id);
     return { success: true, data };
   } catch (error) {
     console.error('❌ Exception updating assessment with contact:', error);
@@ -456,6 +461,17 @@ export const clearAssessmentState = () => {
   } catch (error) {
     console.error('❌ Failed to clear assessment state:', error);
   }
+};
+
+/**
+ * Start a fresh assessment session (clears stored progress and creates new session ID)
+ * @returns {string} New session ID
+ */
+export const startNewSession = () => {
+  clearAssessmentState();
+  sessionStorage.removeItem('ai-level-lead-id');
+  delete window.__assessmentStartTime;
+  return getSessionId();
 };
 
 /**
@@ -880,6 +896,7 @@ export default {
   loadAssessmentState,
   linkAssessmentToUser,
   clearAssessmentState,
+  startNewSession,
   validateStateIntegrity,
   migrateStateVersion,
   getAssessmentProgress,

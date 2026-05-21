@@ -12,13 +12,74 @@ const SUPABASE_CONFIG = {
 const supabase = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
 
 // Generate session ID for analytics
+const SESSION_ID_KEY = 'ai-level-session-id';
+const ASSESSMENT_STATE_KEY = 'ai-level-assessment-state';
+const ASSESSMENT_DB_ID_KEY = 'ai-level-assessment-db-id';
+
 const getSessionId = () => {
-  let sessionId = sessionStorage.getItem('ai-level-session-id');
+  let sessionId = sessionStorage.getItem(SESSION_ID_KEY);
   if (!sessionId) {
     sessionId = crypto.randomUUID();
-    sessionStorage.setItem('ai-level-session-id', sessionId);
+    sessionStorage.setItem(SESSION_ID_KEY, sessionId);
   }
   return sessionId;
+};
+
+/** Match the session_id used when the assessment was saved to the database */
+const resolveAssessmentSessionId = () => {
+  try {
+    const raw =
+      localStorage.getItem(ASSESSMENT_STATE_KEY) ||
+      sessionStorage.getItem(ASSESSMENT_STATE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const fromState = parsed?.analytics?.sessionId;
+      if (fromState) {
+        sessionStorage.setItem(SESSION_ID_KEY, fromState);
+        return fromState;
+      }
+    }
+  } catch (_) {}
+
+  const fromStorage = sessionStorage.getItem(SESSION_ID_KEY);
+  if (fromStorage) return fromStorage;
+
+  return getSessionId();
+};
+
+/** Store assessment row UUID for reliable intent updates */
+export const persistAssessmentDbId = (assessmentId) => {
+  if (assessmentId) {
+    sessionStorage.setItem(ASSESSMENT_DB_ID_KEY, assessmentId);
+  }
+};
+
+const INTENT_SELECT_COLUMNS =
+  'id, prove_interest, improve_interest, custom_offering_interest, enterprise_interest, enterprise_team_size, enterprise_goal, enterprise_company, enterprise_phone';
+
+const updateAssessmentIntent = async (patch) => {
+  const sessionId = resolveAssessmentSessionId();
+
+  let { data, error } = await supabase
+    .from('ai_level_assessments')
+    .update(patch)
+    .eq('session_id', sessionId)
+    .select(INTENT_SELECT_COLUMNS)
+    .maybeSingle();
+
+  if (!error && !data) {
+    const assessmentDbId = sessionStorage.getItem(ASSESSMENT_DB_ID_KEY);
+    if (assessmentDbId) {
+      ({ data, error } = await supabase
+        .from('ai_level_assessments')
+        .update(patch)
+        .eq('id', assessmentDbId)
+        .select(INTENT_SELECT_COLUMNS)
+        .maybeSingle());
+    }
+  }
+
+  return { data, error, sessionId };
 };
 
 const LEADER_ROLE_KEYWORDS = /\b(lead|manager|manag|director|head|vp|svp|evp|avp|chief|founder|co-?founder|ceo|cto|coo|cfo|cmo|cpo|cro|cxo|president|owner|partner|principal|gm|general manager|managing director|entrepreneur|business owner)\b/i;
@@ -193,11 +254,7 @@ export const captureIntentData = async (intentData) => {
   window.__aiLevelIntent = { ...(window.__aiLevelIntent || {}), ...intentData };
 
   try {
-    // Resolve session_id — prefer the persistent key used by stateManager
-    const sessionId =
-      localStorage.getItem('ai-level-session-id') ||
-      sessionStorage.getItem('ai-level-session-id') ||
-      getSessionId();
+    const sessionId = resolveAssessmentSessionId();
 
     if (!sessionId) {
       console.warn('⚠️ No session_id found, skipping intent capture');
@@ -207,22 +264,35 @@ export const captureIntentData = async (intentData) => {
     // Build the update patch — only set columns to true, never reset to false
     const patch = {
       intent_captured_at: new Date().toISOString(),
-      ...(intentData.prove   ? { prove_interest:   true } : {}),
+      ...(intentData.prove ? { prove_interest: true } : {}),
       ...(intentData.improve ? { improve_interest: true } : {}),
+      ...(intentData.customOffering ? { custom_offering_interest: true } : {}),
+      ...(intentData.enterprise ? {
+        enterprise_interest: true,
+        enterprise_team_size: intentData.teamSize || null,
+        enterprise_goal: intentData.goal || null,
+        enterprise_company: intentData.company || null,
+        enterprise_phone: intentData.phone || null,
+      } : {}),
     };
 
-    const { data, error } = await supabase
-      .from('ai_level_assessments')
-      .update(patch)
-      .eq('session_id', sessionId)
-      .select('id, prove_interest, improve_interest')
-      .single();
+    const { data, error, sessionId: resolvedSessionId } = await updateAssessmentIntent(patch);
 
     if (error) {
       console.error('❌ Intent capture error:', error);
       return { success: false, error };
     }
 
+    if (!data) {
+      console.warn('⚠️ No assessment row matched for intent capture', {
+        sessionId: resolvedSessionId,
+        assessmentDbId: sessionStorage.getItem(ASSESSMENT_DB_ID_KEY),
+        intent: intentData,
+      });
+      return { success: false, error: 'assessment_not_found' };
+    }
+
+    persistAssessmentDbId(data.id);
     console.log('✅ Intent captured on assessment record:', data);
     return { success: true, data };
 
