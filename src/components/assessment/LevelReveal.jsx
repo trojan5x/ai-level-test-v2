@@ -22,6 +22,8 @@ import { EnhancedScoring, mergeAssessmentScores, getAssessmentPrimaryTotal } fro
 import TeamInviteBlock, { getTeamInviteMessages } from './TeamInviteBlock.jsx';
 import EnterpriseCalendlyModal from './EnterpriseCalendlyModal.jsx';
 
+const ENTERPRISE_BOOKING_URL = 'https://calendar.notion.so/meet/shronit/j63u94pms';
+
 // ─── Level Data (EXACT ORIGINAL) ────────────────────────────
 const LEVEL_DATA = {
   0: {
@@ -686,19 +688,7 @@ function LevelReveal({ assessmentContext }) {
     trackAnalyticsEvent('enterprise_calendly_clicked', { level, company, teamSize, goal, phone: phone || null });
     setEnterpriseModalOpen(false);
 
-    const calendlyParams = new URLSearchParams({
-      name: lead.name || '',
-      email: lead.email || '',
-      a1: company || '',
-      a2: teamSize,
-      a3: goal,
-    });
-    if (phone) calendlyParams.set('a4', phone);
-
-    window.open(
-      `https://calendly.com/shronit/ai-readiness?${calendlyParams.toString()}`,
-      '_blank'
-    );
+    window.open(ENTERPRISE_BOOKING_URL, '_blank');
   };
 
   // Challenge functionality for Beat 3

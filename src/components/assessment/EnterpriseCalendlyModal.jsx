@@ -1,5 +1,5 @@
 /**
- * Modal form for enterprise Calendly booking — replaces browser prompt() dialogs.
+ * Modal form for enterprise strategy booking — collects team context before redirect.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -85,7 +85,7 @@ function EnterpriseCalendlyModal({ isOpen, onClose, onSubmit, company, phone }) 
                 readOnly
                 className="mp-sensitive w-full rounded-xl border border-gray-700/60 bg-gray-900/40 px-3 py-3 text-gray-400 text-sm cursor-not-allowed"
               />
-              <p className="text-gray-600 text-[10px] mt-1">From your assessment signup — sent to Calendly automatically.</p>
+              <p className="text-gray-600 text-[10px] mt-1">From your assessment signup — saved with your booking request.</p>
             </div>
           )}
 
@@ -135,7 +135,7 @@ function EnterpriseCalendlyModal({ isOpen, onClose, onSubmit, company, phone }) 
               disabled={!canSubmit}
               className="w-full sm:flex-1 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-600/15"
             >
-              Continue to Calendly →
+              Continue to booking →
             </button>
           </div>
         </form>

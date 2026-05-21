@@ -11,11 +11,11 @@ const LEVEL_METADATA = {
 };
 
 const PROFILE_TEXT = {
-  0: "You haven't started yet — and that's fine. You're about to skip everyone else's mistakes. The gap between where you are and where AI could take you is massive, but more accessible than you'd think. Start with one real task this week.",
-  1: "You've dipped your toes in. The gap between where you are and where AI could take you is bigger than you'd guess. You're using AI occasionally, but your mental model of what it can do is still forming. Push past your first response.",
-  2: "You're getting real value from AI — but you're trusting the polish more than you should. You treat it like a search engine rather than a reasoning partner. Your next leap: systematic multi-prompt iteration and output evaluation.",
-  3: "You have judgment most people lack. You don't just use AI — you think with it. You've crossed the threshold where you can evaluate output, not just consume it. Next: encode your judgment into repeatable workflow systems.",
-  4: "AI isn't a tool you use — it's how you work. Most people won't understand your workflow for another two years. You engineer architectures and structure automated agents. Your edge: organizational leverage and custom pipelines.",
+  0: "You haven't started yet — and that's fine. You're about to skip everyone else's mistakes. AI could catalyse your journey, as long as you are serious about staying ahead. Start with one real task this week.",
+  1: "You've dipped your toes in. The gap between where you are and where AI could take you is bigger than you'd guess. You're using AI occasionally, but your mental model of what it can do is still forming. Push past your first response, this will help move you forward.",
+  2: "You're getting real value from AI - but you're trusting the polish more than you should. You treat it like a search engine rather than a reasoning partner. How to get to the next frontier? Systematic multi-prompt iteration and output evaluation.",
+  3: "You have judgment most people lack. You don't just use AI — you are ready to rewrite your career with it. You've crossed the threshold where you can evaluate output, not just consume it. Next: encode your judgment into repeatable workflow systems.",
+  4: "AI isn't a tool you use - it's how you're already preparing for the future of work, tech, and innovation. Most people won't understand your workflow for another two years. You engineer architectures and structure automated agents. Your edge: organizational leverage and custom pipelines.",
   5: "You operate at the absolute technological vanguard. You design agentic systems, manage data stores, and advance the practice itself. Your focus: multi-agent consensus, cognitive routing, and frameworks that outlast your involvement.",
 };
 
@@ -214,7 +214,7 @@ export const generateAIReportPDF = async (leadData) => {
         <div style="width: 1px; height: 40px; background-color: #374151;"></div>
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 10px; font-weight: 600; color: #9ca3af; letter-spacing: 0.05em;">IN PARTNERSHIP WITH</span>
-          ${ixImg ? `<img src="${ixImg}" style="height: 36px;" />` : '<div style="font-weight: 800; font-size: 26px; color: #ffffff;">IMAGINEXT</div>'}
+          ${ixImg ? `<img src="${ixImg}" style="height: 51.84px;" />` : '<div style="font-weight: 800; font-size: 37.44px; color: #ffffff;">IMAGINEXT</div>'}
         </div>
       </div>
     </div>
@@ -329,11 +329,11 @@ export const generateAIReportPDF = async (leadData) => {
         </div>
       </div>
 
-      <!-- Growth Roadmap -->
+      <!-- Be Future-Ready -->
       <div>
         <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px;">
           <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
-          <div style="font-size: 13px; font-weight: 800; color: #6b7280; letter-spacing: 0.15em; text-transform: uppercase;">Growth Roadmap</div>
+          <div style="font-size: 13px; font-weight: 800; color: #6b7280; letter-spacing: 0.15em; text-transform: uppercase;">Be Future-Ready</div>
           <div style="height: 1px; flex: 1; background-color: #1f2937;"></div>
         </div>
         
@@ -373,7 +373,7 @@ export const generateAIReportPDF = async (leadData) => {
           </div>
           
           <div style="background: #111827; border: 1px solid #1f2937; border-top: 6px solid #10b981; border-radius: 16px; padding: 24px;">
-            <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 800; color: #ffffff;">🚀 How to Level Up</h3>
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 800; color: #ffffff;">🚀 Start Shaping Your Future, Today.</h3>
             <p style="margin: 0; font-size: 15px; color: #d1d5db; line-height: 1.6;">${insights.bridge}</p>
 
             <div style="border-top: 1px solid #1f2937; padding-top: 16px; margin-top: 16px;">

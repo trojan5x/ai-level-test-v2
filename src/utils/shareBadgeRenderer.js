@@ -118,7 +118,7 @@ export function renderShareCard(canvas, level, levelData, relationshipData, perc
   const topY = 48;
   const marginX = 60;
   const ltLogoH = 48;
-  const ixLogoH = 43;
+  const ixLogoH = 56; // 30% larger than previous 43px
   ctx.textBaseline = "middle";
 
   if (BADGE_LOGOS.lt) {
