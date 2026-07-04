@@ -25,6 +25,7 @@ function LinkedInCallbackRedirect() {
 import { captureLeadData, captureIntentData, trackAnalyticsEvent, scoreLLMResponse } from "./supabase.js";
 import { utmTracker } from './utils/utmTracker.js';
 import { startNewSession } from './utils/stateManager.js';
+import { PARTNER_REGISTRY, getPartnerConfig, setActivePartner } from './config/partners.js';
 import { generateReferralId, createReferralLink } from './utils/referralGenerator.js';
 import { generateLinkedInAuthUrl, linkedInSession, createLinkedInPostContent } from './utils/linkedinAuth.js';
 import { 
@@ -106,15 +107,18 @@ function ScreenTransition({ children }) {
   );
 }
 
-// Original landing page component  
-function Landing() {
+// Original landing page component
+function Landing({ partnerSlug = 'default' }) {
   const [supportsGradient, setSupportsGradient] = useState(true);
+  const partner = getPartnerConfig(partnerSlug);
 
   useEffect(() => {
     // Start fresh session and capture UTM data immediately on landing
     startNewSession();
+    // Persist partner after startNewSession — landing entry URL decides branding
+    setActivePartner(partnerSlug);
     utmTracker.initialize();
-    
+
     // Track referral visit if referral ID is present
     const referralId = utmTracker.getReferralId();
     if (referralId) {
@@ -122,7 +126,7 @@ function Landing() {
     }
 
     // Track landing page view
-    trackPageView('landing');
+    trackPageView('landing', { partner: partnerSlug });
     
     // Test gradient text support
     const testEl = document.createElement('div');
@@ -149,7 +153,9 @@ function Landing() {
 
     // Debug log for testing
     console.log('Gradient support detected:', hasGradientSupport);
-  }, []);
+    // partnerSlug dep: React reuses this component instance when routing
+    // between landing URLs, so the partner must re-persist on slug change
+  }, [partnerSlug]);
 
   const handleStart = () => {
     // Track assessment start time for completion time calculation
@@ -185,11 +191,13 @@ function Landing() {
                 <img src="/backed-by-google.png" alt="Google for Startups" className="h-5 opacity-80" />
               </div>
 
-              {/* In partnership with ImagiNxt — centered on mobile (row 2), right on desktop */}
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end sm:ml-auto">
-                <span className="text-gray-500 text-[10px] font-medium tracking-widest uppercase">In partnership with</span>
-                <img src="/imaginxt-2026-logo.png" alt="ImagiNxt" className="h-7 opacity-85" />
-              </div>
+              {/* Partner block — centered on mobile (row 2), right on desktop */}
+              {partner.headerLogo && (
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end sm:ml-auto">
+                  <span className="text-gray-500 text-[10px] font-medium tracking-widest uppercase">{partner.partnershipLabel}</span>
+                  <img src={partner.headerLogo} alt={partner.logoAlt} className="h-7 opacity-85" />
+                </div>
+              )}
             </div>
           </div>
         </FadeIn>
@@ -346,6 +354,10 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Landing />} />
+        {/* Partner landing routes generated from the registry, e.g. /imaginxt */}
+        {Object.keys(PARTNER_REGISTRY).filter((slug) => slug !== 'default').map((slug) => (
+          <Route key={slug} path={`/${slug}`} element={<Landing partnerSlug={slug} />} />
+        ))}
         <Route path="/assessment/*" element={<AssessmentRouter />} />
         {/* Temporary redirect for LinkedIn callback until OAuth config updates */}
         <Route path="/linkedin-callback" element={<LinkedInCallbackRedirect />} />

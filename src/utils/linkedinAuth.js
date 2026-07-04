@@ -3,6 +3,8 @@
  * Handles LinkedIn OAuth flow for social sharing integration
  */
 
+import { getPartnerConfig } from '../config/partners.js';
+
 // LinkedIn OAuth Configuration
 const LINKEDIN_CLIENT_ID = '86h7ayn66hgjuf';
 const LINKEDIN_SCOPES = 'w_member_social profile openid email r_basicprofile';
@@ -128,24 +130,19 @@ function getErrorMessage(error) {
 }
 
 /**
- * Default hashtags included in the generated LinkedIn post copy
- */
-export const LINKEDIN_POST_HASHTAGS = `#LearnTubeAI #ImagiNxt2026
-#MumbaiAIReadinessReport`;
-
-/**
  * Create LinkedIn post content from user data
  * @param {Object} userData - User assessment data
  * @param {string} referralLink - Personalized referral link
+ * @param {Object} partner - Partner branding config (attribution + hashtags)
  * @returns {string} Formatted LinkedIn post text
  */
-export function createLinkedInPostContent(userData, referralLink) {
+export function createLinkedInPostContent(userData, referralLink, partner = getPartnerConfig('default')) {
   const { level, levelData, relationshipData } = userData;
   const levelDisplay = level >= 5 ? '5+' : level;
 
   return `I thought I was AI-ready, but just got a reality check!
 
-Took the AI-Readiness Test, by LearnTube.ai, India's only AI-powered skilling platform, and ImagiNxt, India's Festival of Technology and Innovation.
+${partner.linkedin.attribution}
 
 Scored at Level ${levelDisplay} — ${levelData.name} 🤝
 My AI Relationship Status: ${relationshipData.status}
@@ -153,7 +150,7 @@ My AI Relationship Status: ${relationshipData.status}
 What's your score? Take the assessment ⬇️
 ${referralLink}
 
-${LINKEDIN_POST_HASHTAGS}`;
+${partner.linkedin.hashtags}`;
 }
 
 /**
@@ -245,7 +242,6 @@ export default {
   parseOAuthCallback,
   validateOAuthCallback,
   createLinkedInPostContent,
-  LINKEDIN_POST_HASHTAGS,
   prepareLinkedInApiPayload,
   linkedInSession
 };

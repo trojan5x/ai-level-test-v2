@@ -7,6 +7,7 @@ import { supabase, persistAssessmentDbId } from '../supabase.js';
 import { utmTracker } from './utmTracker.js';
 import { shouldTrackAnalytics } from './analyticsEnvironment.js';
 import { isItem3Correct, isItem3bCorrect } from './questionOptions.js';
+import { getActivePartner } from '../config/partners.js';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -207,7 +208,8 @@ export const saveAssessmentToDatabase = async (state) => {
       completed_at: new Date(state.assessment.completedAt || Date.now()).toISOString(),
       user_agent: navigator.userAgent,
       utm_data: utmData,
-      referrer: document.referrer || null
+      referrer: document.referrer || null,
+      partner_slug: getActivePartner().slug
     };
 
     const { data, error } = await supabase

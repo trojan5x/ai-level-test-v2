@@ -4,8 +4,11 @@
  */
 
 import React from 'react';
+import { usePartner } from '../config/partners.js';
 
 function Header() {
+  const partner = usePartner();
+
   return (
     <div className="w-full bg-gray-900/60 border-b border-gray-800/40 backdrop-blur-sm py-3 z-20 relative">
       <div className="flex flex-wrap items-center gap-y-2 px-4 sm:px-8 max-w-4xl mx-auto">
@@ -17,11 +20,13 @@ function Header() {
           <img src="/backed-by-google.png" alt="Google for Startups" className="h-5 opacity-80" />
         </div>
 
-        {/* In partnership with ImagiNxt — centered on mobile (row 2), right on desktop */}
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end sm:ml-auto">
-          <span className="text-gray-500 text-[10px] font-medium tracking-widest uppercase">In partnership with</span>
-          <img src="/imaginxt-2026-logo.png" alt="ImagiNxt" className="h-7 opacity-85" />
-        </div>
+        {/* Partner block — centered on mobile (row 2), right on desktop */}
+        {partner.headerLogo && (
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end sm:ml-auto">
+            <span className="text-gray-500 text-[10px] font-medium tracking-widest uppercase">{partner.partnershipLabel}</span>
+            <img src={partner.headerLogo} alt={partner.logoAlt} className="h-7 opacity-85" />
+          </div>
+        )}
       </div>
     </div>
   );

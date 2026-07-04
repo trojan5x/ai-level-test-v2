@@ -2,6 +2,8 @@
  * Share badge canvas renderer — used on results page and WhatsApp report dispatch.
  */
 
+import { getPartnerConfig } from '../config/partners.js';
+
 const LEVEL_DATA = {
   0: { name: "Non-User", color: "#64748b", tier: "Explorer" },
   1: { name: "Experimenter", color: "#818cf8", tier: "Explorer" },
@@ -35,8 +37,9 @@ const BADGE_GEM_TIERS = {
   6: { bg: ["#1a0000","#2d0505"], gem: ["#b91c1c","#dc2626","#ef4444","#f87171","#fca5a5"], accent: "#f87171", sparkle: "#fecaca", name: "RUBY" },
 };
 
-const BADGE_LOGOS = { lt: null, ix: null };
+const BADGE_LOGOS = { lt: null, partner: null };
 let badgeLogosPromise = null;
+let badgeLogosPartnerSlug = null;
 
 function loadBadgeLogo(src) {
   return new Promise((resolve) => {
@@ -48,14 +51,16 @@ function loadBadgeLogo(src) {
   });
 }
 
-export function preloadBadgeLogos() {
-  if (!badgeLogosPromise) {
+export function preloadBadgeLogos(partner = getPartnerConfig('default')) {
+  // Cache is per partner: switching entry URLs in the same tab must not reuse stale logos
+  if (!badgeLogosPromise || badgeLogosPartnerSlug !== partner.slug) {
+    badgeLogosPartnerSlug = partner.slug;
     badgeLogosPromise = Promise.all([
       loadBadgeLogo('/learntube-report-logo.png'),
-      loadBadgeLogo('/imaginxt-2026-logo.png'),
-    ]).then(([lt, ix]) => {
+      partner.badgeLogo ? loadBadgeLogo(partner.badgeLogo) : Promise.resolve(null),
+    ]).then(([lt, partnerLogo]) => {
       BADGE_LOGOS.lt = lt;
-      BADGE_LOGOS.ix = ix;
+      BADGE_LOGOS.partner = partnerLogo;
     });
   }
   return badgeLogosPromise;
@@ -68,7 +73,7 @@ function drawScaledLogo(ctx, img, anchorX, centerY, maxHeight, align = 'left') {
   ctx.drawImage(img, x, centerY - h / 2, w, h);
 }
 
-export function renderShareCard(canvas, level, levelData, relationshipData, percentile, referralLink = null, selfSelectedLevel = null) {
+export function renderShareCard(canvas, level, levelData, relationshipData, percentile, referralLink = null, selfSelectedLevel = null, partner = getPartnerConfig('default')) {
   const ctx = canvas.getContext("2d");
   const S = 1080;
   canvas.width = S;
@@ -118,7 +123,7 @@ export function renderShareCard(canvas, level, levelData, relationshipData, perc
   const topY = 48;
   const marginX = 60;
   const ltLogoH = 48;
-  const ixLogoH = 56; // 30% larger than previous 43px
+  const partnerLogoH = 56; // 30% larger than previous 43px
   ctx.textBaseline = "middle";
 
   if (BADGE_LOGOS.lt) {
@@ -131,13 +136,13 @@ export function renderShareCard(canvas, level, levelData, relationshipData, perc
     for (const ch of "LEARNTUBE") { ctx.fillText(ch, ltx, topY); ltx += ctx.measureText(ch).width + 3; }
   }
 
-  if (BADGE_LOGOS.ix) {
-    drawScaledLogo(ctx, BADGE_LOGOS.ix, S - marginX, topY, ixLogoH, 'right');
-  } else {
+  if (partner.badgeLogo && BADGE_LOGOS.partner) {
+    drawScaledLogo(ctx, BADGE_LOGOS.partner, S - marginX, topY, partnerLogoH, 'right');
+  } else if (partner.badgeLogo && partner.logoFallbackText) {
     ctx.textAlign = "right";
     ctx.fillStyle = "rgba(255,255,255,0.55)";
     ctx.font = "700 13px system-ui, -apple-system, sans-serif";
-    ctx.fillText("IMAGINEXT", S - marginX, topY);
+    ctx.fillText(partner.logoFallbackText, S - marginX, topY);
   }
 
   ctx.strokeStyle = `rgba(${accentRgb.r},${accentRgb.g},${accentRgb.b},0.1)`;
@@ -318,8 +323,9 @@ export async function generateShareBadgeBlob({
   relationshipStatus,
   referralLink = null,
   selfSelectedLevel = null,
+  partner = getPartnerConfig('default'),
 }) {
-  await preloadBadgeLogos();
+  await preloadBadgeLogos(partner);
 
   const levelData = LEVEL_DATA[level] || LEVEL_DATA[4];
   const relationshipData = RELATIONSHIP_DATA[relationshipStatus] || RELATIONSHIP_DATA.casual;
@@ -335,6 +341,7 @@ export async function generateShareBadgeBlob({
       percentile,
       referralLink,
       selfSelectedLevel,
+      partner,
     );
 
     canvas.toBlob((blob) => {

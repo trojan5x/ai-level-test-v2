@@ -18,6 +18,7 @@ import { generateReferralId, createReferralLink } from '../../utils/referralGene
 import { generateLinkedInAuthUrl, linkedInSession, parseOAuthCallback, validateOAuthCallback, createLinkedInPostContent, getLinkedInRedirectUri } from '../../utils/linkedinAuth.js';
 import { generateAIReportPDF } from '../../utils/pdfGenerator.js';
 import { preloadBadgeLogos, renderShareCard, generateShareBadgeBase64 } from '../../utils/shareBadgeRenderer.js';
+import { getActivePartner } from '../../config/partners.js';
 import { EnhancedScoring, mergeAssessmentScores, getAssessmentPrimaryTotal } from '../../utils/stateManager.js';
 import TeamInviteBlock, { getTeamInviteMessages } from './TeamInviteBlock.jsx';
 import EnterpriseCalendlyModal from './EnterpriseCalendlyModal.jsx';
@@ -339,7 +340,9 @@ function AnimatedPercentile({ target, duration = 1200 }) {
 // ─── MAIN LEVELREVEAL COMPONENT (EXACT ORIGINAL) ───────────
 function LevelReveal({ assessmentContext }) {
   const { state } = assessmentContext;
-  
+  // Partner branding follows the landing URL the user entered through
+  const partner = getActivePartner();
+
   const mergedScores = mergeAssessmentScores(state.assessment);
   const path = state.navigation?.assessmentPath || "B";
   const responses = state.assessment.responses || {};
@@ -402,7 +405,7 @@ function LevelReveal({ assessmentContext }) {
         relationshipStatus,
         scores,
         referralId
-      });
+      }, partner);
       const url = URL.createObjectURL(pdfBlob);
       const a = document.createElement('a');
       a.href = url;
@@ -461,7 +464,7 @@ function LevelReveal({ assessmentContext }) {
         timestamp: Date.now()
       };
       console.log("🧪 Simulating PDF generation and download for testing...", mockLead);
-      const pdfBlob = await generateAIReportPDF(mockLead);
+      const pdfBlob = await generateAIReportPDF(mockLead, partner);
       const url = URL.createObjectURL(pdfBlob);
       const a = document.createElement("a");
       a.href = url;
@@ -495,7 +498,7 @@ function LevelReveal({ assessmentContext }) {
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, []);
 
-  useEffect(() => { preloadBadgeLogos(); }, []);
+  useEffect(() => { preloadBadgeLogos(partner); }, [partner]);
 
   // Classify role + persona for managers/CXOs/founders (team challenge before LinkedIn share)
   useEffect(() => {
@@ -510,13 +513,13 @@ function LevelReveal({ assessmentContext }) {
   // Render share card when share section appears (after logos load)
   useEffect(() => {
     if (stage >= 3 && previewRef.current) {
-      preloadBadgeLogos().then(() => {
+      preloadBadgeLogos(partner).then(() => {
         if (previewRef.current) {
-          renderShareCard(previewRef.current, level, data, relData, percentile, null, selfSelectedLevel);
+          renderShareCard(previewRef.current, level, data, relData, percentile, null, selfSelectedLevel, partner);
         }
       });
     }
-  }, [stage, level, data, relData, percentile, selfSelectedLevel]);
+  }, [stage, level, data, relData, percentile, selfSelectedLevel, partner]);
 
   // Handle LinkedIn OAuth callback parameters
   useEffect(() => {
@@ -568,8 +571,8 @@ function LevelReveal({ assessmentContext }) {
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-    await preloadBadgeLogos();
-    renderShareCard(canvas, level, data, relData, percentile, null, selfSelectedLevel);
+    await preloadBadgeLogos(partner);
+    renderShareCard(canvas, level, data, relData, percentile, null, selfSelectedLevel, partner);
 
     if (navigator.share && navigator.canShare) {
       try {
@@ -823,7 +826,7 @@ function LevelReveal({ assessmentContext }) {
         levelData: data,
         relationshipData: relData,
         percentile
-      }, referralLink);
+      }, referralLink, partner);
 
       const sharingData = {
         level,
@@ -973,7 +976,7 @@ function LevelReveal({ assessmentContext }) {
         levelData: sharingData.levelData,
         relationshipData: sharingData.relationshipData,
         percentile: sharingData.percentile
-      }, referralLink);
+      }, referralLink, partner);
 
       const badgeImageBase64 = sharingData.badgeImageBase64
         || await generateBadgeWithReferral(sharingData, referralLink);
@@ -1065,6 +1068,7 @@ function LevelReveal({ assessmentContext }) {
         sharingData.selfSelectedLevel !== undefined
           ? sharingData.selfSelectedLevel
           : selfSelectedLevel,
+      partner,
     });
 
   // Share to LinkedIn API
@@ -1152,8 +1156,8 @@ function LevelReveal({ assessmentContext }) {
         <button
           onClick={async () => {
             if (canvasRef.current) {
-              await preloadBadgeLogos();
-              renderShareCard(canvasRef.current, level, data, relData, percentile, null, selfSelectedLevel);
+              await preloadBadgeLogos(partner);
+              renderShareCard(canvasRef.current, level, data, relData, percentile, null, selfSelectedLevel, partner);
               setPreviewDataUrl(canvasRef.current.toDataURL());
             }
             setIsPreviewExpanded(true);

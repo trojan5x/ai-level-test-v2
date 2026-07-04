@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { getPartnerConfig } from '../config/partners.js';
 
 const LEVEL_METADATA = {
   0: { color: "#94a3b8", name: "Non-User",               tier: "Explorer",     percentile: 95 },
@@ -131,7 +132,7 @@ const loadImgDataUrl = (src) =>
     img.src = src;
   });
 
-export const generateAIReportPDF = async (leadData) => {
+export const generateAIReportPDF = async (leadData, partner = getPartnerConfig('default')) => {
   const { name, phone, email, level, relationshipStatus, scores, referralId } = leadData;
   const lvl  = Math.max(0, Math.min(5, parseInt(level) || 0));
   const relationshipStatusStr = relationshipStatus || 'casual';
@@ -139,15 +140,15 @@ export const generateAIReportPDF = async (leadData) => {
   const ac    = meta.color;
   const insights = generateInsights(scores, lvl, relationshipStatusStr);
   
-  const [ltLogo, googleLogo, imaginxtLogo] = await Promise.all([
+  const [ltLogo, googleLogo, partnerLogo] = await Promise.all([
     loadImgDataUrl('/learntube-report-logo.png'),
     loadImgDataUrl('/backed-by-google.png'),
-    loadImgDataUrl('/imaginxt-2026-logo.png'),
+    partner.reportLogo ? loadImgDataUrl(partner.reportLogo) : Promise.resolve(null),
   ]);
 
   const ltImg = ltLogo ? ltLogo.dataUrl : "";
   const googleImg = googleLogo ? googleLogo.dataUrl : "";
-  const ixImg = imaginxtLogo ? imaginxtLogo.dataUrl : "";
+  const partnerImg = partnerLogo ? partnerLogo.dataUrl : "";
 
   // Helper for generating dimensions bars
   const renderDims = () => {
@@ -211,11 +212,12 @@ export const generateAIReportPDF = async (leadData) => {
       </div>
       <div style="display: flex; align-items: center; gap: 20px;">
         ${googleImg ? `<img src="${googleImg}" style="height: 36px;" />` : ''}
+        ${partner.reportLogo ? `
         <div style="width: 1px; height: 40px; background-color: #374151;"></div>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 10px; font-weight: 600; color: #9ca3af; letter-spacing: 0.05em;">IN PARTNERSHIP WITH</span>
-          ${ixImg ? `<img src="${ixImg}" style="height: 51.84px;" />` : '<div style="font-weight: 800; font-size: 37.44px; color: #ffffff;">IMAGINEXT</div>'}
-        </div>
+          <span style="font-size: 10px; font-weight: 600; color: #9ca3af; letter-spacing: 0.05em;">${(partner.partnershipLabel || '').toUpperCase()}</span>
+          ${partnerImg ? `<img src="${partnerImg}" style="height: 51.84px;" />` : `<div style="font-weight: 800; font-size: 37.44px; color: #ffffff;">${partner.logoFallbackText || ''}</div>`}
+        </div>` : ''}
       </div>
     </div>
   `;

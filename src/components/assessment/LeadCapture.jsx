@@ -15,6 +15,7 @@ import { generateShareBadgeBlob } from '../../utils/shareBadgeRenderer.js';
 import { utmTracker } from '../../utils/utmTracker.js';
 import { EnhancedScoring, mergeAssessmentScores, getAssessmentPrimaryTotal } from '../../utils/stateManager.js';
 import { generateAIReportPDF, dispatchPDFReportToWhatsApp } from '../../utils/pdfGenerator.js';
+import { getActivePartner } from '../../config/partners.js';
 
 // Country codes for international phone number input support
 const COUNTRY_CODES = [
@@ -150,12 +151,14 @@ function LeadCapture({ assessmentContext }) {
       const referralLink = createReferralLink(leadData.referralId);
       const selfSelectedLevel = state.assessment?.calibration?.selfSelectedLevel ?? null;
 
-      const pdfPromise = generateAIReportPDF(leadData);
+      const partner = getActivePartner();
+      const pdfPromise = generateAIReportPDF(leadData, partner);
       const badgePromise = generateShareBadgeBlob({
         level: leadData.level,
         relationshipStatus: leadData.relationshipStatus,
         referralLink,
         selfSelectedLevel,
+        partner,
       }).catch((badgeError) => {
         console.warn("⚠️ Badge generation failed, sending PDF only:", badgeError);
         return null;

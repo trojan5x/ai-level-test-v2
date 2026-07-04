@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnTube AI Level Badge — Design Preview</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      background: #111;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #fff;
+      padding: 24px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .controls label { font-size: 14px; color: #aaa; }
+    .controls select {
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    /* ─── Badge canvas: 1080 × 1080 ─── */
+    .badge {
+      --s: 1080px;
+      --cx: 540px;
+      --gem-cy: 280px;
+      --gem-r: 200px;
+      --margin-x: 60px;
+      --top-y: 48px;
+      --accent: #60a5fa;
+      --sparkle: #bfdbfe;
+      --bg-inner: #06122d;
+      --bg-outer: #020818;
+
+      position: relative;
+      width: var(--s);
+      height: var(--s);
+      overflow: hidden;
+      flex-shrink: 0;
+      transform-origin: top center;
+    }
+
+    @media (max-width: 1120px) {
+      .badge { transform: scale(calc(100vw / 1120)); margin-bottom: calc((var(--s) * (100vw / 1120)) - var(--s)); }
+    }
+
+    .badge-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle 700px at var(--cx) 290px,
+        var(--bg-inner) 0%,
+        var(--bg-outer) 40%,
+        #000 100%
+      );
+    }
+
+    .badge-noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.35;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    .badge-streaks {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .badge-streaks span {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 2%, transparent), transparent);
+    }
+
+    .badge-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      z-index: 2;
+    }
+
+    .badge-header .logo-lt {
+      position: absolute;
+      left: var(--margin-x);
+      top: var(--top-y);
+      transform: translateY(-50%);
+      height: 48px;
+      width: auto;
+    }
+
+    .badge-header .logo-ix {
+      position: absolute;
+      right: var(--margin-x);
+      top: var(--top-y);
+      transform: translateY(-50%);
+      height: 56px;
+      width: auto;
+    }
+
+    .badge-divider-top {
+      position: absolute;
+      left: var(--margin-x);
+      right: var(--margin-x);
+      top: 70px;
+      height: 1px;
+      background: color-mix(in srgb, var(--accent) 10%, transparent);
+    }
+
+    .gem-wrap {
+      position: absolute;
+      left: calc(var(--cx) - var(--gem-r));
+      top: calc(var(--gem-cy) - var(--gem-r));
+      width: calc(var(--gem-r) * 2);
+      height: calc(var(--gem-r) * 2);
+      z-index: 1;
+    }
+
+    .gem-glow {
+      position: absolute;
+      left: 50%;
+      top: 55%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, color-mix(in srgb, var(--accent) 30%, transparent) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .gem-svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 4px 20px rgba(0,0,0,0.6));
+    }
+
+    .level-score {
+      position: absolute;
+      left: var(--cx);
+      top: calc(var(--gem-cy) + 20px);
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      z-index: 3;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      pointer-events: none;
+    }
+
+    .level-score .num {
+      font-size: 170px;
+      font-weight: 900;
+      line-height: 1;
+      color: #fff;
+      margin-right: -4px;
+    }
+
+    .level-score .denom {
+      font-size: 60px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.55);
+      margin-left: 6px;
+    }
+
+    .badge-copy {
+      position: absolute;
+      left: 0;
+      right: 0;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .level-name {
+      top: 520px;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+    }
+
+    .rel-label {
+      top: 566px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+    }
+
+    .rel-word {
+      top: 610px;
+      font-size: 64px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .rel-word.long { font-size: 56px; }
+
+    .percentile {
+      top: 700px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .percentile.low { top: 580px; }
+
+    .divider-mid {
+      position: absolute;
+      left: calc(var(--cx) - 220px);
+      right: calc(var(--cx) - 220px);
+      top: 750px;
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+      margin: 0 auto;
+      width: 440px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .research-label {
+      top: 774px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .research-names {
+      top: 798px;
+      font-size: 17px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+    }
+
+    .companies-label {
+      top: 846px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .companies-names {
+      top: 866px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.65);
+    }
+
+    .cta-question {
+      bottom: 82px;
+      font-size: 22px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.75);
+    }
+
+    .cta-url {
+      bottom: 52px;
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .cta-tagline {
+      bottom: 26px;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .gem-reflection {
+      position: absolute;
+      left: calc(var(--cx) - 260px);
+      top: calc(var(--gem-cy) + var(--gem-r) + 12px);
+      width: 520px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 20%, transparent), transparent);
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="controls">
+    <label for="level-select">Preview level:</label>
+    <select id="level-select">
+      <option value="0">L0 — Non-User (Steel)</option>
+      <option value="1">L1 — Experimenter (Steel)</option>
+      <option value="2">L2 — Functional User (Emerald)</option>
+      <option value="3" selected>L3 — Effective Practitioner (Sapphire)</option>
+      <option value="4">L4 — AI-Native Performer (Amethyst)</option>
+      <option value="5">L5 — AI-Native Builder (Gold)</option>
+      <option value="6">L6 — Frontier Contributor (Ruby)</option>
+    </select>
+    <label for="rel-select">Relationship:</label>
+    <select id="rel-select">
+      <option value="single">Single (hidden)</option>
+      <option value="casual">Casual</option>
+      <option value="committed" selected>Committed</option>
+      <option value="merged">Merged</option>
+      <option value="complicated">It's Complicated</option>
+    </select>
+  </div>
+
+  <!-- 1080×1080 badge — mirrors shareBadgeRenderer.js -->
+  <article class="badge" id="badge" aria-label="AI Level share badge">
+
+    <div class="badge-bg"></div>
+    <div class="badge-noise"></div>
+    <div class="badge-streaks" aria-hidden="true">
+      <span style="top:12%"></span>
+      <span style="top:22%"></span>
+      <span style="top:35%"></span>
+      <span style="top:48%"></span>
+      <span style="top:58%"></span>
+      <span style="top:68%"></span>
+      <span style="top:78%"></span>
+      <span style="top:88%"></span>
+    </div>
+
+    <header class="badge-header">
+      <img class="logo-lt" src="/learntube-report-logo.png" alt="LearnTube" />
+      <img class="logo-ix" src="/imaginxt-2026-logo.png" alt="ImagiNxt" />
+    </header>
+    <div class="badge-divider-top"></div>
+
+    <div class="gem-glow" aria-hidden="true"></div>
+    <div class="gem-wrap">
+      <svg class="gem-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="gemBody" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" id="gemStop0" />
+            <stop offset="50%" id="gemStop1" />
+            <stop offset="100%" id="gemStop0b" />
+          </linearGradient>
+          <radialGradient id="gemInner" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" id="gemInner0" />
+            <stop offset="50%" id="gemInner1" />
+            <stop offset="100%" id="gemInner2" />
+          </radialGradient>
+        </defs>
+        <!-- Outer hex (flat top) -->
+        <polygon id="hexOuter" points="200,20 373,120 373,280 200,380 27,280 27,120" fill="url(#gemBody)" />
+        <!-- Facet highlights (simplified) -->
+        <polygon points="200,200 200,20 373,120" fill="url(#gemBody)" opacity="0.5" />
+        <polygon points="200,200 373,120 373,280" fill="url(#gemBody)" opacity="0.35" />
+        <polygon points="200,200 373,280 200,380" fill="url(#gemBody)" opacity="0.3" />
+        <polygon points="200,200 200,380 27,280" fill="url(#gemBody)" opacity="0.35" />
+        <polygon points="200,200 27,280 27,120" fill="url(#gemBody)" opacity="0.4" />
+        <polygon points="200,200 27,120 200,20" fill="url(#gemBody)" opacity="0.55" />
+        <!-- Inner hex -->
+        <polygon points="200,110 295,165 295,235 200,290 105,235 105,165" fill="url(#gemInner)" opacity="0.5" />
+        <!-- Facet lines -->
+        <g stroke="currentColor" stroke-width="0.8" fill="none" opacity="0.25" id="gemLines">
+          <line x1="200" y1="200" x2="200" y2="20" />
+          <line x1="200" y1="200" x2="373" y2="120" />
+          <line x1="200" y1="200" x2="373" y2="280" />
+          <line x1="200" y1="200" x2="200" y2="380" />
+          <line x1="200" y1="200" x2="27" y2="280" />
+          <line x1="200" y1="200" x2="27" y2="120" />
+        </g>
+        <!-- Specular edges -->
+        <polyline points="27,280 200,20 373,120" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2.5" />
+        <line x1="373" y1="120" x2="373" y2="280" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+        <polygon points="200,20 373,120 373,280 200,380 27,280 27,120" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4" />
+      </svg>
+    </div>
+    <div class="gem-reflection" aria-hidden="true"></div>
+
+    <div class="level-score">
+      <span class="num" id="level-num">3</span>
+      <span class="denom">/ 6</span>
+    </div>
+
+    <p class="badge-copy level-name" id="level-name">Effective Practitioner</p>
+
+    <p class="badge-copy rel-label" id="rel-label">My AI Relationship</p>
+    <p class="badge-copy rel-word" id="rel-word">COMMITTED</p>
+
+    <p class="badge-copy percentile" id="percentile">Top 12% of professionals assessed</p>
+
+    <div class="divider-mid"></div>
+
+    <p class="badge-copy research-label">Assessment built on research from</p>
+    <p class="badge-copy research-names">BCG &nbsp;·&nbsp; Anthropic &nbsp;·&nbsp; MIT</p>
+    <p class="badge-copy companies-label">Professionals assessed from</p>
+    <p class="badge-copy companies-names">Meta &nbsp;·&nbsp; Amazon &nbsp;·&nbsp; TCS &nbsp;·&nbsp; Deloitte &nbsp;·&nbsp; Infosys &nbsp;·&nbsp; and more</p>
+
+    <p class="badge-copy cta-question">What’s your AI Level?</p>
+    <p class="badge-copy cta-url" id="cta-url">Visit: ai-level.learntube.ai</p>
+    <p class="badge-copy cta-tagline">Free &nbsp;·&nbsp; Under 10 min &nbsp;·&nbsp; 4M+ assessed</p>
+  </article>
+
+  <script>
+    const TIERS = {
+      0: { bg: ['#08090f','#0e1018'], gem: ['#5a657a','#7a869e','#95a0b8','#b0bcd0','#d0d8e8'], accent: '#95a0b8', sparkle: '#d0d8e8' },
+      1: { bg: ['#08090f','#0e1018'], gem: ['#5a657a','#7a869e','#95a0b8','#b0bcd0','#d0d8e8'], accent: '#95a0b8', sparkle: '#d0d8e8' },
+      2: { bg: ['#020e08','#041a0e'], gem: ['#047857','#059669','#10b981','#34d399','#6ee7b7'], accent: '#34d399', sparkle: '#a7f3d0' },
+      3: { bg: ['#020818','#06122d'], gem: ['#1e40af','#2563eb','#3b82f6','#60a5fa','#93c5fd'], accent: '#60a5fa', sparkle: '#bfdbfe' },
+      4: { bg: ['#0a0318','#15082e'], gem: ['#6d28d9','#7c3aed','#8b5cf6','#a78bfa','#c4b5fd'], accent: '#a78bfa', sparkle: '#ddd6fe' },
+      5: { bg: ['#140a00','#241600'], gem: ['#a16207','#ca8a04','#eab308','#fbbf24','#fde68a'], accent: '#fbbf24', sparkle: '#fef3c7' },
+      6: { bg: ['#1a0000','#2d0505'], gem: ['#b91c1c','#dc2626','#ef4444','#f87171','#fca5a5'], accent: '#f87171', sparkle: '#fecaca' },
+    };
+
+    const LEVEL_NAMES = [
+      'Non-User', 'Experimenter', 'Functional User', 'Effective Practitioner',
+      'AI-Native Performer', 'AI-Native Builder', 'Frontier Contributor',
+    ];
+
+    const PERCENTILES = { 0: 95, 1: 65, 2: 34, 3: 12, 4: 5, 5: 1, 6: 0.1 };
+
+    const REL_WORDS = {
+      casual: 'CASUAL',
+      committed: 'COMMITTED',
+      merged: 'MERGED',
+      complicated: "IT'S COMPLICATED",
+    };
+
+    const badge = document.getElementById('badge');
+    const levelSelect = document.getElementById('level-select');
+    const relSelect = document.getElementById('rel-select');
+
+    function applyTier(level) {
+      const t = TIERS[level] || TIERS[0];
+      badge.style.setProperty('--accent', t.accent);
+      badge.style.setProperty('--sparkle', t.sparkle);
+      badge.style.setProperty('--bg-outer', t.bg[0]);
+      badge.style.setProperty('--bg-inner', t.bg[1]);
+
+      ['gemStop0','gemStop0b'].forEach(id => {
+        document.getElementById(id).setAttribute('stop-color', t.gem[0]);
+      });
+      document.getElementById('gemStop1').setAttribute('stop-color', t.gem[1]);
+      document.getElementById('gemInner0').setAttribute('stop-color', t.gem[3]);
+      document.getElementById('gemInner1').setAttribute('stop-color', t.gem[2]);
+      document.getElementById('gemInner2').setAttribute('stop-color', t.gem[1]);
+      document.getElementById('gemLines').setAttribute('stroke', t.accent);
+      document.querySelector('.gem-svg polygon[fill="none"]')?.setAttribute('stroke', t.accent);
+    }
+
+    function update() {
+      const level = parseInt(levelSelect.value, 10);
+      const rel = relSelect.value;
+      const t = TIERS[level];
+
+      applyTier(level);
+
+      document.getElementById('level-num').textContent = level >= 5 ? '5+' : String(level);
+      document.getElementById('level-name').textContent = LEVEL_NAMES[level];
+
+      const relLabel = document.getElementById('rel-label');
+      const relWord = document.getElementById('rel-word');
+      const pct = document.getElementById('percentile');
+      const divider = document.querySelector('.divider-mid');
+
+      if (rel === 'single' || !REL_WORDS[rel]) {
+        relLabel.classList.add('hidden');
+        relWord.classList.add('hidden');
+        if (level <= 1) {
+          pct.textContent = 'Now I know where I stand — growth starts here';
+          pct.classList.add('low');
+          divider.style.top = '610px';
+        } else {
+          pct.classList.remove('low');
+          pct.textContent = `Top ${PERCENTILES[level]}% of professionals assessed`;
+          divider.style.top = '750px';
+        }
+      } else {
+        relLabel.classList.remove('hidden');
+        relWord.classList.remove('hidden');
+        relWord.textContent = REL_WORDS[rel];
+        relWord.classList.toggle('long', REL_WORDS[rel].length > 12);
+        pct.classList.remove('low');
+        if (level <= 1) {
+          pct.textContent = 'Now I know where I stand — growth starts here';
+        } else {
+          pct.textContent = `Top ${PERCENTILES[level]}% of professionals assessed`;
+        }
+        divider.style.top = '750px';
+      }
+    }
+
+    levelSelect.addEventListener('change', update);
+    relSelect.addEventListener('change', update);
+    update();
+  </script>
+</body>
+</html>
